@@ -28,8 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.trazo.gpx.Waypoint
+import app.trazo.map.TopoPreview
 import app.trazo.ui.ElevationChart
-import app.trazo.ui.RouteShape
 import java.util.Locale
 
 internal val ES: Locale = Locale.forLanguageTag("es-ES")
@@ -101,7 +101,7 @@ private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap:
                 shape = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             ) {
-                RouteShape(state.preview, Modifier.fillMaxWidth().height(220.dp))
+                TopoPreview(state, Modifier.fillMaxWidth().height(220.dp))
             }
         }
         item {

@@ -43,7 +43,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import app.trazo.gpx.GeoJson
 import app.trazo.gpx.RouteGeometry
 import app.trazo.importer.ImportState
 import app.trazo.importer.Stat
@@ -53,29 +52,11 @@ import app.trazo.importer.title
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
-import org.maplibre.android.style.layers.CircleLayer
-import org.maplibre.android.style.layers.LineLayer
-import org.maplibre.android.style.layers.Property
-import org.maplibre.android.style.layers.PropertyFactory.circleColor
-import org.maplibre.android.style.layers.PropertyFactory.circleRadius
-import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
-import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
-import org.maplibre.android.style.layers.PropertyFactory.lineCap
-import org.maplibre.android.style.layers.PropertyFactory.lineColor
-import org.maplibre.android.style.layers.PropertyFactory.lineJoin
-import org.maplibre.android.style.layers.PropertyFactory.lineWidth
-import org.maplibre.android.style.sources.GeoJsonSource
-
-/** Estilo vectorial gratuito y sin clave. Más adelante: estilo topo propio y offline. */
-private const val STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
-
-private const val TRACK_COLOR = "#C2410C"
 
 @Composable
 fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
@@ -122,9 +103,16 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
 
     LaunchedEffect(mapView) {
         mapView.getMapAsync { map ->
-            map.setStyle(Style.Builder().fromUri(STYLE_URL)) { style ->
-                addRoute(style, state)
-                fitRoute(map, state, density = context.resources.displayMetrics.density)
+            // Cámara en la ruta desde el principio, sin esperar a que cargue el estilo
+            RouteGeometry.bounds(state.gpx.segments)?.let { b ->
+                map.cameraPosition = CameraPosition.Builder()
+                    .target(LatLng((b.minLat + b.maxLat) / 2, (b.minLon + b.maxLon) / 2))
+                    .zoom(12.0)
+                    .build()
+            }
+            map.setStyle(TrazoMapStyle.builder(context, state)) { style ->
+                // Encuadre exacto cuando la vista ya tiene tamaño
+                mapView.post { fitRoute(map, state, context.resources.displayMetrics.density) }
                 ready = map to style
             }
         }
@@ -171,55 +159,10 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
     }
 }
 
-private fun addRoute(style: Style, state: ImportState.Loaded) {
-    style.addSource(GeoJsonSource("track", GeoJson.track(state.gpx.segments)))
-    style.addLayer(
-        LineLayer("track-casing", "track").withProperties(
-            lineColor("#FFFFFF"), lineWidth(9f),
-            lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND),
-        )
-    )
-    style.addLayer(
-        LineLayer("track-line", "track").withProperties(
-            lineColor(TRACK_COLOR), lineWidth(5f),
-            lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND),
-        )
-    )
-
-    val wpts = state.gpx.waypoints.map { it.lat to it.lon }
-    if (wpts.isNotEmpty()) {
-        style.addSource(GeoJsonSource("waypoints", GeoJson.points(wpts)))
-        style.addLayer(
-            CircleLayer("waypoints", "waypoints").withProperties(
-                circleRadius(6f), circleColor("#1F6FB2"),
-                circleStrokeColor("#FFFFFF"), circleStrokeWidth(2f),
-            )
-        )
-    }
-
-    val segs = state.gpx.segments
-    val ends = listOfNotNull(segs.firstOrNull()?.firstOrNull(), segs.lastOrNull()?.lastOrNull())
-    style.addSource(GeoJsonSource("ends", GeoJson.points(ends.map { it.lat to it.lon })))
-    style.addLayer(
-        CircleLayer("ends", "ends").withProperties(
-            circleRadius(7f), circleColor("#1A1C16"),
-            circleStrokeColor("#FFFFFF"), circleStrokeWidth(3f),
-        )
-    )
-}
-
 private fun fitRoute(map: MapLibreMap, state: ImportState.Loaded, density: Float) {
-    val b = RouteGeometry.bounds(state.gpx.segments) ?: return
-    if (b.minLat == b.maxLat && b.minLon == b.maxLon) {
-        map.cameraPosition = CameraPosition.Builder().target(LatLng(b.minLat, b.minLon)).zoom(14.0).build()
-        return
-    }
-    val bounds = LatLngBounds.Builder()
-        .include(LatLng(b.minLat, b.minLon))
-        .include(LatLng(b.maxLat, b.maxLon))
-        .build()
+    val bounds = TrazoMapStyle.bounds(state) ?: return
     val pad = (48 * density).toInt()
-    // Abajo dejamos sitio para la tarjeta de datos
+    // Arriba el botón de volver, abajo la tarjeta de datos
     map.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, pad, pad * 2, pad, pad * 4))
 }
 
