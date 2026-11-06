@@ -74,7 +74,9 @@ import app.trazo.importer.km
 import app.trazo.importer.metros
 import app.trazo.importer.title
 import app.trazo.nav.Alerts
-import app.trazo.nav.locationUpdates
+import app.trazo.ride.RideSession
+import app.trazo.ride.ridePermissions
+import java.io.File
 import app.trazo.ui.ElevationChart
 import kotlinx.coroutines.flow.catch
 import org.maplibre.android.camera.CameraPosition
@@ -95,7 +97,12 @@ private const val MAX_ACCURACY_M = 1_000f
 private const val REPEAT_ALERT_MS = 20_000L
 
 @Composable
-fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit, onOpen3D: () -> Unit) {
+fun MapScreen(
+    state: ImportState.Loaded,
+    onBack: () -> Unit,
+    onOpen3D: () -> Unit,
+    onRideSaved: (File) -> Unit = {},
+) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var scrub by remember(state.gpx) { mutableStateOf<Double?>(null) }
@@ -109,18 +116,29 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit, onOpen3D: () -> Uni
     val navProfile = remember(navSegments) { RouteGeometry.downsample(ElevationProfile.of(navSegments), 300) }
     var navState by remember { mutableStateOf<NavState?>(null) }
     var navError by remember { mutableStateOf<String?>(null) }
-    BackHandler { if (navigating) navigating = false else onBack() }
+
+    // Navegar = grabar la salida: el servicio mantiene el GPS y los avisos con la pantalla apagada
+    val startNav = {
+        RideSession.start(context, routeName = state.title())
+        navigating = true
+    }
+    val stopNav = {
+        navigating = false
+        RideSession.stop(context)?.let(onRideSaved)
+        Unit
+    }
+    BackHandler { if (navigating) stopNav() else onBack() }
 
     var hasLocation by remember { mutableStateOf(context.hasLocationPermission()) }
     var startWhenGranted by remember { mutableStateOf(false) }
     val askLocation = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { granted ->
-        hasLocation = granted.values.any { it }
-        if (hasLocation && startWhenGranted) navigating = true
+    ) {
+        hasLocation = context.hasLocationPermission()
+        if (hasLocation && startWhenGranted) startNav()
         startWhenGranted = false
     }
-    val locationPermissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+    val locationPermissions = ridePermissions()
     LaunchedEffect(Unit) { if (!hasLocation) askLocation.launch(locationPermissions) }
 
     val mapView = remember { MapView(context).apply { onCreate(null) } }
@@ -217,7 +235,8 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit, onOpen3D: () -> Uni
         val navigator = Navigator(navSegments)
         var lastAlert = 0L
         var wasOff = false
-        context.locationUpdates()
+        // Las posiciones llegan del servicio de grabación, que sigue vivo con la pantalla apagada
+        RideSession.fixes
             .catch { navError = it.message; navigating = false }
             .collect { loc ->
                 // Posiciones absurdamente imprecisas (p. ej. solo por antena) no aportan nada
@@ -280,8 +299,8 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit, onOpen3D: () -> Uni
                             highlight = s?.nextClimb?.let { it.startMeters..it.endMeters },
                         )
                     }
-                    FilledTonalButton(onClick = { navigating = false }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                        Text("Terminar", style = MaterialTheme.typography.titleMedium)
+                    FilledTonalButton(onClick = stopNav, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                        Text("Terminar y guardar", style = MaterialTheme.typography.titleMedium)
                     }
                 } else {
                     Text(
@@ -320,7 +339,7 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit, onOpen3D: () -> Uni
             onStart = { option ->
                 showStartSheet = false
                 startAlong = option.alongMeters
-                if (hasLocation) navigating = true
+                if (hasLocation) startNav()
                 else { startWhenGranted = true; askLocation.launch(locationPermissions) }
             },
             onDirections = { option -> context.openDirections(option.lat, option.lon, option.label) },

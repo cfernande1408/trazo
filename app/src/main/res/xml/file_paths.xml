@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Carpetas que se pueden compartir (exportar una salida a GPX) -->
+<paths>
+    <files-path name="rides" path="rides/" />
+</paths>

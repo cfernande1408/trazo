@@ -34,6 +34,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import android.net.Uri
 import app.trazo.ui.openUrl
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import app.trazo.ui.ScrubbableProfile
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,8 +60,28 @@ internal fun ImportState.Loaded.title() = gpx.name?.removePrefix("Wikiloc - ") ?
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ImportScreen(state: ImportState, onPickFile: () -> Unit, onOpenMap: () -> Unit) {
-    Scaffold(topBar = { TopAppBar(title = { Text("Mis rutas") }) }) { padding ->
+fun ImportScreen(
+    state: ImportState,
+    onPickFile: () -> Unit,
+    onOpenMap: () -> Unit,
+    onRecord: () -> Unit = {},
+    onRides: () -> Unit = {},
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Mis rutas") },
+                actions = { TextButton(onClick = onRides) { Text("Mis salidas") } },
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = onRecord,
+                icon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
+                text = { Text("Grabar salida") },
+            )
+        },
+    ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (state) {
                 ImportState.Empty -> EmptyState(onPickFile)
@@ -107,7 +132,7 @@ private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap:
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var scrub by remember(state.gpx) { mutableStateOf<Double?>(null) }
     LazyColumn(
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {

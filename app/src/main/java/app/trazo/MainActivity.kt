@@ -38,6 +38,19 @@ import app.trazo.importer.ImportState
 import app.trazo.importer.ImportViewModel
 import app.trazo.map.MapScreen
 import app.trazo.map.Terrain3DScreen
+import app.trazo.ride.RecordScreen
+import app.trazo.ride.RideDetailScreen
+import app.trazo.ride.RideSession
+import app.trazo.ride.RidesScreen
+import app.trazo.ride.formatDuration
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.unit.dp
+import java.io.File
+import java.util.Locale
 import app.trazo.ui.theme.TrazoTheme
 import org.maplibre.android.MapLibre
 
@@ -52,6 +65,7 @@ class MainActivity : ComponentActivity() {
     /** Pestaña seleccionada; también la cambia un GPX que llega por Abrir con / Compartir. */
     private var tab by mutableIntStateOf(0)
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MapLibre.getInstance(this)
@@ -62,18 +76,67 @@ class MainActivity : ComponentActivity() {
                 val state by importer.state.collectAsStateWithLifecycle()
                 var showMap by rememberSaveable { mutableStateOf(false) }
                 var show3D by rememberSaveable { mutableStateOf(false) }
+                var showRecord by rememberSaveable { mutableStateOf(false) }
+                var showRides by rememberSaveable { mutableStateOf(false) }
+                /** Ruta del archivo de la salida abierta en detalle. */
+                var rideFile by rememberSaveable { mutableStateOf<String?>(null) }
+                val ride by RideSession.state.collectAsStateWithLifecycle()
                 val loaded = state as? ImportState.Loaded
                 val openRoute: (app.trazo.gpx.Gpx) -> Unit = { gpx ->
                     importer.importGpx(gpx)
+                    showRides = false
+                    rideFile = null
                     tab = 0
+                }
+                val openRide: (File) -> Unit = { f ->
+                    showMap = false
+                    showRecord = false
+                    rideFile = f.absolutePath
                 }
 
                 when {
+                    rideFile != null -> RideDetailScreen(
+                        File(rideFile!!),
+                        onBack = { rideFile = null },
+                        onUseAsRoute = openRoute,
+                        onDeleted = { rideFile = null; showRides = true },
+                    )
+                    showRecord -> RecordScreen(onClose = { showRecord = false }, onSaved = openRide)
                     show3D && loaded != null -> Terrain3DScreen(loaded, onBack = { show3D = false })
-                    showMap && loaded != null -> MapScreen(loaded, onBack = { showMap = false }, onOpen3D = { show3D = true })
+                    showMap && loaded != null -> MapScreen(
+                        loaded,
+                        onBack = { showMap = false },
+                        onOpen3D = { show3D = true },
+                        onRideSaved = openRide,
+                    )
+                    showRides -> RidesScreen(
+                        onBack = { showRides = false },
+                        onOpen = openRide,
+                        onRecord = { showRides = false; showRecord = true },
+                    )
                     else -> Scaffold(
                         contentWindowInsets = WindowInsets(0, 0, 0, 0),
                         bottomBar = {
+                            Column {
+                                // Si hay una salida grabándose y no se ve, un aviso para volver a ella
+                                if (ride.active) {
+                                    Surface(
+                                        onClick = { if (ride.routeName != null && loaded != null) showMap = true else showRecord = true },
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Text(
+                                            String.format(
+                                                Locale.forLanguageTag("es-ES"), "%s · %.1f km · %s — toca para verla",
+                                                if (ride.paused) "En pausa" else "Grabando",
+                                                ride.stats.distanceMeters / 1000, formatDuration(ride.stats.movingMs),
+                                            ),
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                            style = MaterialTheme.typography.labelLarge,
+                                        )
+                                    }
+                                }
                             NavigationBar {
                                 NavigationBarItem(
                                     selected = tab == 0, onClick = { tab = 0 },
@@ -96,6 +159,7 @@ class MainActivity : ComponentActivity() {
                                     label = { Text("Comunidad") },
                                 )
                             }
+                            }
                         },
                     ) { padding ->
                         Box(Modifier.padding(padding).consumeWindowInsets(padding)) {
@@ -104,6 +168,8 @@ class MainActivity : ComponentActivity() {
                                     state,
                                     onPickFile = { pickGpx.launch(arrayOf("*/*")) },
                                     onOpenMap = { showMap = true },
+                                    onRecord = { showRecord = true },
+                                    onRides = { showRides = true },
                                 )
                                 1 -> ExploreMapScreen(onRouteReady = openRoute)
                                 2 -> WikilocBrowser(onGpx = openRoute)
