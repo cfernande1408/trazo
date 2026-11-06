@@ -4,8 +4,12 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import app.trazo.gpx.ElevationProfile
+import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.Gpx
 import app.trazo.gpx.GpxParser
+import app.trazo.gpx.ProfilePoint
+import app.trazo.gpx.RouteGeometry
 import app.trazo.gpx.TrackStats
 import app.trazo.gpx.TrackStatsCalculator
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +22,13 @@ import kotlinx.coroutines.withContext
 sealed interface ImportState {
     data object Empty : ImportState
     data object Loading : ImportState
-    data class Loaded(val gpx: Gpx, val stats: TrackStats) : ImportState
+    data class Loaded(
+        val gpx: Gpx,
+        val stats: TrackStats,
+        /** Track reducido para dibujar la silueta sin cargar miles de puntos. */
+        val preview: List<List<GeoPoint>>,
+        val profile: List<ProfilePoint>,
+    ) : ImportState
     data class Error(val message: String) : ImportState
 }
 
@@ -37,7 +47,12 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
                         ?.use(GpxParser::parse)
                         ?: error("No se pudo abrir el archivo")
                     if (gpx.segments.isEmpty()) error("El GPX no tiene ningún track")
-                    ImportState.Loaded(gpx, TrackStatsCalculator.compute(gpx.segments))
+                    ImportState.Loaded(
+                        gpx = gpx,
+                        stats = TrackStatsCalculator.compute(gpx.segments),
+                        preview = gpx.segments.map { RouteGeometry.downsample(it, 400) },
+                        profile = RouteGeometry.downsample(ElevationProfile.of(gpx.segments), 300),
+                    )
                 }.getOrElse { ImportState.Error(it.message ?: "Archivo no válido") }
             }
         }

@@ -17,30 +17,39 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.trazo.gpx.Waypoint
+import app.trazo.ui.ElevationChart
+import app.trazo.ui.RouteShape
 import java.util.Locale
 
-private val ES = Locale.forLanguageTag("es-ES")
+internal val ES: Locale = Locale.forLanguageTag("es-ES")
+
+internal fun km(m: Double) = String.format(ES, "%.1f km", m / 1000)
+internal fun metros(m: Double) = String.format(ES, "%,.0f m", m)
+
+/** Wikiloc antepone "Wikiloc - " al nombre de la ruta en el GPX. */
+internal fun ImportState.Loaded.title() = gpx.name?.removePrefix("Wikiloc - ") ?: "Ruta sin nombre"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ImportScreen(state: ImportState, onPickFile: () -> Unit) {
-    Scaffold(topBar = { LargeTopAppBar(title = { Text("Mis rutas") }) }) { padding ->
+fun ImportScreen(state: ImportState, onPickFile: () -> Unit, onOpenMap: () -> Unit) {
+    Scaffold(topBar = { TopAppBar(title = { Text("Mis rutas") }) }) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (state) {
                 ImportState.Empty -> EmptyState(onPickFile)
                 ImportState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 is ImportState.Error -> ErrorState(state.message, onPickFile)
-                is ImportState.Loaded -> Loaded(state, onPickFile)
+                is ImportState.Loaded -> Loaded(state, onPickFile, onOpenMap)
             }
         }
     }
@@ -78,25 +87,58 @@ private fun ErrorState(message: String, onPickFile: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit) {
+private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap: () -> Unit) {
     val s = state.stats
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
+            Card(
+                onClick = onOpenMap,
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+            ) {
+                RouteShape(state.preview, Modifier.fillMaxWidth().height(220.dp))
+            }
+        }
+        item {
             Text(
-                state.gpx.name?.removePrefix("Wikiloc - ") ?: "Ruta sin nombre",
-                style = MaterialTheme.typography.headlineMedium,
+                state.title(),
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Stat("Distancia", String.format(ES, "%.1f km", s.distanceMeters / 1000), Modifier.weight(1f))
-                Stat("Desnivel +", String.format(ES, "%.0f m", s.elevationGainMeters), Modifier.weight(1f))
-                Stat("Desnivel −", String.format(ES, "%.0f m", s.elevationLossMeters), Modifier.weight(1f))
+                Stat("Distancia", km(s.distanceMeters), Modifier.weight(1f))
+                Stat("Desnivel +", metros(s.elevationGainMeters), Modifier.weight(1f))
+                Stat("Desnivel −", metros(s.elevationLossMeters), Modifier.weight(1f))
+            }
+        }
+        if (state.profile.size >= 2) {
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Perfil", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "${metros(s.minElevation ?: 0.0)} – ${metros(s.maxElevation ?: 0.0)}",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        ElevationChart(state.profile, Modifier.fillMaxWidth().height(110.dp))
+                    }
+                }
+            }
+        }
+        item {
+            Button(onClick = onOpenMap, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                Text("Ver en el mapa", style = MaterialTheme.typography.titleMedium)
             }
         }
         if (state.gpx.waypoints.isNotEmpty()) {
@@ -112,14 +154,14 @@ private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit) {
 }
 
 @Composable
-private fun Stat(label: String, value: String, modifier: Modifier = Modifier) {
+internal fun Stat(label: String, value: String, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         Column(Modifier.padding(12.dp)) {
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
         }
     }
 }

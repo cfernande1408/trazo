@@ -8,11 +8,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.trazo.importer.ImportScreen
+import app.trazo.importer.ImportState
 import app.trazo.importer.ImportViewModel
+import app.trazo.map.MapScreen
 import app.trazo.ui.theme.TrazoTheme
+import org.maplibre.android.MapLibre
 
 class MainActivity : ComponentActivity() {
 
@@ -24,12 +31,23 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MapLibre.getInstance(this)
         enableEdgeToEdge()
         if (savedInstanceState == null) handleIntent(intent)
         setContent {
             TrazoTheme {
-                val state = importer.state.collectAsStateWithLifecycle().value
-                ImportScreen(state, onPickFile = { pickGpx.launch(arrayOf("*/*")) })
+                val state by importer.state.collectAsStateWithLifecycle()
+                var showMap by rememberSaveable { mutableStateOf(false) }
+                val loaded = state as? ImportState.Loaded
+                if (showMap && loaded != null) {
+                    MapScreen(loaded, onBack = { showMap = false })
+                } else {
+                    ImportScreen(
+                        state,
+                        onPickFile = { pickGpx.launch(arrayOf("*/*")) },
+                        onOpenMap = { showMap = true },
+                    )
+                }
             }
         }
     }
