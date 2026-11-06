@@ -17,7 +17,7 @@ y sin claves de API.
 ![OpenStreetMap](https://img.shields.io/badge/datos-OpenStreetMap-7EBC6F?logo=openstreetmap&logoColor=white)
 ![Estado](https://img.shields.io/badge/estado-en%20desarrollo-E0A100)
 
-[Qué hace](#qué-hace) · [Capturas](#capturas) · [Instalar](#instalar) · [Cómo está hecho](#cómo-está-hecho) · [Datos y servicios](#datos-y-servicios) · [Hoja de ruta](#hoja-de-ruta)
+[Qué hace](#qué-hace) · [Todas las funciones](FEATURES.md) · [Capturas](#capturas) · [Instalar](#instalar) · [Cómo está hecho](#cómo-está-hecho) · [Datos y servicios](#datos-y-servicios) · [Hoja de ruta](#hoja-de-ruta)
 
 </div>
 
@@ -51,6 +51,10 @@ Resumen con mapa topo, perfil arrastrable, puntos del autor y enlace a los comen
 ✏️ **Crear rutas.** Toca puntos en el mapa y la ruta se ajusta sola a pistas o senderos.
 Deshacer, cerrar en circular, guardar. Se quedan en el móvil y funcionan sin conexión.
 
+🌦️ **El tiempo en la ruta.** Elige día y hora de salida y mira qué tiempo hará en cada tramo
+a la hora en que pasarás por él y a su altitud real. Avisa de tormenta, hielo, rachas o lluvia
+y dice en qué km empieza.
+
 🧭 **Navegar.** Tu posición sobre la ruta, vibración al salirte, la próxima subida, empezar
 desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 
@@ -61,9 +65,12 @@ y un recorrido virtual que vuela la ruta.
 movimiento, el recorrido coloreado por velocidad y exportación a GPX.
 
 🍂 **Según la estación.** El mapa, los árboles y el acento del tema cambian con el año: flores en
-primavera, hojas naranjas en otoño, pinos nevados en invierno. Y un consejo de temporada antes de salir.
+primavera, hojas naranjas en otoño, pinos nevados en invierno. Y un consejo de temporada antes de
+salir, como el de las hojas mojadas y el anochecer temprano en otoño.
 
 🌞 **Modo sol.** Tema claro de alto contraste para leer la pantalla a pleno sol, y oscuro para el resto.
+
+La lista completa, una línea por función, está en **[FEATURES.md](FEATURES.md)**.
 
 ## Instalar
 
@@ -95,6 +102,7 @@ core/gpx/      Kotlin puro: todo lo que se puede probar sin móvil
   gpx/osm/       Overpass, Waymarked Trails, Nominatim, unión de tramos, altitud
   gpx/ride/      grabación y estadísticas de salidas
   gpx/plan/      BRouter (crear rutas)
+  gpx/weather/   previsión a lo largo de la ruta
 app/           Android
   importer/      Mis rutas
   explore/       Explorar, buscador y navegador de Wikiloc
@@ -123,6 +131,7 @@ tus rutas, salidas y ajustes se quedan en el móvil.
 | Buscar lugares | [Nominatim](https://nominatim.org) | © colaboradores de OpenStreetMap |
 | Crear rutas | [BRouter](https://brouter.de) | © colaboradores de OpenStreetMap |
 | Altitud | [Open-Meteo](https://open-meteo.com) | Copernicus DEM |
+| Previsión del tiempo | [Open-Meteo](https://open-meteo.com) | Modelos de ECMWF, DWD, Météo-France y otros |
 | Vista 3D | [MapLibre GL JS](https://maplibre.org) | — |
 
 Los datos de OpenStreetMap están bajo licencia [ODbL](https://www.openstreetmap.org/copyright).
