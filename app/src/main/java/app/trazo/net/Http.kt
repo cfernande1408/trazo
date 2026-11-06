@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.net.URL
 import java.net.URLEncoder
 import java.util.Locale
@@ -47,8 +49,27 @@ object Http {
             }
         }
 
-    suspend fun overpass(query: String): String =
-        postForm(Overpass.ENDPOINT, "data=" + URLEncoder.encode(query, "UTF-8"))
+    /** Prueba el servidor principal y, si falla, los espejos. */
+    suspend fun overpass(query: String): String {
+        val form = "data=" + URLEncoder.encode(query, "UTF-8")
+        var last: Exception? = null
+        for (endpoint in Overpass.ENDPOINTS) {
+            try {
+                return postForm(endpoint, form)
+            } catch (e: IOException) {
+                last = e
+            }
+        }
+        throw IOException(friendly(last), last)
+    }
+
+    /** Mensaje para el usuario en lugar del error técnico. */
+    fun friendly(e: Throwable?): String = when (e) {
+        is UnknownHostException -> "Sin conexión con el servidor de rutas. Comprueba internet y vuelve a probar."
+        is SocketTimeoutException -> "El servidor de rutas tarda demasiado. Prueba en un rato."
+        null -> "No se pudo conectar"
+        else -> e.message ?: "No se pudo conectar"
+    }
 
     /**
      * Añade altitud a una ruta que no la trae (las de OSM) con la API de

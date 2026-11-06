@@ -62,13 +62,16 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun loaded(gpx: Gpx): ImportState.Loaded {
-        if (gpx.segments.isEmpty()) error("El GPX no tiene ningún track")
-        return ImportState.Loaded(
-            gpx = gpx,
-            stats = TrackStatsCalculator.compute(gpx.segments),
-            preview = gpx.segments.map { RouteGeometry.downsample(it, 400) },
-            profile = RouteGeometry.downsample(ElevationProfile.of(gpx.segments), 300),
-        )
-    }
+    private fun loaded(gpx: Gpx): ImportState.Loaded = loadedFrom(gpx)
+}
+
+/** Todo lo que necesitan el resumen, el mapa y las vistas previas a partir de un Gpx. */
+fun loadedFrom(gpx: Gpx): ImportState.Loaded {
+    if (gpx.segments.isEmpty()) error("El GPX no tiene ningún track")
+    return ImportState.Loaded(
+        gpx = gpx,
+        stats = TrackStatsCalculator.compute(gpx.segments),
+        preview = gpx.segments.map { RouteGeometry.downsample(it, 400) },
+        profile = RouteGeometry.downsample(ElevationProfile.of(gpx.segments), 300),
+    )
 }

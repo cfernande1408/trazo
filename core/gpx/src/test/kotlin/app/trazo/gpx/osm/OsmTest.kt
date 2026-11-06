@@ -40,7 +40,7 @@ class OverpassTest {
     @Test
     fun `consulta de busqueda con coordenadas en formato ingles`() {
         val q = Overpass.searchQuery(40.4168, -3.7038, 30_000)
-        assertTrue(q.contains("""relation["route"="mtb"](around:30000,40.41680,-3.70380)"""))
+        assertTrue(q.contains("""relation["route"~"^(mtb|bicycle)$"](around:30000,40.41680,-3.70380)"""))
         assertTrue(q.startsWith("[out:json]"))
     }
 
@@ -49,7 +49,7 @@ class OverpassTest {
         val json = """{"elements":[
             {"type":"relation","id":1234567,"center":{"lat":40.7,"lon":-3.8},
              "tags":{"name":"Ruta BTT del Embalse","route":"mtb","ref":"BTT-3","network":"lcn","distance":"28,5 km"}},
-            {"type":"relation","id":42,"center":{"lat":40.6,"lon":-3.9},"tags":{"route":"mtb"}},
+            {"type":"relation","id":42,"center":{"lat":40.6,"lon":-3.9},"tags":{"route":"bicycle"}},
             {"type":"relation","id":7,"tags":{"name":"sin centro"}}
         ]}"""
         val r = Overpass.parseSearch(json)
@@ -58,6 +58,8 @@ class OverpassTest {
         assertEquals(1234567L, r[0].id)
         assertEquals(28.5, r[0].distanceKm!!, 1e-9)
         assertEquals("Ruta MTB 42", r[1].name)
+        assertTrue(r[0].isMtb)
+        assertTrue(!r[1].isMtb)
     }
 
     @Test

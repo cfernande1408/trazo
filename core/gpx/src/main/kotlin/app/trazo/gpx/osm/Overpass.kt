@@ -17,17 +17,25 @@ data class OsmRouteSummary(
     /** Longitud según la etiqueta `distance` de OSM, si la tiene. */
     val distanceKm: Double?,
     val description: String?,
+    /** true si OSM la marca como ruta de montaña (route=mtb); false si es ciclista general. */
+    val isMtb: Boolean = true,
 )
 
 /** Consultas a la API Overpass de OpenStreetMap y lectura de sus respuestas. */
 object Overpass {
 
-    const val ENDPOINT = "https://overpass-api.de/api/interpreter"
+    /** Servidor principal y espejos públicos, por si alguno falla o está saturado. */
+    val ENDPOINTS = listOf(
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
+        "https://overpass.private.coffee/api/interpreter",
+    )
 
     private fun f(v: Double) = String.format(Locale.ROOT, "%.5f", v)
 
+    /** Rutas MTB y ciclistas (muchas pistas de montaña están etiquetadas solo como bicycle). */
     fun searchQuery(lat: Double, lon: Double, radiusMeters: Int): String =
-        "[out:json][timeout:25];relation[\"route\"=\"mtb\"](around:$radiusMeters,${f(lat)},${f(lon)});out tags center qt 80;"
+        "[out:json][timeout:25];relation[\"route\"~\"^(mtb|bicycle)$\"](around:$radiusMeters,${f(lat)},${f(lon)});out tags center qt 150;"
 
     fun routeQuery(id: Long): String =
         "[out:json][timeout:60];relation($id);out tags;way(r);out geom;"
@@ -51,6 +59,7 @@ object Overpass {
                 lon = lon,
                 distanceKm = (tags["distance"] as? String)?.let(::parseKm),
                 description = (tags["description"] ?: tags["note"]) as? String,
+                isMtb = tags["route"] != "bicycle",
             )
         }
 
