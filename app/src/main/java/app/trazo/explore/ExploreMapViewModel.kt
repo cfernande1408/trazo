@@ -9,6 +9,8 @@ import app.trazo.gpx.osm.OsmRouteSummary
 import app.trazo.gpx.osm.Overpass
 import app.trazo.gpx.osm.WayStitcher
 import app.trazo.gpx.osm.WaymarkedTrails
+import app.trazo.gpx.osm.Place
+import app.trazo.gpx.osm.PlaceSearch
 import app.trazo.gpx.Track
 import app.trazo.gpx.Activity
 import app.trazo.ui.AppMode
@@ -37,7 +39,24 @@ data class SelectedRoute(
     val error: String? = null,
 )
 
+/** Resultado del buscador: lugares (para ir allí) y rutas que se llaman así. */
+data class SearchResults(
+    val query: String,
+    val loading: Boolean = true,
+    val places: List<Place> = emptyList(),
+    val routes: List<OsmRouteSummary> = emptyList(),
+    val error: String? = null,
+)
+
 class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
+
+    private val _search = MutableStateFlow<SearchResults?>(null)
+    val search: StateFlow<SearchResults?> = _search.asStateFlow()
+    private var searchJob: Job? = null
+
+    /** Zona que se ve ahora, para el listado de rutas. */
+    private val _view = MutableStateFlow<Bbox?>(null)
+    val view: StateFlow<Bbox?> = _view.asStateFlow()
 
     private val _routes = MutableStateFlow<Map<Long, OsmRouteSummary>>(emptyMap())
     val routes: StateFlow<Map<Long, OsmRouteSummary>> = _routes.asStateFlow()
@@ -70,6 +89,7 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
     /** Se llama cada vez que el mapa se para. Carga las rutas de la zona visible si faltan. */
     fun onViewport(view: Bbox, zoom: Double) {
         lastView = view to zoom
+        _view.value = view
         if (zoom < MIN_ZOOM) {
             loadJob?.cancel()
             _canRetry.value = false
@@ -178,6 +198,56 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
                 _selected.value = SelectedRoute(summary, error = Http.friendly(e))
             }
         }
+    }
+
+    /**
+     * Busca a la vez el lugar (Nominatim) y rutas con ese nombre (Waymarked
+     * Trails). Las rutas encontradas se añaden al mapa para poder tocarlas.
+     */
+    fun search(query: String) {
+        val q = query.trim()
+        if (q.length < 2) return
+        searchJob?.cancel()
+        _search.value = SearchResults(q)
+        searchJob = viewModelScope.launch {
+            val places = async {
+                runCatching { PlaceSearch.parse(Http.get(PlaceSearch.url(q))) }
+            }
+            val named = async { runCatching { routesNamed(q) } }
+            val p = places.await()
+            val r = named.await()
+            r.getOrNull()?.let { found -> _routes.value = _routes.value + found.associateBy { it.id } }
+            _search.value = SearchResults(
+                q, loading = false,
+                places = p.getOrDefault(emptyList()),
+                routes = r.getOrDefault(emptyList()),
+                error = if (p.isFailure && r.isFailure) Http.friendly(p.exceptionOrNull()) else null,
+            )
+        }
+    }
+
+    /** Rutas por nombre: la lista no trae posición, así que se pide el recuadro de cada una. */
+    private suspend fun routesNamed(q: String): List<OsmRouteSummary> = coroutineScope {
+        WaymarkedTrails.flavoursFor(AppMode.current).map { f ->
+            async {
+                runCatching {
+                    WaymarkedTrails.parseList(Http.get(WaymarkedTrails.searchUrl(f, q))).take(8).map { l ->
+                        async {
+                            runCatching {
+                                val (bbox, desc) = WaymarkedTrails.parseDetails(Http.get(WaymarkedTrails.detailsUrl(f, l.id)))
+                                val c = WaymarkedTrails.mercCenter(bbox!!)!!
+                                OsmRouteSummary(l.id, l.name, l.ref, null, c.lat, c.lon, null, desc, isMtb = f.mtb)
+                            }.getOrNull()
+                        }
+                    }.awaitAll().filterNotNull()
+                }.getOrDefault(emptyList())
+            }
+        }.awaitAll().flatten().distinctBy { it.id }
+    }
+
+    fun clearSearch() {
+        searchJob?.cancel()
+        _search.value = null
     }
 
     fun clearSelection() {

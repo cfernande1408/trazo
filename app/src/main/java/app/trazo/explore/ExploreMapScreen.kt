@@ -66,6 +66,28 @@ import app.trazo.ui.AppMode
 import app.trazo.ui.badge
 import app.trazo.ui.exploreHint
 import app.trazo.ui.openUrl
+import app.trazo.ui.icon
+import app.trazo.ui.routesWord
+import app.trazo.gpx.osm.OsmRouteSummary
+import app.trazo.gpx.osm.Place
+import app.trazo.gpx.osm.PlaceSearch
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.maplibre.android.camera.CameraPosition
@@ -99,8 +121,14 @@ fun ExploreMapScreen(
     val onlyMtb by vm.onlyMtb.collectAsStateWithLifecycle()
     val selected by vm.selected.collectAsStateWithLifecycle()
     val canRetry by vm.canRetry.collectAsStateWithLifecycle()
+    val search by vm.search.collectAsStateWithLifecycle()
+    val view by vm.view.collectAsStateWithLifecycle()
+    var query by rememberSaveable { mutableStateOf("") }
+    var showList by rememberSaveable { mutableStateOf(false) }
 
     BackHandler(enabled = selected != null) { vm.clearSelection() }
+    BackHandler(enabled = search != null && selected == null) { vm.clearSearch() }
+    BackHandler(enabled = showList && search == null && selected == null) { showList = false }
 
     var hasLocation by remember { mutableStateOf(context.hasLocationPermission()) }
     val askLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -179,35 +207,82 @@ fun ExploreMapScreen(
     Box(Modifier.fillMaxSize()) {
         AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
 
-        Row(
-            Modifier.statusBarsPadding().padding(16.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (activity == Activity.BIKE) {
-                FilterChip(
-                    selected = onlyMtb,
-                    onClick = vm::toggleOnlyMtb,
-                    label = { Text("Solo MTB") },
-                    colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        val focus = LocalFocusManager.current
+        val keyboard = LocalSoftwareKeyboardController.current
+        // Ir a un lugar del buscador: se marca y se acerca lo justo para que carguen sus rutas
+        val goTo: (Place) -> Unit = { p ->
+            vm.clearSearch()
+            showList = false
+            ready?.let { (map, style) ->
+                style.getSourceAs<GeoJsonSource>(ExploreMapStyle.PLACE)?.setGeoJson(GeoJson.points(listOf(p.lat to p.lon)))
+                map.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(LatLng(p.lat, p.lon), PlaceSearch.zoomFor(p, ExploreMapViewModel.MIN_ZOOM)),
+                    900,
                 )
             }
-            status?.let { s ->
-                Surface(
-                    onClick = { if (canRetry) vm.retry() },
-                    enabled = canRetry,
-                    shape = MaterialTheme.shapes.small,
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                ) {
-                    Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        if (s.startsWith("Buscando") || s.endsWith("reintentando…")) {
-                            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                            Box(Modifier.size(8.dp))
+        }
+
+        Column(
+            Modifier.statusBarsPadding().padding(12.dp).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            SearchField(
+                query = query,
+                onQuery = { query = it },
+                placeholder = if (activity == Activity.HIKE) "Busca un pico, un pueblo o un sendero" else "Busca un sitio o una ruta",
+                onSearch = {
+                    focus.clearFocus()
+                    keyboard?.hide()
+                    vm.search(query)
+                },
+                onClear = { query = ""; vm.clearSearch() },
+            )
+            val results = search
+            if (results != null) {
+                SearchResultsCard(
+                    results, activity,
+                    onPlace = goTo,
+                    onRoute = { r -> vm.clearSearch(); showList = false; vm.select(r.id) },
+                )
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (activity == Activity.BIKE) {
+                        FilterChip(
+                            selected = onlyMtb,
+                            onClick = vm::toggleOnlyMtb,
+                            label = { Text("Solo MTB") },
+                            colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        )
+                    }
+                    status?.let { s ->
+                        Surface(
+                            onClick = { if (canRetry) vm.retry() },
+                            enabled = canRetry,
+                            shape = MaterialTheme.shapes.small,
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ) {
+                            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                if (s.startsWith("Buscando") || s.endsWith("reintentando…")) {
+                                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                                    Box(Modifier.size(8.dp))
+                                }
+                                Text(s, style = MaterialTheme.typography.labelLarge, maxLines = 2)
+                            }
                         }
-                        Text(s, style = MaterialTheme.typography.labelLarge, maxLines = 2)
                     }
                 }
             }
+        }
+
+        // Rutas que se ven ahora, de la más cercana al centro a la más lejana
+        val visible = remember(routes, view, onlyMtb) {
+            val v = view ?: return@remember emptyList<OsmRouteSummary>()
+            val cLat = (v.south + v.north) / 2
+            val cLon = (v.west + v.east) / 2
+            val k = kotlin.math.cos(Math.toRadians(cLat))
+            routes.values
+                .filter { it.lat in v.south..v.north && it.lon in v.west..v.east && (!onlyMtb || it.isMtb) }
+                .sortedBy { (it.lat - cLat).let { d -> d * d } + ((it.lon - cLon) * k).let { d -> d * d } }
         }
 
         val sel = selected
@@ -216,15 +291,150 @@ fun ExploreMapScreen(
             shape = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         ) {
-            if (sel == null) {
-                Text(
-                    if (routes.isEmpty()) "Mueve el mapa por la zona donde quieras rodar"
-                    else activity.exploreHint,
-                    modifier = Modifier.padding(20.dp),
-                    style = MaterialTheme.typography.titleMedium,
+            if (sel == null && showList && visible.isNotEmpty()) {
+                RouteList(
+                    visible, activity,
+                    onPick = { r -> showList = false; vm.select(r.id) },
+                    onClose = { showList = false },
                 )
+            } else if (sel == null) {
+                Row(Modifier.padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        if (routes.isEmpty()) "Mueve el mapa o busca la zona donde quieras salir"
+                        else activity.exploreHint,
+                        modifier = Modifier.weight(1f).padding(vertical = 12.dp),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    if (visible.isNotEmpty()) {
+                        FilledTonalButton(onClick = { showList = true }) {
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, Modifier.size(18.dp))
+                            Box(Modifier.size(6.dp))
+                            Text("Lista (${visible.size})")
+                        }
+                    }
+                }
             } else {
                 SelectedCard(sel, activity, onClose = vm::clearSelection, onOpen = onRouteReady, onOsm = { context.openUrl(Overpass.osmUrl(sel.summary.id)) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchField(
+    query: String,
+    onQuery: (String) -> Unit,
+    placeholder: String,
+    onSearch: () -> Unit,
+    onClear: () -> Unit,
+) {
+    Surface(
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shadowElevation = 3.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        TextField(
+            value = query,
+            onValueChange = onQuery,
+            placeholder = { Text(placeholder, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            singleLine = true,
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            trailingIcon = {
+                if (query.isNotEmpty()) IconButton(onClick = onClear) { Icon(Icons.Filled.Close, contentDescription = "Borrar") }
+            },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun SearchResultsCard(
+    results: SearchResults,
+    activity: Activity,
+    onPlace: (Place) -> Unit,
+    onRoute: (OsmRouteSummary) -> Unit,
+) {
+    Card(
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        LazyColumn(Modifier.heightIn(max = 380.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+            if (results.loading) {
+                item {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Text("Buscando «${results.query}»…")
+                    }
+                }
+                return@LazyColumn
+            }
+            results.error?.let { e -> item { Text(e, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error) } }
+            if (results.error == null && results.places.isEmpty() && results.routes.isEmpty()) {
+                item { Text("No he encontrado nada para «${results.query}».", Modifier.padding(16.dp)) }
+            }
+            if (results.routes.isNotEmpty()) {
+                item { SectionTitle(if (activity == Activity.HIKE) "Senderos" else "Rutas") }
+                items(results.routes, key = { "r${it.id}" }) { r ->
+                    ResultRow(activity.icon, r.name, listOfNotNull(activity.badge(r.isMtb), r.ref).joinToString(" · ")) { onRoute(r) }
+                }
+            }
+            if (results.places.isNotEmpty()) {
+                item { SectionTitle("Lugares") }
+                items(results.places) { p -> ResultRow(Icons.Filled.LocationOn, p.name, p.detail) { onPlace(p) } }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RouteList(routes: List<OsmRouteSummary>, activity: Activity, onPick: (OsmRouteSummary) -> Unit, onClose: () -> Unit) {
+    Column {
+        Row(Modifier.padding(start = 20.dp, end = 4.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "${routes.size} ${activity.routesWord} en esta zona",
+                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Cerrar lista") }
+        }
+        LazyColumn(Modifier.heightIn(max = 340.dp), contentPadding = PaddingValues(bottom = 8.dp)) {
+            items(routes, key = { it.id }) { r ->
+                ResultRow(activity.icon, r.name, listOfNotNull(activity.badge(r.isMtb), r.ref, r.network).joinToString(" · ")) { onPick(r) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 4.dp),
+    )
+}
+
+@Composable
+private fun ResultRow(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (subtitle.isNotEmpty()) {
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }

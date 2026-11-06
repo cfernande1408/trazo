@@ -55,6 +55,17 @@ object WaymarkedTrails {
 
     fun detailsUrl(f: Flavour, id: Long) = "${base(f)}/details/relation/$id"
 
+    /** Busca rutas por nombre (o referencia, p. ej. "PR-M 13"). Devuelve el mismo formato que [byAreaUrl]. */
+    fun searchUrl(f: Flavour, query: String, limit: Int = 15) =
+        "${base(f)}/list/search?limit=$limit&query=" + java.net.URLEncoder.encode(query.trim(), "UTF-8")
+
+    /** Centro de un recuadro Mercator "x1,y1,x2,y2" (el de [parseDetails]), en grados. */
+    fun mercCenter(mercBbox: String): GeoPoint? {
+        val v = mercBbox.split(",").mapNotNull { it.trim().toDoubleOrNull() }
+        if (v.size != 4) return null
+        return fromMerc((v[0] + v[2]) / 2, (v[1] + v[3]) / 2)
+    }
+
     fun parseList(json: String): List<Listed> {
         val root = Json.parse(json) as? Map<*, *> ?: return emptyList()
         return (root["results"] as? List<*>).orEmpty().mapNotNull { r ->

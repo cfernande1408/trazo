@@ -10,7 +10,12 @@ import app.trazo.gpx.GeoJson
 import app.trazo.map.TrazoMapStyle
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.PropertyFactory.circleColor
+import org.maplibre.android.style.layers.PropertyFactory.circleRadius
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory.iconAllowOverlap
 import org.maplibre.android.style.layers.PropertyFactory.iconIgnorePlacement
@@ -27,6 +32,8 @@ object ExploreMapStyle {
 
     const val ROUTES = "routes"
     const val SELECTED = "selected"
+    /** Lugar elegido en el buscador. */
+    const val PLACE = "place"
 
     fun builder(context: Context, activity: Activity = Activity.BIKE): Style.Builder {
         val d = context.resources.displayMetrics.density
@@ -45,6 +52,13 @@ object ExploreMapStyle {
                 LineLayer("$SELECTED-line", SELECTED).withProperties(
                     lineColor("#C2410C"), lineWidth(5f),
                     lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND),
+                )
+            )
+            .withSource(GeoJsonSource(PLACE, GeoJson.points(emptyList())))
+            .withLayer(
+                CircleLayer(PLACE, PLACE).withProperties(
+                    circleRadius(9f), circleColor("#B3261E"),
+                    circleStrokeColor("#FFFFFF"), circleStrokeWidth(3f),
                 )
             )
             .withSource(GeoJsonSource(ROUTES, GeoJson.markers(emptyList())))
