@@ -87,14 +87,15 @@ object TrazoMapStyle {
 
     /**
      * Baldosa con dos pinos estilo Material (cara clara y cara en sombra) que
-     * se repite como patrón sobre los bosques. 40 dp de lado.
+     * se repite como patrón sobre los bosques. 72 dp de lado con pinos de
+     * unos 18 dp: deja ver el relieve y los caminos.
      */
     private fun pineTile(density: Float): Bitmap {
-        val s = (40 * density).toInt().coerceAtLeast(16)
+        val s = (72 * density).toInt().coerceAtLeast(24)
         val bmp = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
-        drawPine(c, cx = s * 0.28f, baseY = s * 0.50f, h = s * 0.40f)
-        drawPine(c, cx = s * 0.76f, baseY = s * 0.96f, h = s * 0.36f)
+        drawPine(c, cx = s * 0.25f, baseY = s * 0.40f, h = s * 0.25f)
+        drawPine(c, cx = s * 0.75f, baseY = s * 0.90f, h = s * 0.22f)
         return bmp
     }
 

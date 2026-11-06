@@ -39,9 +39,9 @@
     },
     {
       "id": "landcover-wood-pines", "type": "fill", "source": "omt", "source-layer": "landcover",
-      "minzoom": 11,
+      "minzoom": 12,
       "filter": ["==", ["get", "class"], "wood"],
-      "paint": { "fill-pattern": "pino" }
+      "paint": { "fill-pattern": "pino", "fill-opacity": 0.75 }
     },
     {
       "id": "hillshade", "type": "hillshade", "source": "terrain",
