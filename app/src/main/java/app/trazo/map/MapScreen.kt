@@ -76,8 +76,11 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 
-/** Precisión mínima para usar una posición: con peor señal daría falsos desvíos. */
-private const val MAX_ACCURACY_M = 50f
+/**
+ * Por encima de este error se descarta la posición. Por debajo se usa y el
+ * navegador descuenta el error antes de decidir si te has desviado.
+ */
+private const val MAX_ACCURACY_M = 1_000f
 private const val REPEAT_ALERT_MS = 20_000L
 
 @Composable
@@ -185,9 +188,11 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
         context.locationUpdates()
             .catch { navError = it.message; navigating = false }
             .collect { loc ->
+                // Posiciones absurdamente imprecisas (p. ej. solo por antena) no aportan nada
                 if (loc.hasAccuracy() && loc.accuracy > MAX_ACCURACY_M) return@collect
                 val t = loc.elapsedRealtimeNanos / 1_000_000
-                val s = navigator.update(loc.latitude, loc.longitude, t)
+                val accuracy = if (loc.hasAccuracy()) loc.accuracy.toDouble() else 0.0
+                val s = navigator.update(loc.latitude, loc.longitude, t, accuracy)
                 navState = s
                 when {
                     s.offRouteStarted -> { alerts.offRoute(); lastAlert = t }

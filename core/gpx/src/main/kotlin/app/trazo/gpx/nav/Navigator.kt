@@ -57,14 +57,22 @@ class Navigator(
 
     val lengthMeters get() = line.length
 
-    fun update(lat: Double, lon: Double, timeMs: Long): NavState {
+    /**
+     * [accuracyMeters] es el radio de error de la posición. Se descuenta antes
+     * de decidir si te has salido: con mala señal solo avisa si estás lejos
+     * del track incluso en el mejor caso.
+     */
+    fun update(lat: Double, lon: Double, timeMs: Long, accuracyMeters: Double = 0.0): NavState {
         val pos = matcher.locate(lat, lon, lastAlong)
-        // Solo avanzamos sobre el track cuando de verdad estás en él
-        if (pos.distanceToTrackMeters <= offRouteMeters) lastAlong = pos.alongMeters
+        // Solo avanzamos sobre el track cuando de verdad estás en él y la posición es fiable
+        if (pos.distanceToTrackMeters <= offRouteMeters && accuracyMeters <= MAX_TRACKING_ACCURACY) {
+            lastAlong = pos.alongMeters
+        }
+        val surelyAway = (pos.distanceToTrackMeters - accuracyMeters).coerceAtLeast(0.0)
 
         var started = false
         if (!offRoute) {
-            if (pos.distanceToTrackMeters > offRouteMeters) {
+            if (surelyAway > offRouteMeters) {
                 val since = farSince ?: timeMs.also { farSince = it }
                 if (timeMs - since >= offRouteDelayMs) { offRoute = true; started = true }
             } else {
@@ -87,6 +95,11 @@ class Navigator(
             nextClimb = next,
             metersToNextClimb = next?.let { (it.startMeters - along).coerceAtLeast(0.0) },
         )
+    }
+
+    private companion object {
+        /** Con más error que esto la posición no hace avanzar sobre el track. */
+        const val MAX_TRACKING_ACCURACY = 50.0
     }
 
     private fun gainAtDistance(d: Double): Double {

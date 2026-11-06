@@ -5,15 +5,22 @@ import android.content.Context
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Looper
+import android.os.SystemClock
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
+/** Una última posición conocida de hace más de esto no sirve para empezar. */
+private const val MAX_LAST_KNOWN_AGE_MS = 2 * 60 * 1000L
+
 /**
- * Posiciones del GPS con el LocationManager del sistema: funciona también
- * en ROMs sin servicios de Google. Si el GPS está apagado usa la red.
+ * Posiciones del LocationManager del sistema (vale sin servicios de Google).
+ * Escucha todas las fuentes activas —fusionada, GPS y red— para tener
+ * posición también donde el GPS tarda, y empieza con la última conocida si
+ * es reciente. Cada posición trae su precisión; quien la usa decide.
  */
 @SuppressLint("MissingPermission")
 fun Context.locationUpdates(intervalMs: Long = 1_000): Flow<Location> = callbackFlow {
@@ -27,12 +34,24 @@ fun Context.locationUpdates(intervalMs: Long = 1_000): Flow<Location> = callback
         @Deprecated("Deprecated in Java")
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) = Unit
     }
-    val provider = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
-        .firstOrNull { lm.isProviderEnabled(it) }
-    if (provider == null) {
+
+    val candidates = buildList {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(LocationManager.FUSED_PROVIDER)
+        add(LocationManager.GPS_PROVIDER)
+        add(LocationManager.NETWORK_PROVIDER)
+    }
+    val providers = candidates.filter { p -> p in lm.allProviders && runCatching { lm.isProviderEnabled(p) }.getOrDefault(false) }
+
+    if (providers.isEmpty()) {
         close(IllegalStateException("Activa la ubicación del móvil"))
     } else {
-        lm.requestLocationUpdates(provider, intervalMs, 0f, listener, Looper.getMainLooper())
+        val now = SystemClock.elapsedRealtimeNanos()
+        providers
+            .mapNotNull { lm.getLastKnownLocation(it) }
+            .filter { (now - it.elapsedRealtimeNanos) / 1_000_000 < MAX_LAST_KNOWN_AGE_MS }
+            .minByOrNull { if (it.hasAccuracy()) it.accuracy else Float.MAX_VALUE }
+            ?.let { trySend(it) }
+        providers.forEach { lm.requestLocationUpdates(it, intervalMs, 0f, listener, Looper.getMainLooper()) }
     }
     awaitClose { lm.removeUpdates(listener) }
 }

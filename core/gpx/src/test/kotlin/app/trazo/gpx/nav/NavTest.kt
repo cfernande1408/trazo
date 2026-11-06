@@ -127,6 +127,33 @@ class NavigatorTest {
     }
 
     @Test
+    fun `con mala precision no avisa si podrias estar en el track`() {
+        val nav = Navigator(listOf(northLine(1000)))
+        val p = at(200.0, 60.0) // a 60 m, pero con 30 m de error podría estar a 30
+        val s = (0..12).map { nav.update(p.lat, p.lon, it * 1000L, accuracyMeters = 30.0) }
+        assertFalse(s.last().offRoute)
+    }
+
+    @Test
+    fun `lejisimos avisa aunque la precision sea mala`() {
+        val nav = Navigator(listOf(northLine(1000)))
+        val p = at(200.0, 25_000.0)
+        val s = (0..11).map { nav.update(p.lat, p.lon, it * 1000L, accuracyMeters = 500.0) }
+        assertTrue(s.last().offRoute)
+        assertEquals(25_000.0, s.last().distanceToTrackMeters, 50.0)
+    }
+
+    @Test
+    fun `una posicion imprecisa no te hace avanzar`() {
+        val nav = Navigator(listOf(northLine(1000)))
+        val a = at(100.0)
+        nav.update(a.lat, a.lon, 0)
+        val b = at(600.0, 10.0)
+        assertEquals(100.0, nav.update(b.lat, b.lon, 1000, accuracyMeters = 120.0).alongMeters, 1.0)
+        assertEquals(600.0, nav.update(b.lat, b.lon, 2000, accuracyMeters = 8.0).alongMeters, 1.0)
+    }
+
+    @Test
     fun `informa de la proxima subida`() {
         val ele: (Int) -> Double = { d -> if (d < 2000) 600.0 else 600.0 + (d - 2000) / 10.0 }
         val nav = Navigator(listOf(northLine(3000, ele)))
