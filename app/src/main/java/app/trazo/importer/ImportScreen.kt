@@ -18,7 +18,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -298,9 +298,9 @@ private fun Loaded(
             }
         }
         item {
-            PrimaryTabRow(selectedTabIndex = tab, containerColor = Color.Transparent) {
+            PrimaryScrollableTabRow(selectedTabIndex = tab, containerColor = Color.Transparent, edgePadding = 0.dp) {
                 val n = state.gpx.waypoints.size
-                listOf("Perfil", if (n > 0) "Puntos ($n)" else "Puntos", "Comentarios").forEachIndexed { i, label ->
+                listOf("Perfil", if (n > 0) "Puntos ($n)" else "Puntos", "Tiempo", "Comentarios").forEachIndexed { i, label ->
                     Tab(selected = tab == i, onClick = { tab = i }, text = { Text(label, maxLines = 1) })
                 }
             }
@@ -329,6 +329,7 @@ private fun Loaded(
             } else {
                 items(state.gpx.waypoints) { WaypointRow(it) }
             }
+            2 -> item { WeatherTab(state, activity) }
             else -> item { CommentsTab(state) }
         }
         item {
