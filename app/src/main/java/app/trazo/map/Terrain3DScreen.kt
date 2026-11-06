@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.ViewGroup
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -64,6 +65,8 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
         val bounds = b?.let { "[[${it.minLon},${it.minLat}],[${it.maxLon},${it.maxLat}]]" } ?: "null"
 
         WebView(context).apply {
+            // Sin esto la WebView se mide "al contenido" y una página de alto 100 % queda a 0
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             addJavascriptInterface(object {

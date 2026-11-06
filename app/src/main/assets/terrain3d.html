@@ -64,11 +64,13 @@ function pineImage() {
   return { image: g.getImageData(0, 0, s, s), pixelRatio: dpr };
 }
 
+let waitedFrames = 0;
 function init(style, track, b) {
   // Si el mapa se crea con la vista aún a 0×0, la cámara sale NaN y no se pinta nada.
   const el = document.getElementById('map');
   if (el.clientWidth === 0 || el.clientHeight === 0) {
-    console.log('Esperando tamaño de la vista…');
+    if (waitedFrames === 0) console.log('Esperando tamaño de la vista…');
+    if (++waitedFrames > 300) { show('La vista 3D no tiene tamaño (' + el.clientWidth + 'x' + el.clientHeight + ').'); return; }
     requestAnimationFrame(() => init(style, track, b));
     return;
   }

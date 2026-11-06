@@ -1,6 +1,7 @@
 package app.trazo.explore
 
 import android.annotation.SuppressLint
+import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -64,6 +65,8 @@ fun WikilocBrowser(onGpx: (Gpx) -> Unit, onClose: (() -> Unit)? = null) {
 
     val webView = remember {
         WebView(context).apply {
+            // Ocupa todo el hueco; si no, se mide "al contenido" y las páginas de alto 100 % quedan a 0
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             webViewClient = object : WebViewClient() {
