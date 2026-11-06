@@ -3,7 +3,10 @@ package app.trazo.map
 import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
@@ -72,6 +75,13 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView, url: String?) {
                     view.evaluateJavascript("init($style, $track, $bounds);", null)
+                }
+            }
+            // Los mensajes de la página van al logcat: adb logcat | grep Trazo3D
+            webChromeClient = object : WebChromeClient() {
+                override fun onConsoleMessage(m: ConsoleMessage): Boolean {
+                    Log.d("Trazo3D", "${m.messageLevel()} ${m.message()} (${m.sourceId()}:${m.lineNumber()})")
+                    return true
                 }
             }
             loadDataWithBaseURL("https://trazo.app/", html, "text/html", "utf-8", null)

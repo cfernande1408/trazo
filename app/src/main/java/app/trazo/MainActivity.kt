@@ -30,7 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.trazo.community.CommunityScreen
-import app.trazo.explore.ExploreScreen
+import app.trazo.explore.ExploreMapScreen
+import androidx.compose.material.icons.filled.Place
 import app.trazo.explore.WikilocBrowser
 import app.trazo.importer.ImportScreen
 import app.trazo.importer.ImportState
@@ -60,19 +61,16 @@ class MainActivity : ComponentActivity() {
             TrazoTheme {
                 val state by importer.state.collectAsStateWithLifecycle()
                 var showMap by rememberSaveable { mutableStateOf(false) }
-                var showWikiloc by rememberSaveable { mutableStateOf(false) }
                 var show3D by rememberSaveable { mutableStateOf(false) }
                 val loaded = state as? ImportState.Loaded
                 val openRoute: (app.trazo.gpx.Gpx) -> Unit = { gpx ->
                     importer.importGpx(gpx)
-                    showWikiloc = false
                     tab = 0
                 }
 
                 when {
                     show3D && loaded != null -> Terrain3DScreen(loaded, onBack = { show3D = false })
                     showMap && loaded != null -> MapScreen(loaded, onBack = { showMap = false }, onOpen3D = { show3D = true })
-                    showWikiloc -> WikilocBrowser(onClose = { showWikiloc = false }, onGpx = openRoute)
                     else -> Scaffold(
                         contentWindowInsets = WindowInsets(0, 0, 0, 0),
                         bottomBar = {
@@ -84,11 +82,16 @@ class MainActivity : ComponentActivity() {
                                 )
                                 NavigationBarItem(
                                     selected = tab == 1, onClick = { tab = 1 },
-                                    icon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                                    icon = { Icon(Icons.Filled.Place, contentDescription = null) },
                                     label = { Text("Explorar") },
                                 )
                                 NavigationBarItem(
                                     selected = tab == 2, onClick = { tab = 2 },
+                                    icon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                                    label = { Text("Wikiloc") },
+                                )
+                                NavigationBarItem(
+                                    selected = tab == 3, onClick = { tab = 3 },
                                     icon = { Icon(Icons.Filled.Person, contentDescription = null) },
                                     label = { Text("Comunidad") },
                                 )
@@ -102,7 +105,8 @@ class MainActivity : ComponentActivity() {
                                     onPickFile = { pickGpx.launch(arrayOf("*/*")) },
                                     onOpenMap = { showMap = true },
                                 )
-                                1 -> ExploreScreen(onRouteReady = openRoute, onOpenWikiloc = { showWikiloc = true })
+                                1 -> ExploreMapScreen(onRouteReady = openRoute)
+                                2 -> WikilocBrowser(onGpx = openRoute)
                                 else -> CommunityScreen()
                             }
                         }

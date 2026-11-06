@@ -8,12 +8,20 @@
 <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
 <style>
   html, body, #map { margin: 0; height: 100%; background: #EFEDE0; }
-  #error { display: none; position: absolute; inset: 40% 24px auto; font: 16px sans-serif; color: #1A1C16; text-align: center; }
+  #msg { position: absolute; left: 24px; right: 24px; top: 40%; font: 16px sans-serif; color: #1A1C16;
+         text-align: center; background: #FFFFFFE6; border-radius: 16px; padding: 16px; word-break: break-word; }
 </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="error">No se pudo cargar la vista 3D. Comprueba la conexión.</div>
+<div id="msg">Cargando la vista 3D…</div>
+<script>
+// Cualquier error se enseña en pantalla y va al logcat (etiqueta Trazo3D)
+function show(text) { const m = document.getElementById('msg'); m.style.display = 'block'; m.textContent = text; console.error(text); }
+function hide() { document.getElementById('msg').style.display = 'none'; }
+window.onerror = (message, source, line) => { show('Error 3D: ' + message + ' (' + line + ')'); };
+console.log('WebGL2: ' + !!document.createElement('canvas').getContext('webgl2'));
+</script>
 <script>
 // Trazo llama a init(estilo, track, recuadro) cuando la página ha cargado.
 let map = null, line = [], cum = [], total = 0, anim = null, bounds = null;
@@ -57,7 +65,12 @@ function pineImage() {
 }
 
 function init(style, track, b) {
-  if (typeof maplibregl === 'undefined') { document.getElementById('error').style.display = 'block'; return; }
+  try { start(style, track, b); } catch (e) { show('Error al iniciar el 3D: ' + e.message); }
+}
+
+function start(style, track, b) {
+  if (typeof maplibregl === 'undefined') { show('No se pudo descargar el motor 3D. Comprueba la conexión.'); return; }
+  console.log('MapLibre GL JS ' + maplibregl.getVersion());
   bounds = b;
   // Fuente de relieve aparte para el 3D (MapLibre recomienda no compartirla con el sombreado)
   style.sources.terrain3d = Object.assign({}, style.sources.terrain);
@@ -66,6 +79,7 @@ function init(style, track, b) {
     fitBoundsOptions: { padding: 40 }, pitch: 60, bearing: -20, maxPitch: 80,
     attributionControl: { compact: true },
   });
+  map.on('error', e => console.error('MapLibre: ' + (e && e.error ? e.error.message : e)));
   map.on('styleimagemissing', e => {
     if (e.id === 'pino' && !map.hasImage('pino')) {
       const p = pineImage();
@@ -73,6 +87,7 @@ function init(style, track, b) {
     }
   });
   map.on('load', () => {
+    hide();
     map.setTerrain({ source: 'terrain3d', exaggeration: 1.5 });
     try {
       map.setSky({ 'sky-color': '#A9CFE8', 'horizon-color': '#EFEDE0', 'fog-color': '#EFEDE0',

@@ -37,14 +37,18 @@ object TrazoMapStyle {
      */
     private const val STYLE_URI = "asset://trazo_topo.json"
 
+    /** Solo el mapa topo con sus pinos, sin ruta. */
+    fun baseBuilder(context: Context): Style.Builder =
+        Style.Builder()
+            .fromUri(STYLE_URI)
+            .withImage("pino", pineTile(context.resources.displayMetrics.density))
+
     fun builder(context: Context, state: ImportState.Loaded): Style.Builder {
         val segs = state.gpx.segments
         val ends = listOfNotNull(segs.firstOrNull()?.firstOrNull(), segs.lastOrNull()?.lastOrNull())
         val wpts = state.gpx.waypoints.map { it.lat to it.lon }
 
-        return Style.Builder()
-            .fromUri(STYLE_URI)
-            .withImage("pino", pineTile(context.resources.displayMetrics.density))
+        return baseBuilder(context)
             .withSource(GeoJsonSource("track", GeoJson.track(segs)))
             .withLayer(
                 LineLayer("track-casing", "track").withProperties(

@@ -31,7 +31,7 @@ object Http {
             val c = URL(url).openConnection() as HttpURLConnection
             try {
                 c.connectTimeout = 15_000
-                c.readTimeout = 90_000
+                c.readTimeout = 35_000
                 c.instanceFollowRedirects = true
                 c.setRequestProperty("User-Agent", USER_AGENT)
                 headers.forEach { (k, v) -> c.setRequestProperty(k, v) }

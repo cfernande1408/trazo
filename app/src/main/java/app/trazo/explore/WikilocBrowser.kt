@@ -55,17 +55,22 @@ private const val START_URL = "https://es.wikiloc.com/"
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WikilocBrowser(onClose: () -> Unit, onGpx: (Gpx) -> Unit) {
+fun WikilocBrowser(onGpx: (Gpx) -> Unit, onClose: (() -> Unit)? = null) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var canGoBack by remember { mutableStateOf(false) }
 
     val webView = remember {
         WebView(context).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
-            webViewClient = WebViewClient()
+            webViewClient = object : WebViewClient() {
+                override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+                    canGoBack = view.canGoBack()
+                }
+            }
             CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
             loadUrl(START_URL)
         }
@@ -85,14 +90,21 @@ fun WikilocBrowser(onClose: () -> Unit, onGpx: (Gpx) -> Unit) {
         onDispose { webView.destroy() }
     }
 
-    BackHandler { if (webView.canGoBack()) webView.goBack() else onClose() }
+    // Atrás navega dentro de Wikiloc; en la primera página lo deja pasar
+    BackHandler(enabled = canGoBack || onClose != null) {
+        if (webView.canGoBack()) webView.goBack() else onClose?.invoke()
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Wikiloc") },
                 navigationIcon = {
-                    IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Cerrar") }
+                    if (canGoBack || onClose != null) {
+                        IconButton(onClick = { if (webView.canGoBack()) webView.goBack() else onClose?.invoke() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                        }
+                    }
                 },
             )
         },
