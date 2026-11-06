@@ -44,6 +44,24 @@ function at(d) {
   return [line[lo][0] + (line[hi][0] - line[lo][0]) * t, line[lo][1] + (line[hi][1] - line[lo][1]) * t];
 }
 
+// Pino "de pie" para el 3D: más alto y con sombra en la base, se dibuja mirando siempre a la cámara
+function standingPine() {
+  const dpr = window.devicePixelRatio || 1, w = Math.round(30 * dpr), h = Math.round(46 * dpr);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  const k = w / 24, X = v => w / 2 + v * k, Y = v => h - 2 * dpr + (v - 4) * k * 1.05;
+  g.fillStyle = 'rgba(40,50,30,0.25)';
+  g.beginPath(); g.ellipse(w / 2, h - 3 * dpr, w * 0.32, 2.5 * dpr, 0, 0, 2 * Math.PI); g.fill();
+  g.fillStyle = '#6B4F35'; g.fillRect(X(-1.6), Y(-7), 3.2 * k, 11 * k);
+  const tiers = [[[0,-40],[9,-25],[5,-25],[12,-8],[-12,-8],[-5,-25],[-9,-25]], [[0,-40],[9,-25],[5,-25],[12,-8],[0,-8]]];
+  ['#5E9340', '#3F6F2A'].forEach((col, t) => {
+    g.fillStyle = col; g.beginPath();
+    tiers[t].forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y)));
+    g.closePath(); g.fill();
+  });
+  return { image: g.getImageData(0, 0, w, h), pixelRatio: dpr };
+}
+
 // Mismo pino que en el mapa 2D, dibujado en un canvas
 function pineImage() {
   const dpr = window.devicePixelRatio || 1, s = Math.round(72 * dpr);
@@ -100,7 +118,7 @@ function start(style, track, b) {
   // Créditos arriba a la derecha, recogidos, para que no los tape el botón de abajo
   map.addControl(new maplibregl.AttributionControl({ compact: true }), 'top-right');
   window.addEventListener('resize', () => map.resize());
-  map.on('idle', () => console.log('Mapa listo y pintado'));
+  map.once('idle', () => { console.log('Mapa listo y pintado'); collapseAttribution(); });
   map.on('error', e => console.error('MapLibre: ' + (e && e.error ? e.error.message : e)));
   map.on('styleimagemissing', e => {
     if (e.id === 'pino' && !map.hasImage('pino')) {
@@ -127,6 +145,35 @@ function start(style, track, b) {
                    'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.9, 'fog-ground-blend': 1.0,
                    'atmosphere-blend': 0 });
     } catch (e) {}
+    // Casas en 3D con la altura de OpenStreetMap (o 6 m si no la tiene); el edificio plano se oculta
+    if (map.getLayer('building')) map.setLayoutProperty('building', 'visibility', 'none');
+    map.addLayer({
+      id: 'buildings-3d', type: 'fill-extrusion', source: 'omt', 'source-layer': 'building', minzoom: 13,
+      paint: {
+        'fill-extrusion-color': '#E6DFCD',
+        'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 6],
+        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+        'fill-extrusion-opacity': 0.92,
+      },
+    }, 'place-label');
+
+    // Pinos de pie: a lo largo del borde de cada bosque y uno en su centro
+    const sp = standingPine();
+    map.addImage('pino-pie', sp.image, { pixelRatio: sp.pixelRatio });
+    const treeLayout = {
+      'icon-image': 'pino-pie', 'icon-anchor': 'bottom',
+      'icon-pitch-alignment': 'viewport', 'icon-rotation-alignment': 'viewport',
+      'icon-allow-overlap': true, 'icon-ignore-placement': true,
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.45, 14, 0.8, 16, 1.2],
+    };
+    const wood = ['==', ['get', 'class'], 'wood'];
+    map.addLayer({ id: 'trees-edge', type: 'symbol', source: 'omt', 'source-layer': 'landcover', minzoom: 12, filter: wood,
+      layout: Object.assign({ 'symbol-placement': 'line', 'symbol-spacing': 26 }, treeLayout) }, 'place-label');
+    map.addLayer({ id: 'trees-center', type: 'symbol', source: 'omt', 'source-layer': 'landcover', minzoom: 12, filter: wood,
+      layout: Object.assign({ 'symbol-placement': 'point' }, treeLayout) }, 'place-label');
+
+    collapseAttribution();
+
     map.addSource('track', { type: 'geojson', data: track });
     map.addLayer({ id: 'track-casing', type: 'line', source: 'track',
       layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#FFFFFF', 'line-width': 8 } });
@@ -139,6 +186,14 @@ function start(style, track, b) {
     line = []; track.geometry.coordinates.forEach(seg => seg.forEach(c => line.push(c)));
     cum = [0]; for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + dist(line[i - 1], line[i]));
     total = cum[cum.length - 1] || 0;
+  });
+}
+
+// Los créditos son obligatorios (OSM, OpenFreeMap), pero se quedan recogidos en el botón (i)
+function collapseAttribution() {
+  document.querySelectorAll('.maplibregl-ctrl-attrib').forEach(el => {
+    el.classList.remove('maplibregl-compact-show');
+    el.removeAttribute('open');
   });
 }
 
