@@ -2,7 +2,8 @@
 <gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Wikiloc - https://www.wikiloc.com" version="1.1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
   <metadata>
     <name>Wikiloc - Circular por la Fuenfría</name>
-    <author><name>autor</name></author>
+    <author><name>autor</name><link href="https://www.wikiloc.com/wikiloc/user.do?id=1"><text>autor</text></link></author>
+    <link href="https://es.wikiloc.com/rutas-mountain-bike/circular-por-la-fuenfria-123456"><text>Circular por la Fuenfría on Wikiloc</text></link>
     <time>2026-10-12T08:00:00Z</time>
   </metadata>
   <!-- waypoints del autor -->
@@ -18,6 +19,7 @@
   </wpt>
   <trk>
     <name>Circular por la Fuenfría</name>
+    <desc>Salida desde el aparcamiento. Bajada final técnica.</desc>
     <trkseg>
       <trkpt lat="40.7780" lon="-4.0600"><ele>1500.0</ele><time>2026-10-12T08:00:00Z</time></trkpt>
       <trkpt lat="40.7790" lon="-4.0605"><ele>1520.0</ele><time>2026-10-12T08:01:00Z</time></trkpt>

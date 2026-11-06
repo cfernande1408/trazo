@@ -22,7 +22,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -53,9 +57,13 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import app.trazo.gpx.ElevationProfile
 import app.trazo.gpx.RouteGeometry
 import app.trazo.gpx.nav.NavState
 import app.trazo.gpx.nav.Navigator
+import app.trazo.gpx.nav.RouteStart
+import app.trazo.gpx.nav.StartOption
+import app.trazo.ui.openDirections
 import app.trazo.importer.ES
 import app.trazo.importer.ImportState
 import app.trazo.importer.Stat
@@ -89,6 +97,12 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
 
     var navigating by rememberSaveable { mutableStateOf(false) }
+    /** Desde qué punto del track original se empieza (0 = inicio). */
+    var startAlong by rememberSaveable { mutableStateOf(0.0) }
+    var showStartSheet by remember { mutableStateOf(false) }
+    val startOptions = remember(state.gpx) { RouteStart.options(state.gpx) }
+    val navSegments = remember(state.gpx, startAlong) { RouteStart.from(state.gpx.segments, startAlong) }
+    val navProfile = remember(navSegments) { RouteGeometry.downsample(ElevationProfile.of(navSegments), 300) }
     var navState by remember { mutableStateOf<NavState?>(null) }
     var navError by remember { mutableStateOf<String?>(null) }
     BackHandler { if (navigating) navigating = false else onBack() }
@@ -178,11 +192,11 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
     val alerts = remember { Alerts(context) }
     DisposableEffect(Unit) { onDispose { alerts.release() } }
 
-    LaunchedEffect(navigating, hasLocation) {
+    LaunchedEffect(navigating, hasLocation, navSegments) {
         if (!navigating || !hasLocation) return@LaunchedEffect
         navError = null
         navState = null
-        val navigator = Navigator(state.gpx.segments)
+        val navigator = Navigator(navSegments)
         var lastAlert = 0L
         var wasOff = false
         context.locationUpdates()
@@ -234,9 +248,9 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
                         Stat("Por subir", s?.let { metros(it.remainingGainMeters) } ?: "—", Modifier.weight(1f))
                         Stat("Recorrido", s?.let { km(it.alongMeters) } ?: "—", Modifier.weight(1f))
                     }
-                    if (state.profile.size >= 2) {
+                    if (navProfile.size >= 2) {
                         ElevationChart(
-                            state.profile,
+                            navProfile,
                             Modifier.fillMaxWidth().height(72.dp),
                             positionMeters = s?.alongMeters,
                             highlight = s?.nextClimb?.let { it.startMeters..it.endMeters },
@@ -259,15 +273,71 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
                     }
                     navError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                     Button(
-                        onClick = {
-                            if (hasLocation) navigating = true
-                            else { startWhenGranted = true; askLocation.launch(locationPermissions) }
-                        },
+                        onClick = { showStartSheet = true },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                     ) {
                         Icon(Icons.Filled.PlayArrow, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text("Empezar ruta", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+            }
+        }
+    }
+
+    if (showStartSheet) {
+        StartSheet(
+            options = startOptions,
+            isLoop = remember(state.gpx) { RouteStart.isLoop(state.gpx.segments) },
+            onDismiss = { showStartSheet = false },
+            onStart = { option ->
+                showStartSheet = false
+                startAlong = option.alongMeters
+                if (hasLocation) navigating = true
+                else { startWhenGranted = true; askLocation.launch(locationPermissions) }
+            },
+            onDirections = { option -> context.openDirections(option.lat, option.lon, option.label) },
+        )
+    }
+}
+
+/** ¿Desde dónde empiezas? Cada opción se puede iniciar o abrir en el navegador del coche. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun StartSheet(
+    options: List<StartOption>,
+    isLoop: Boolean,
+    onDismiss: () -> Unit,
+    onStart: (StartOption) -> Unit,
+    onDirections: (StartOption) -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("¿Desde dónde empiezas?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                if (isLoop) "Es circular: acabarás en el mismo sitio donde empieces."
+                else "No es circular: lo anterior al punto elegido se salta.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            options.forEach { o ->
+                Card(
+                    onClick = { onStart(o) },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(o.label, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                if (o.alongMeters == 0.0) "Punto de salida del GPX" else "En el km ${km(o.alongMeters).removeSuffix(" km")} de la ruta",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        FilledTonalButton(onClick = { onDirections(o) }) {
+                            Icon(Icons.Filled.Place, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Cómo llegar")
+                        }
                     }
                 }
             }

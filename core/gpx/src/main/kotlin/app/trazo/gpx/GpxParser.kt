@@ -12,6 +12,8 @@ object GpxParser {
         var sawRoot = false
 
         var gpxName: String? = null
+        var description: String? = null
+        val links = mutableListOf<String>()
         val tracks = mutableListOf<Track>()
         val waypoints = mutableListOf<Waypoint>()
 
@@ -28,9 +30,13 @@ object GpxParser {
                         if (e.name != "gpx") throw GpxParseException("El archivo no es un GPX")
                         sawRoot = true
                     }
+                    val startParent = stack.lastOrNull()
                     stack.addLast(e.name)
                     text.clear()
                     when (e.name) {
+                        "link" -> if (startParent in ROUTE_LEVEL) {
+                            e.attrs["href"]?.takeIf { it.startsWith("http") }?.let(links::add)
+                        }
                         "trk" -> { trackName = null; segments = mutableListOf() }
                         "trkseg" -> segment = mutableListOf()
                         "rte" -> { trackName = null; segment = mutableListOf() }
@@ -55,7 +61,10 @@ object GpxParser {
                             parent == "trk" || parent == "rte" -> trackName = value
                             parent == "metadata" || parent == "gpx" -> gpxName = gpxName ?: value
                         }
-                        "desc" -> if (p != null && parent == p.tag) p.desc = value
+                        "desc" -> when {
+                            p != null && parent == p.tag -> p.desc = value
+                            parent in ROUTE_LEVEL -> description = description ?: value
+                        }
                         "cmt" -> if (p != null && parent == p.tag) p.desc = p.desc ?: value
                         "trkpt", "rtept" -> { p?.let { segment.add(it.toGeoPoint()) }; point = null }
                         "wpt" -> { p?.let { waypoints.add(it.toWaypoint()) }; point = null }
@@ -76,8 +85,13 @@ object GpxParser {
             name = gpxName ?: tracks.firstNotNullOfOrNull { it.name },
             tracks = tracks,
             waypoints = waypoints,
+            description = description,
+            links = links.distinct(),
         )
     }
+
+    /** Elementos cuyo <desc> o <link> describen la ruta entera, no un punto. */
+    private val ROUTE_LEVEL = setOf("metadata", "trk", "rte", "gpx")
 
     private class PointBuilder(val tag: String, val lat: Double, val lon: Double) {
         var ele: Double? = null

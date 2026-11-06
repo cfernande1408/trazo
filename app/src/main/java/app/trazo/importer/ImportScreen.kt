@@ -18,12 +18,22 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import android.net.Uri
+import app.trazo.ui.openUrl
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -91,6 +101,7 @@ private fun ErrorState(message: String, onPickFile: () -> Unit) {
 @Composable
 private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap: () -> Unit) {
     val s = state.stats
+    var tab by rememberSaveable { mutableIntStateOf(0) }
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -120,30 +131,44 @@ private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap:
                 Stat("Desnivel −", metros(s.elevationLossMeters), Modifier.weight(1f))
             }
         }
-        if (state.profile.size >= 2) {
-            item {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Perfil", style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                "${metros(s.minElevation ?: 0.0)} – ${metros(s.maxElevation ?: 0.0)}",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        ElevationChart(state.profile, Modifier.fillMaxWidth().height(110.dp))
-                    }
-                }
-            }
-        }
         item {
             Button(onClick = onOpenMap, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                 Text("Ver en el mapa", style = MaterialTheme.typography.titleMedium)
             }
         }
-        if (state.gpx.waypoints.isNotEmpty()) {
-            item { Text("Puntos del autor", style = MaterialTheme.typography.titleMedium) }
-            items(state.gpx.waypoints) { WaypointRow(it) }
+        item {
+            PrimaryTabRow(selectedTabIndex = tab, containerColor = Color.Transparent) {
+                val n = state.gpx.waypoints.size
+                listOf("Perfil", if (n > 0) "Puntos ($n)" else "Puntos", "Comentarios").forEachIndexed { i, label ->
+                    Tab(selected = tab == i, onClick = { tab = i }, text = { Text(label, maxLines = 1) })
+                }
+            }
+        }
+        when (tab) {
+            0 -> if (state.profile.size >= 2) {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Altitud", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "${metros(s.minElevation ?: 0.0)} – ${metros(s.maxElevation ?: 0.0)}",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            ElevationChart(state.profile, Modifier.fillMaxWidth().height(110.dp))
+                        }
+                    }
+                }
+            } else {
+                item { Hint("El GPX no trae altitudes, así que no hay perfil.") }
+            }
+            1 -> if (state.gpx.waypoints.isEmpty()) {
+                item { Hint("El autor no marcó puntos en esta ruta.") }
+            } else {
+                items(state.gpx.waypoints) { WaypointRow(it) }
+            }
+            else -> item { CommentsTab(state) }
         }
         item {
             FilledTonalButton(onClick = onPickFile, modifier = Modifier.height(48.dp)) {
@@ -151,6 +176,41 @@ private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap:
             }
         }
     }
+}
+
+@Composable
+private fun CommentsTab(state: ImportState.Loaded) {
+    val context = LocalContext.current
+    val url = state.gpx.wikilocUrl
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Descripción del autor", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    state.gpx.description ?: "El autor no incluyó descripción en el GPX.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (url != null) {
+            Button(onClick = { context.openUrl(url) }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                Text("Ver comentarios en Wikiloc", style = MaterialTheme.typography.titleMedium)
+            }
+        } else {
+            FilledTonalButton(
+                onClick = { context.openUrl("https://www.google.com/search?q=" + Uri.encode("wikiloc ${state.title()}")) },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+            ) {
+                Text("Buscar la ruta en Wikiloc")
+            }
+        }
+        Hint("Los comentarios se leen en Wikiloc: Trazo no los copia.")
+    }
+}
+
+@Composable
+private fun Hint(text: String) {
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @Composable
