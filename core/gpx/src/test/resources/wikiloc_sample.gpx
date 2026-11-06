@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Wikiloc - https://www.wikiloc.com" version="1.1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <metadata>
+    <name>Wikiloc - Circular por la Fuenfría</name>
+    <author><name>autor</name></author>
+    <time>2026-10-12T08:00:00Z</time>
+  </metadata>
+  <!-- waypoints del autor -->
+  <wpt lat="40.7801" lon="-4.0612">
+    <ele>1540.0</ele>
+    <name>Fuente</name>
+    <desc><![CDATA[Agua <buena> todo el año]]></desc>
+  </wpt>
+  <wpt lat="40.7899" lon="-4.0705">
+    <ele>1795.2</ele>
+    <name>Bajada técnica</name>
+    <cmt>Raíces &amp; piedra suelta</cmt>
+  </wpt>
+  <trk>
+    <name>Circular por la Fuenfría</name>
+    <trkseg>
+      <trkpt lat="40.7780" lon="-4.0600"><ele>1500.0</ele><time>2026-10-12T08:00:00Z</time></trkpt>
+      <trkpt lat="40.7790" lon="-4.0605"><ele>1520.0</ele><time>2026-10-12T08:01:00Z</time></trkpt>
+      <trkpt lat="40.7800" lon="-4.0610"><ele>1540.0</ele><time>2026-10-12T08:02:00Z</time></trkpt>
+    </trkseg>
+    <trkseg>
+      <trkpt lat="40.7810" lon="-4.0620"><ele>1530.0</ele></trkpt>
+      <trkpt lat="40.7820" lon="-4.0630"/>
+    </trkseg>
+  </trk>
+</gpx>
