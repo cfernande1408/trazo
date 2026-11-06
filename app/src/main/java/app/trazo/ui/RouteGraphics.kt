@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -50,11 +51,21 @@ fun RouteShape(segments: List<List<GeoPoint>>, modifier: Modifier = Modifier) {
     }
 }
 
-/** Perfil de desnivel: área rellena con degradado y línea encima. */
+/**
+ * Perfil de desnivel: área rellena con degradado y línea encima. Opcionalmente
+ * marca tu posición ([positionMeters]) y resalta un tramo ([highlight], p. ej.
+ * la próxima subida).
+ */
 @Composable
-fun ElevationChart(profile: List<ProfilePoint>, modifier: Modifier = Modifier) {
+fun ElevationChart(
+    profile: List<ProfilePoint>,
+    modifier: Modifier = Modifier,
+    positionMeters: Double? = null,
+    highlight: ClosedFloatingPointRange<Double>? = null,
+) {
     val fill = MaterialTheme.colorScheme.primary
     val stroke = MaterialTheme.colorScheme.onSurface
+    val surface = MaterialTheme.colorScheme.surfaceContainer
 
     Canvas(modifier) {
         if (profile.size < 2) return@Canvas
@@ -75,7 +86,21 @@ fun ElevationChart(profile: List<ProfilePoint>, modifier: Modifier = Modifier) {
             lineTo(0f, size.height)
             close()
         }
+        highlight?.let { r ->
+            val x0 = (r.start / total * size.width).toFloat()
+            val x1 = (r.endInclusive / total * size.width).toFloat()
+            drawRect(fill.copy(alpha = 0.25f), Offset(x0, 0f), Size(x1 - x0, size.height))
+        }
         drawPath(area, Brush.verticalGradient(listOf(fill.copy(alpha = 0.45f), fill.copy(alpha = 0.05f))))
         drawPath(line, stroke, style = Stroke(2.dp.toPx(), join = StrokeJoin.Round))
+
+        positionMeters?.let { d ->
+            val i = profile.indexOfFirst { it.distanceMeters >= d }.let { if (it < 0) profile.lastIndex else it }
+            val px = (d.coerceIn(0.0, total) / total * size.width).toFloat()
+            val py = y(profile[i])
+            drawLine(stroke.copy(alpha = 0.5f), Offset(px, 0f), Offset(px, size.height), 1.dp.toPx())
+            drawCircle(surface, 7.dp.toPx(), Offset(px, py))
+            drawCircle(fill, 5.dp.toPx(), Offset(px, py))
+        }
     }
 }
