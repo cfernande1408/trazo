@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Trazo 3D</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<style>
+  html, body, #map { margin: 0; height: 100%; background: #EFEDE0; }
+  #error { display: none; position: absolute; inset: 40% 24px auto; font: 16px sans-serif; color: #1A1C16; text-align: center; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="error">No se pudo cargar la vista 3D. Comprueba la conexión.</div>
+<script>
+// Trazo llama a init(estilo, track, recuadro) cuando la página ha cargado.
+let map = null, line = [], cum = [], total = 0, anim = null, bounds = null;
+
+const R = 6371008.8, RAD = Math.PI / 180;
+function dist(a, b) {
+  const dLat = (b[1] - a[1]) * RAD, dLon = (b[0] - a[0]) * RAD;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * RAD) * Math.cos(b[1] * RAD) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+function bearing(a, b) {
+  const y = Math.sin((b[0] - a[0]) * RAD) * Math.cos(b[1] * RAD);
+  const x = Math.cos(a[1] * RAD) * Math.sin(b[1] * RAD) - Math.sin(a[1] * RAD) * Math.cos(b[1] * RAD) * Math.cos((b[0] - a[0]) * RAD);
+  return Math.atan2(y, x) / RAD;
+}
+function at(d) {
+  let lo = 0, hi = cum.length - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (cum[m] <= d) lo = m; else hi = m; }
+  const span = cum[hi] - cum[lo], t = span > 0 ? (d - cum[lo]) / span : 0;
+  return [line[lo][0] + (line[hi][0] - line[lo][0]) * t, line[lo][1] + (line[hi][1] - line[lo][1]) * t];
+}
+
+// Mismo pino que en el mapa 2D, dibujado en un canvas
+function pineImage() {
+  const dpr = window.devicePixelRatio || 1, s = Math.round(72 * dpr);
+  const c = document.createElement('canvas'); c.width = c.height = s;
+  const g = c.getContext('2d');
+  function pine(cx, by, h) {
+    const k = h / 44, X = v => cx + v * k, Y = v => by - 4 * k + v * k;
+    g.fillStyle = '#7A5C3E'; g.fillRect(X(-1.5), Y(-6), 3 * k, 10 * k);
+    g.fillStyle = '#6E9F48'; g.beginPath();
+    [[0,-40],[9,-25],[5,-25],[12,-8],[-12,-8],[-5,-25],[-9,-25]].forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y)));
+    g.closePath(); g.fill();
+    g.fillStyle = '#4F7F33'; g.beginPath();
+    [[0,-40],[9,-25],[5,-25],[12,-8],[0,-8]].forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y)));
+    g.closePath(); g.fill();
+  }
+  pine(s * 0.25, s * 0.40, s * 0.25);
+  pine(s * 0.75, s * 0.90, s * 0.22);
+  return { image: g.getImageData(0, 0, s, s), pixelRatio: dpr };
+}
+
+function init(style, track, b) {
+  if (typeof maplibregl === 'undefined') { document.getElementById('error').style.display = 'block'; return; }
+  bounds = b;
+  // Fuente de relieve aparte para el 3D (MapLibre recomienda no compartirla con el sombreado)
+  style.sources.terrain3d = Object.assign({}, style.sources.terrain);
+  map = new maplibregl.Map({
+    container: 'map', style: style, bounds: b,
+    fitBoundsOptions: { padding: 40 }, pitch: 60, bearing: -20, maxPitch: 80,
+    attributionControl: { compact: true },
+  });
+  map.on('styleimagemissing', e => {
+    if (e.id === 'pino' && !map.hasImage('pino')) {
+      const p = pineImage();
+      map.addImage('pino', p.image, { pixelRatio: p.pixelRatio });
+    }
+  });
+  map.on('load', () => {
+    map.setTerrain({ source: 'terrain3d', exaggeration: 1.5 });
+    try {
+      map.setSky({ 'sky-color': '#A9CFE8', 'horizon-color': '#EFEDE0', 'fog-color': '#EFEDE0',
+                   'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.3 });
+    } catch (e) {}
+    map.addSource('track', { type: 'geojson', data: track });
+    map.addLayer({ id: 'track-casing', type: 'line', source: 'track',
+      layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#FFFFFF', 'line-width': 8 } });
+    map.addLayer({ id: 'track-line', type: 'line', source: 'track',
+      layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#C2410C', 'line-width': 4.5 } });
+    map.addSource('rider', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: 'rider', type: 'circle', source: 'rider',
+      paint: { 'circle-radius': 9, 'circle-color': '#C5F26B', 'circle-stroke-color': '#1A1C16', 'circle-stroke-width': 3 } });
+
+    line = []; track.geometry.coordinates.forEach(seg => seg.forEach(c => line.push(c)));
+    cum = [0]; for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + dist(line[i - 1], line[i]));
+    total = cum[cum.length - 1] || 0;
+  });
+}
+
+// Recorrido virtual: la cámara vuela siguiendo el track (unos 2,5 s por km, entre 30 y 90 s)
+function fly() {
+  if (!map || line.length < 2) return;
+  stop();
+  const duration = Math.min(90000, Math.max(30000, total / 1000 * 2500));
+  let start = null;
+  map.jumpTo({ center: line[0], zoom: 14.6, pitch: 65, bearing: bearing(line[0], at(Math.min(total, 300))) });
+  const step = t => {
+    if (start === null) start = t;
+    const f = Math.min(1, (t - start) / duration), d = f * total;
+    const p = at(d), ahead = at(Math.min(total, d + 400));
+    const cur = map.getBearing(), target = bearing(p, ahead);
+    const diff = ((target - cur + 540) % 360) - 180;
+    map.jumpTo({ center: p, bearing: cur + diff * 0.06, pitch: 65, zoom: 14.6 });
+    map.getSource('rider').setData({ type: 'Point', coordinates: p });
+    if (f < 1) anim = requestAnimationFrame(step);
+    else { anim = null; if (window.Trazo) Trazo.onFlyEnd(); }
+  };
+  anim = requestAnimationFrame(step);
+}
+
+function stop() {
+  if (anim) cancelAnimationFrame(anim);
+  anim = null;
+}
+
+function overview() {
+  stop();
+  if (!map || !bounds) return;
+  map.getSource('rider') && map.getSource('rider').setData({ type: 'FeatureCollection', features: [] });
+  map.fitBounds(bounds, { padding: 40, pitch: 60, bearing: -20, duration: 1500 });
+}
+</script>
+</body>
+</html>

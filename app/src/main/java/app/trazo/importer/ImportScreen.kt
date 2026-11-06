@@ -34,6 +34,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import android.net.Uri
 import app.trazo.ui.openUrl
+import app.trazo.ui.ScrubbableProfile
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -102,6 +105,7 @@ private fun ErrorState(message: String, onPickFile: () -> Unit) {
 private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap: () -> Unit) {
     val s = state.stats
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    var scrub by remember(state.gpx) { mutableStateOf<Double?>(null) }
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -156,7 +160,7 @@ private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap:
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            ElevationChart(state.profile, Modifier.fillMaxWidth().height(110.dp))
+                            ScrubbableProfile(state.profile, scrub, onScrub = { scrub = it })
                         }
                     }
                 }

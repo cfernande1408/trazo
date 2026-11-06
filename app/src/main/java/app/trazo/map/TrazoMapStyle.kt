@@ -28,6 +28,7 @@ import org.maplibre.android.style.sources.GeoJsonSource
 object TrazoMapStyle {
 
     private const val TRACK_COLOR = "#C2410C"
+    const val CURSOR = "cursor"
 
     /**
      * Se carga por URI y no con fromJson: con fromJson el estilo termina de
@@ -69,6 +70,14 @@ object TrazoMapStyle {
                 CircleLayer("ends", "ends").withProperties(
                     circleRadius(7f), circleColor("#1A1C16"),
                     circleStrokeColor("#FFFFFF"), circleStrokeWidth(3f),
+                )
+            )
+            // Punto que sigue al dedo en el perfil
+            .withSource(GeoJsonSource(CURSOR, GeoJson.points(emptyList())))
+            .withLayer(
+                CircleLayer(CURSOR, CURSOR).withProperties(
+                    circleRadius(9f), circleColor("#C5F26B"),
+                    circleStrokeColor("#1A1C16"), circleStrokeWidth(3f),
                 )
             )
     }

@@ -36,6 +36,7 @@ import app.trazo.importer.ImportScreen
 import app.trazo.importer.ImportState
 import app.trazo.importer.ImportViewModel
 import app.trazo.map.MapScreen
+import app.trazo.map.Terrain3DScreen
 import app.trazo.ui.theme.TrazoTheme
 import org.maplibre.android.MapLibre
 
@@ -60,6 +61,7 @@ class MainActivity : ComponentActivity() {
                 val state by importer.state.collectAsStateWithLifecycle()
                 var showMap by rememberSaveable { mutableStateOf(false) }
                 var showWikiloc by rememberSaveable { mutableStateOf(false) }
+                var show3D by rememberSaveable { mutableStateOf(false) }
                 val loaded = state as? ImportState.Loaded
                 val openRoute: (app.trazo.gpx.Gpx) -> Unit = { gpx ->
                     importer.importGpx(gpx)
@@ -68,7 +70,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 when {
-                    showMap && loaded != null -> MapScreen(loaded, onBack = { showMap = false })
+                    show3D && loaded != null -> Terrain3DScreen(loaded, onBack = { show3D = false })
+                    showMap && loaded != null -> MapScreen(loaded, onBack = { showMap = false }, onOpen3D = { show3D = true })
                     showWikiloc -> WikilocBrowser(onClose = { showWikiloc = false }, onGpx = openRoute)
                     else -> Scaffold(
                         contentWindowInsets = WindowInsets(0, 0, 0, 0),

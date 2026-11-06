@@ -50,6 +50,33 @@ object RouteGeometry {
         }
     }
 
+    /**
+     * Punto de la ruta a [meters] del inicio, interpolado entre los dos puntos
+     * que lo rodean (también la altitud). Misma distancia que el perfil: el
+     * hueco entre segmentos no cuenta.
+     */
+    fun pointAt(segments: List<List<GeoPoint>>, meters: Double): GeoPoint? {
+        var acc = 0.0
+        var last: GeoPoint? = null
+        for (seg in segments) {
+            if (seg.isEmpty()) continue
+            if (meters <= acc) return seg.first()
+            for (j in 1 until seg.size) {
+                val a = seg[j - 1]
+                val b = seg[j]
+                val d = TrackStatsCalculator.haversineMeters(a, b)
+                if (acc + d >= meters) {
+                    val t = if (d > 0) (meters - acc) / d else 0.0
+                    val ele = if (a.ele != null && b.ele != null) a.ele + (b.ele - a.ele) * t else a.ele ?: b.ele
+                    return GeoPoint(a.lat + (b.lat - a.lat) * t, a.lon + (b.lon - a.lon) * t, ele)
+                }
+                acc += d
+            }
+            last = seg.last()
+        }
+        return last
+    }
+
     /** Se queda con como mucho [max] elementos repartidos uniformemente, conservando el primero y el último. */
     fun <T> downsample(items: List<T>, max: Int): List<T> {
         require(max >= 2) { "max debe ser al menos 2" }

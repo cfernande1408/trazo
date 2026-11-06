@@ -20,4 +20,21 @@ object ElevationProfile {
         }
         return out
     }
+
+    /** Altitud interpolada a [meters] del inicio; null si el perfil está vacío. */
+    fun eleAt(profile: List<ProfilePoint>, meters: Double): Double? {
+        if (profile.isEmpty()) return null
+        if (meters <= profile.first().distanceMeters) return profile.first().ele
+        if (meters >= profile.last().distanceMeters) return profile.last().ele
+        var lo = 0
+        var hi = profile.lastIndex
+        while (hi - lo > 1) {
+            val mid = (lo + hi) / 2
+            if (profile[mid].distanceMeters <= meters) lo = mid else hi = mid
+        }
+        val a = profile[lo]
+        val b = profile[hi]
+        val span = b.distanceMeters - a.distanceMeters
+        return if (span <= 0) a.ele else a.ele + (b.ele - a.ele) * (meters - a.distanceMeters) / span
+    }
 }

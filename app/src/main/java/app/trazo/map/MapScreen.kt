@@ -64,6 +64,9 @@ import app.trazo.gpx.nav.Navigator
 import app.trazo.gpx.nav.RouteStart
 import app.trazo.gpx.nav.StartOption
 import app.trazo.ui.openDirections
+import app.trazo.ui.ScrubbableProfile
+import app.trazo.gpx.GeoJson
+import org.maplibre.android.style.sources.GeoJsonSource
 import app.trazo.importer.ES
 import app.trazo.importer.ImportState
 import app.trazo.importer.Stat
@@ -92,9 +95,10 @@ private const val MAX_ACCURACY_M = 1_000f
 private const val REPEAT_ALERT_MS = 20_000L
 
 @Composable
-fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
+fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit, onOpen3D: () -> Unit) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    var scrub by remember(state.gpx) { mutableStateOf<Double?>(null) }
 
     var navigating by rememberSaveable { mutableStateOf(false) }
     /** Desde qué punto del track original se empieza (0 = inicio). */
@@ -182,6 +186,20 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
         wasNavigating = navigating
     }
 
+    // El punto del perfil bajo el dedo se dibuja en el mapa y, si se sale, la cámara lo sigue
+    LaunchedEffect(ready, scrub, navigating) {
+        val (map, style) = ready ?: return@LaunchedEffect
+        val p = scrub?.takeIf { !navigating }?.let { RouteGeometry.pointAt(state.gpx.segments, it) }
+        style.getSourceAs<GeoJsonSource>(TrazoMapStyle.CURSOR)
+            ?.setGeoJson(GeoJson.points(listOfNotNull(p?.let { it.lat to it.lon })))
+        if (p != null) {
+            val here = LatLng(p.lat, p.lon)
+            if (!map.projection.visibleRegion.latLngBounds.contains(here)) {
+                map.animateCamera(CameraUpdateFactory.newLatLng(here), 300)
+            }
+        }
+    }
+
     // Pantalla encendida mientras navegas
     val view = LocalView.current
     DisposableEffect(navigating) {
@@ -229,6 +247,12 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
             }
+            FilledTonalButton(
+                onClick = onOpen3D,
+                modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(16.dp).height(56.dp),
+            ) {
+                Text("3D", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
         }
 
         Card(
@@ -270,6 +294,9 @@ fun MapScreen(state: ImportState.Loaded, onBack: () -> Unit) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Stat("Distancia", km(state.stats.distanceMeters), Modifier.weight(1f))
                         Stat("Desnivel +", metros(state.stats.elevationGainMeters), Modifier.weight(1f))
+                    }
+                    if (state.profile.size >= 2) {
+                        ScrubbableProfile(state.profile, scrub, onScrub = { scrub = it }, chartHeight = 72.dp)
                     }
                     navError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                     Button(
