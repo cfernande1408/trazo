@@ -6,6 +6,7 @@ import app.trazo.gpx.osm.ElevationFill
 import app.trazo.gpx.osm.Json
 import app.trazo.gpx.osm.Overpass
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -41,7 +42,7 @@ object Http {
                     c.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
                 }
                 val code = c.responseCode
-                if (code == 429 || code == 504) throw IOException("El servidor de mapas está saturado, prueba en un rato")
+                if (code == 429 || code in 500..599) throw BusyException(code)
                 if (code !in 200..299) throw IOException("Error del servidor ($code)")
                 c.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
             } finally {
@@ -49,22 +50,40 @@ object Http {
             }
         }
 
-    /** Prueba el servidor principal y, si falla, los espejos. */
+    /** El servidor respondió pero está lleno (429/5xx): merece la pena reintentar. */
+    class BusyException(val code: Int) : IOException("Servidor saturado ($code)")
+
+    /**
+     * Prueba cada servidor con reintentos de espera creciente (1,5 s, 3 s)
+     * cuando está saturado, como pide Overpass. Si todos fallan, el mensaje
+     * dice si fue por saturación o por falta de conexión.
+     */
     suspend fun overpass(query: String): String {
         val form = "data=" + URLEncoder.encode(query, "UTF-8")
         var last: Exception? = null
+        var anyBusy = false
         for (endpoint in Overpass.ENDPOINTS) {
-            try {
-                return postForm(endpoint, form)
-            } catch (e: IOException) {
-                last = e
+            var wait = 1_500L
+            for (attempt in 0..2) {
+                try {
+                    return postForm(endpoint, form)
+                } catch (e: BusyException) {
+                    anyBusy = true
+                    last = e
+                    if (attempt < 2) { delay(wait); wait *= 2 }
+                } catch (e: IOException) {
+                    last = e
+                    break // sin conexión con este servidor: al siguiente
+                }
             }
         }
-        throw IOException(friendly(last), last)
+        val msg = if (anyBusy) "Los servidores de rutas de OpenStreetMap están saturados. Prueba en un par de minutos." else friendly(last)
+        throw IOException(msg, last)
     }
 
     /** Mensaje para el usuario en lugar del error técnico. */
     fun friendly(e: Throwable?): String = when (e) {
+        is BusyException -> "El servidor está saturado. Prueba en un par de minutos."
         is UnknownHostException -> "Sin conexión con el servidor de rutas. Comprueba internet y vuelve a probar."
         is SocketTimeoutException -> "El servidor de rutas tarda demasiado. Prueba en un rato."
         null -> "No se pudo conectar"

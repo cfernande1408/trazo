@@ -27,8 +27,8 @@ object Overpass {
     /** Servidor principal y espejos públicos, por si alguno falla o está saturado. */
     val ENDPOINTS = listOf(
         "https://overpass-api.de/api/interpreter",
-        "https://overpass.kumi.systems/api/interpreter",
         "https://overpass.private.coffee/api/interpreter",
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     )
 
     private fun f(v: Double) = String.format(Locale.ROOT, "%.5f", v)

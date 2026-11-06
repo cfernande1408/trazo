@@ -65,6 +65,14 @@ function pineImage() {
 }
 
 function init(style, track, b) {
+  // Si el mapa se crea con la vista aún a 0×0, la cámara sale NaN y no se pinta nada.
+  const el = document.getElementById('map');
+  if (el.clientWidth === 0 || el.clientHeight === 0) {
+    console.log('Esperando tamaño de la vista…');
+    requestAnimationFrame(() => init(style, track, b));
+    return;
+  }
+  console.log('Vista ' + el.clientWidth + 'x' + el.clientHeight);
   try { start(style, track, b); } catch (e) { show('Error al iniciar el 3D: ' + e.message); }
 }
 
@@ -75,10 +83,13 @@ function start(style, track, b) {
   // Fuente de relieve aparte para el 3D (MapLibre recomienda no compartirla con el sombreado)
   style.sources.terrain3d = Object.assign({}, style.sources.terrain);
   map = new maplibregl.Map({
-    container: 'map', style: style, bounds: b,
-    fitBoundsOptions: { padding: 40 }, pitch: 60, bearing: -20, maxPitch: 80,
+    container: 'map', style: style,
+    center: [(b[0][0] + b[1][0]) / 2, (b[0][1] + b[1][1]) / 2], zoom: 11,
+    pitch: 60, bearing: -20, maxPitch: 80,
     attributionControl: { compact: true },
   });
+  window.addEventListener('resize', () => map.resize());
+  map.on('idle', () => console.log('Mapa listo y pintado'));
   map.on('error', e => console.error('MapLibre: ' + (e && e.error ? e.error.message : e)));
   map.on('styleimagemissing', e => {
     if (e.id === 'pino' && !map.hasImage('pino')) {
@@ -88,10 +99,20 @@ function start(style, track, b) {
   });
   map.on('load', () => {
     hide();
+    map.resize();
+    // Cámara rota (zoom o centro no numéricos): se vuelve a encuadrar la ruta
+    const c = map.getCenter();
+    if (!isFinite(map.getZoom()) || !isFinite(c.lng) || !isFinite(c.lat)) {
+      console.log('Cámara no válida, reencuadrando');
+      map.jumpTo({ center: [(b[0][0] + b[1][0]) / 2, (b[0][1] + b[1][1]) / 2], zoom: 11, pitch: 60, bearing: -20 });
+    }
+    map.fitBounds(b, { padding: 40, pitch: 60, bearing: -20, duration: 0 });
+    console.log('Cámara zoom ' + map.getZoom().toFixed(2) + ' centro ' + map.getCenter().toArray().map(v => v.toFixed(4)));
     map.setTerrain({ source: 'terrain3d', exaggeration: 1.5 });
     try {
+      // Niebla suave solo hacia el horizonte para no tapar el relieve
       map.setSky({ 'sky-color': '#A9CFE8', 'horizon-color': '#EFEDE0', 'fog-color': '#EFEDE0',
-                   'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.3 });
+                   'sky-horizon-blend': 0.5, 'horizon-fog-blend': 0.2, 'fog-ground-blend': 0.95 });
     } catch (e) {}
     map.addSource('track', { type: 'geojson', data: track });
     map.addLayer({ id: 'track-casing', type: 'line', source: 'track',
