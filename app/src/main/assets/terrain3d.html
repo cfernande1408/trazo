@@ -84,10 +84,14 @@ function start(style, track, b) {
   bounds = b;
   // Fuente de relieve aparte para el 3D (MapLibre recomienda no compartirla con el sombreado)
   style.sources.terrain3d = Object.assign({}, style.sources.terrain);
+  // Relieve a z13 basta (~19 m/píxel) y pide muchas menos teselas mientras vuela
+  style.sources.terrain3d.maxzoom = 13;
   map = new maplibregl.Map({
     container: 'map', style: style,
     center: [(b[0][0] + b[1][0]) / 2, (b[0][1] + b[1][1]) / 2], zoom: 11,
-    pitch: 60, bearing: -20, maxPitch: 80,
+    pitch: 60, bearing: -20, maxPitch: 70,
+    // La pantalla del móvil tiene densidad ~3,5: a 2 se ve igual de bien y va mucho más fluido
+    pixelRatio: Math.min(2, window.devicePixelRatio || 1),
     attributionControl: { compact: true },
   });
   window.addEventListener('resize', () => map.resize());
@@ -110,11 +114,12 @@ function start(style, track, b) {
     }
     map.fitBounds(b, { padding: 40, pitch: 60, bearing: -20, duration: 0 });
     console.log('Cámara zoom ' + map.getZoom().toFixed(2) + ' centro ' + map.getCenter().toArray().map(v => v.toFixed(4)));
-    map.setTerrain({ source: 'terrain3d', exaggeration: 1.5 });
+    map.setTerrain({ source: 'terrain3d', exaggeration: 1.25 });
     try {
-      // Niebla suave solo hacia el horizonte para no tapar el relieve
-      map.setSky({ 'sky-color': '#A9CFE8', 'horizon-color': '#EFEDE0', 'fog-color': '#EFEDE0',
-                   'sky-horizon-blend': 0.5, 'horizon-fog-blend': 0.2, 'fog-ground-blend': 0.95 });
+      // Cielo azul y niebla solo en la línea del horizonte
+      map.setSky({ 'sky-color': '#7FB7E3', 'horizon-color': '#DCE8F0', 'fog-color': '#E4E9E6',
+                   'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.9, 'fog-ground-blend': 1.0,
+                   'atmosphere-blend': 0 });
     } catch (e) {}
     map.addSource('track', { type: 'geojson', data: track });
     map.addLayer({ id: 'track-casing', type: 'line', source: 'track',
@@ -137,19 +142,25 @@ function fly() {
   stop();
   const duration = Math.min(90000, Math.max(30000, total / 1000 * 2500));
   let start = null;
-  map.jumpTo({ center: line[0], zoom: 14.6, pitch: 65, bearing: bearing(line[0], at(Math.min(total, 300))) });
+  // Cámara algo más alta: menos teselas por segundo y sin "paredes" de relieve sin cargar
+  const ZOOM = 13.6, PITCH = 60;
+  map.jumpTo({ center: line[0], zoom: ZOOM, pitch: PITCH, bearing: bearing(line[0], at(Math.min(total, 300))) });
   const step = t => {
     if (start === null) start = t;
     const f = Math.min(1, (t - start) / duration), d = f * total;
     const p = at(d), ahead = at(Math.min(total, d + 400));
     const cur = map.getBearing(), target = bearing(p, ahead);
     const diff = ((target - cur + 540) % 360) - 180;
-    map.jumpTo({ center: p, bearing: cur + diff * 0.06, pitch: 65, zoom: 14.6 });
+    map.jumpTo({ center: p, bearing: cur + diff * 0.06, pitch: PITCH, zoom: ZOOM });
     map.getSource('rider').setData({ type: 'Point', coordinates: p });
     if (f < 1) anim = requestAnimationFrame(step);
     else { anim = null; if (window.Trazo) Trazo.onFlyEnd(); }
   };
-  anim = requestAnimationFrame(step);
+  // Arranca cuando la zona de salida ya está pintada (o a los 4 s como mucho)
+  let started = false;
+  const go = () => { if (!started) { started = true; anim = requestAnimationFrame(step); } };
+  map.once('idle', go);
+  setTimeout(go, 4000);
 }
 
 function stop() {

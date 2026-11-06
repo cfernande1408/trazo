@@ -5,8 +5,15 @@ import app.trazo.gpx.Track
 import app.trazo.gpx.osm.ElevationFill
 import app.trazo.gpx.osm.Json
 import app.trazo.gpx.osm.Overpass
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -53,32 +60,66 @@ object Http {
     /** El servidor respondió pero está lleno (429/5xx): merece la pena reintentar. */
     class BusyException(val code: Int) : IOException("Servidor saturado ($code)")
 
+    /** Si un servidor no ha contestado en este tiempo, se pregunta también al siguiente. */
+    private const val HEDGE_MS = 3_000L
+
     /**
-     * Prueba cada servidor con reintentos de espera creciente (1,5 s, 3 s)
-     * cuando está saturado, como pide Overpass. Si todos fallan, el mensaje
-     * dice si fue por saturación o por falta de conexión.
+     * Petición "escalonada": empieza por el servidor principal y, si a los
+     * 3 s no ha contestado (o falla), lanza la misma consulta al siguiente
+     * espejo sin cancelar la anterior. Gana la primera respuesta buena. Así
+     * un servidor lento o saturado no bloquea, sin cargar a todos a la vez.
      */
     suspend fun overpass(query: String): String {
         val form = "data=" + URLEncoder.encode(query, "UTF-8")
-        var last: Exception? = null
-        var anyBusy = false
-        for (endpoint in Overpass.ENDPOINTS) {
-            var wait = 1_500L
-            for (attempt in 0..2) {
-                try {
-                    return postForm(endpoint, form)
-                } catch (e: BusyException) {
-                    anyBusy = true
-                    last = e
-                    if (attempt < 2) { delay(wait); wait *= 2 }
-                } catch (e: IOException) {
-                    last = e
-                    break // sin conexión con este servidor: al siguiente
+        val result = CompletableDeferred<String>()
+        val failures = mutableListOf<Exception>()
+        val next = Channel<Unit>(Channel.UNLIMITED) // "lanza el siguiente ya" cuando uno falla
+
+        // Fuera de la corrutina que llama: así no hay que esperar a que acaben las peticiones perdedoras
+        val launcher = background.launch {
+            for ((i, endpoint) in Overpass.ENDPOINTS.withIndex()) {
+                if (i > 0) withTimeoutOrNull(HEDGE_MS) { next.receive() }
+                if (result.isCompleted) break
+                launch {
+                    try {
+                        result.complete(attempt(endpoint, form))
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        val all = synchronized(failures) { failures += e; failures.size == Overpass.ENDPOINTS.size }
+                        if (all) {
+                            val busy = failures.any { it is BusyException }
+                            result.completeExceptionally(
+                                IOException(
+                                    if (busy) "Los servidores de rutas de OpenStreetMap están saturados. Prueba en un par de minutos."
+                                    else friendly(failures.last()),
+                                    e,
+                                )
+                            )
+                        } else {
+                            next.trySend(Unit)
+                        }
+                    }
                 }
             }
         }
-        val msg = if (anyBusy) "Los servidores de rutas de OpenStreetMap están saturados. Prueba en un par de minutos." else friendly(last)
-        throw IOException(msg, last)
+        try {
+            return result.await()
+        } finally {
+            launcher.cancel() // cancela también las peticiones que siguen en marcha
+        }
+    }
+
+    private val background = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** Un servidor, con un reintento si responde que está saturado. */
+    private suspend fun attempt(endpoint: String, form: String): String {
+        try {
+            return postForm(endpoint, form)
+        } catch (e: BusyException) {
+            delay(1_500)
+            return postForm(endpoint, form)
+        }
     }
 
     /** Mensaje para el usuario en lugar del error técnico. */
