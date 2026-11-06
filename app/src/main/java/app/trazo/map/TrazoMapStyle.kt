@@ -134,18 +134,20 @@ object TrazoMapStyle {
     }
 
     /**
-     * Baldosa de 72 dp que se repite sobre los bosques: un pino y, según la
-     * estación, un árbol de hoja ancha (verde, en flor, otoñal) o un segundo
-     * pino nevado en invierno. Deja ver el relieve y los caminos.
+     * Baldosa de 68 dp que se repite sobre los bosques: tres árboles al
+     * tresbolillo (dos pinos y, según la estación, un árbol de hoja ancha
+     * verde, en flor u otoñal; en invierno, tres pinos nevados). Algo más
+     * de bosque que antes, sin tapar el relieve ni los caminos.
      */
     private fun treeTile(density: Float, season: Season): Bitmap {
-        val s = (72 * density).toInt().coerceAtLeast(24)
+        val s = (68 * density).toInt().coerceAtLeast(24)
         val bmp = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
         val p = TreePaints(season)
-        drawPine(c, p, cx = s * 0.25f, baseY = s * 0.40f, h = s * 0.25f)
-        if (season.broadleafShare > 0) drawBroadleaf(c, p, cx = s * 0.75f, baseY = s * 0.90f, h = s * 0.21f)
-        else drawPine(c, p, cx = s * 0.75f, baseY = s * 0.90f, h = s * 0.22f)
+        drawPine(c, p, cx = s * 0.22f, baseY = s * 0.38f, h = s * 0.25f)
+        if (season.broadleafShare > 0) drawBroadleaf(c, p, cx = s * 0.72f, baseY = s * 0.62f, h = s * 0.22f)
+        else drawPine(c, p, cx = s * 0.72f, baseY = s * 0.62f, h = s * 0.23f)
+        drawPine(c, p, cx = s * 0.40f, baseY = s * 0.95f, h = s * 0.23f)
         return bmp
     }
 
