@@ -155,6 +155,8 @@ function plant(polygons, area, stepM, max, broadleafShare) {
 }
 
 const EMPTY = { type: 'FeatureCollection', features: [] };
+/** Separación entre árboles del interior del bosque, en píxeles de pantalla. */
+const TREE_SPACING_PX = 52;
 let lastPlant = 0, plantTimer = null;
 function refreshTrees() {
   plantTimer = null;
@@ -162,11 +164,14 @@ function refreshTrees() {
   lastPlant = performance.now();
   const z = map.getZoom();
   if (z < 12.5) { map.getSource('trees').setData(EMPTY); return; }
-  // Más cerca, árboles más juntos; alrededor del centro de la vista (en el vuelo, el ciclista).
-  // Separación ×1,75 respecto a la primera versión: un tercio de árboles, se ve el monte
-  const stepM = z >= 15 ? 45 : z >= 14 ? 70 : 115;
-  const radius = stepM * 40;
+  // La separación se mide en píxeles de pantalla, no en metros: un árbol ocupa ~20 px, así que
+  // van a ~2,5 veces su ancho y nunca se amontonan. El zoom se redondea a medios para que la
+  // rejilla no cambie con cada pequeño movimiento de la cámara.
   const c = map.getCenter();
+  const zq = Math.floor(z * 2) / 2;
+  const metersPerPx = 40075016.686 * Math.cos(c.lat * RAD) / (512 * Math.pow(2, zq));
+  const stepM = metersPerPx * TREE_SPACING_PX;
+  const radius = stepM * 30;
   const dLat = radius / 111320, dLon = dLat / Math.cos(c.lat * RAD);
   const area = { w: c.lng - dLon, e: c.lng + dLon, s: c.lat - dLat, n: c.lat + dLat, clat: Math.round(c.lat * 2) / 2 };
   const polys = [];
@@ -276,7 +281,7 @@ function start(style, track, b) {
     const wood = ['==', ['get', 'class'], 'wood'];
     // Borde del bosque, siempre de pinos
     map.addLayer({ id: 'trees-edge', type: 'symbol', source: 'omt', 'source-layer': 'landcover', minzoom: 12, filter: wood,
-      layout: Object.assign({ 'symbol-placement': 'line', 'symbol-spacing': 70, 'icon-image': 'pino-pie',
+      layout: Object.assign({ 'symbol-placement': 'line', 'symbol-spacing': 120, 'icon-image': 'pino-pie',
         'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.45, 14, 0.8, 16, 1.2] }, treeLayout) }, 'place-label');
     // Interior: la rejilla de plant(), con mezcla de pinos y frondosas según la estación
     map.addSource('trees', { type: 'geojson', data: EMPTY });
@@ -284,7 +289,7 @@ function start(style, track, b) {
       layout: Object.assign({
         'icon-image': ['match', ['get', 'k'], 1, 'frondosa-pie', 'pino-pie'],
         'icon-size': ['interpolate', ['linear'], ['zoom'],
-          12.5, ['*', 0.4, ['get', 's']], 14, ['*', 0.72, ['get', 's']], 16, ['*', 1.1, ['get', 's']]],
+          12.5, ['*', 0.4, ['get', 's']], 14, ['*', 0.65, ['get', 's']], 16, ['*', 1.0, ['get', 's']]],
       }, treeLayout) }, 'place-label');
     map.on('moveend', scheduleTrees);
     map.on('sourcedata', e => { if (e.sourceId === 'omt' && e.isSourceLoaded) scheduleTrees(); });
