@@ -52,6 +52,19 @@ import androidx.compose.ui.unit.dp
 import java.io.File
 import java.util.Locale
 import app.trazo.ui.theme.TrazoTheme
+import app.trazo.plan.PlannerScreen
+import app.trazo.plan.RoutesLibrary
+import app.trazo.plan.SavedRoute
+import app.trazo.ui.AppMode
+import app.trazo.ui.OnboardingScreen
+import app.trazo.ui.outing
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.maplibre.android.MapLibre
 
 class MainActivity : ComponentActivity() {
@@ -69,15 +82,29 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MapLibre.getInstance(this)
+        AppMode.init(this)
         enableEdgeToEdge()
         if (savedInstanceState == null) handleIntent(intent)
         setContent {
-            TrazoTheme {
+            val chosen by AppMode.activity.collectAsStateWithLifecycle()
+            val context = LocalContext.current
+            // Primera vez: ¿biker o senderista?
+            val activity = chosen
+            if (activity == null) {
+                TrazoTheme { OnboardingScreen(onChoose = { AppMode.set(context, it) }) }
+            } else TrazoTheme(activity) {
                 val state by importer.state.collectAsStateWithLifecycle()
                 var showMap by rememberSaveable { mutableStateOf(false) }
                 var show3D by rememberSaveable { mutableStateOf(false) }
                 var showRecord by rememberSaveable { mutableStateOf(false) }
                 var showRides by rememberSaveable { mutableStateOf(false) }
+                var showPlanner by rememberSaveable { mutableStateOf(false) }
+                /** Se incrementa al guardar o borrar para volver a leer "Tus rutas". */
+                var libVersion by remember { mutableIntStateOf(0) }
+                val library by produceState(emptyList<SavedRoute>(), libVersion) {
+                    value = withContext(Dispatchers.IO) { RoutesLibrary.list(context) }
+                }
+                val scope = rememberCoroutineScope()
                 /** Ruta del archivo de la salida abierta en detalle. */
                 var rideFile by rememberSaveable { mutableStateOf<String?>(null) }
                 val ride by RideSession.state.collectAsStateWithLifecycle()
@@ -100,6 +127,14 @@ class MainActivity : ComponentActivity() {
                         onBack = { rideFile = null },
                         onUseAsRoute = openRoute,
                         onDeleted = { rideFile = null; showRides = true },
+                    )
+                    showPlanner -> PlannerScreen(
+                        onClose = { showPlanner = false },
+                        onSaved = { gpx ->
+                            libVersion++
+                            showPlanner = false
+                            openRoute(gpx)
+                        },
                     )
                     showRecord -> RecordScreen(onClose = { showRecord = false }, onSaved = openRide)
                     show3D && loaded != null -> Terrain3DScreen(loaded, onBack = { show3D = false })
@@ -128,8 +163,9 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         Text(
                                             String.format(
-                                                Locale.forLanguageTag("es-ES"), "%s · %.1f km · %s — toca para verla",
+                                                Locale.forLanguageTag("es-ES"), "%s %s · %.1f km · %s — toca para verla",
                                                 if (ride.paused) "En pausa" else "Grabando",
+                                                activity.outing,
                                                 ride.stats.distanceMeters / 1000, formatDuration(ride.stats.movingMs),
                                             ),
                                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -170,8 +206,30 @@ class MainActivity : ComponentActivity() {
                                     onOpenMap = { showMap = true },
                                     onRecord = { showRecord = true },
                                     onRides = { showRides = true },
+                                    activity = activity,
+                                    onSwitchActivity = { AppMode.set(context, it) },
+                                    onCreateRoute = { showPlanner = true },
+                                    library = library,
+                                    onOpenSaved = { r ->
+                                        scope.launch {
+                                            val gpx = withContext(Dispatchers.IO) { runCatching { RoutesLibrary.open(r.file) }.getOrNull() }
+                                            if (gpx != null) importer.importGpx(gpx)
+                                        }
+                                    },
+                                    onDeleteSaved = { r ->
+                                        RoutesLibrary.delete(r)
+                                        libVersion++
+                                    },
+                                    onSaveCurrent = {
+                                        loaded?.let { l ->
+                                            scope.launch {
+                                                withContext(Dispatchers.IO) { RoutesLibrary.save(context, l.gpx) }
+                                                libVersion++
+                                            }
+                                        }
+                                    },
                                 )
-                                1 -> ExploreMapScreen(onRouteReady = openRoute)
+                                1 -> ExploreMapScreen(onRouteReady = openRoute, activity = activity)
                                 2 -> WikilocBrowser(onGpx = openRoute)
                                 else -> CommunityScreen()
                             }

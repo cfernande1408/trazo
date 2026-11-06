@@ -90,7 +90,7 @@ class RideService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_ride)
-            .setContentTitle(s.routeName?.let { "Navegando · $it" } ?: "Grabando salida")
+            .setContentTitle(s.routeName?.let { "Navegando · $it" } ?: if (s.activity == app.trazo.gpx.Activity.HIKE) "Grabando excursión" else "Grabando salida")
             .setContentText(text)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

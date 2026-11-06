@@ -29,6 +29,25 @@ object GpxWriter {
         append("  </trk>\n</gpx>\n")
     }
 
+    /** Una ruta (sin horas), por ejemplo una creada en el planificador. */
+    fun writeRoute(name: String, segments: List<List<app.trazo.gpx.GeoPoint>>, description: String? = null): String = buildString {
+        append("""<?xml version="1.0" encoding="UTF-8"?>""").append('\n')
+        append("""<gpx version="1.1" creator="Trazo" xmlns="http://www.topografix.com/GPX/1/1">""").append('\n')
+        append("  <metadata>\n    <name>").append(escape(name)).append("</name>\n  </metadata>\n")
+        append("  <trk>\n    <name>").append(escape(name)).append("</name>\n")
+        description?.let { append("    <desc>").append(escape(it)).append("</desc>\n") }
+        for (seg in segments.filter { it.isNotEmpty() }) {
+            append("    <trkseg>\n")
+            for (p in seg) {
+                append("      <trkpt lat=\"").append(f(p.lat, 7)).append("\" lon=\"").append(f(p.lon, 7)).append("\">")
+                p.ele?.let { append("<ele>").append(f(it, 1)).append("</ele>") }
+                append("</trkpt>\n")
+            }
+            append("    </trkseg>\n")
+        }
+        append("  </trk>\n</gpx>\n")
+    }
+
     private fun f(v: Double, decimals: Int) = String.format(Locale.ROOT, "%.${decimals}f", v)
 
     private fun escape(s: String) = s

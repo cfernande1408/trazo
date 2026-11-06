@@ -75,6 +75,7 @@ import app.trazo.importer.metros
 import app.trazo.importer.title
 import app.trazo.nav.Alerts
 import app.trazo.ride.RideSession
+import app.trazo.ui.AppMode
 import app.trazo.ride.ridePermissions
 import java.io.File
 import app.trazo.ui.ElevationChart
@@ -232,7 +233,13 @@ fun MapScreen(
         if (!navigating || !hasLocation) return@LaunchedEffect
         navError = null
         navState = null
-        val navigator = Navigator(navSegments)
+        val activity = AppMode.current
+        val navigator = Navigator(
+            navSegments,
+            offRouteMeters = activity.offRouteMeters,
+            backOnRouteMeters = activity.backOnRouteMeters,
+            offRouteDelayMs = activity.offRouteDelayMs,
+        )
         var lastAlert = 0L
         var wasOff = false
         // Las posiciones llegan del servicio de grabación, que sigue vivo con la pantalla apagada

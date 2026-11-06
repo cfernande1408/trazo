@@ -51,6 +51,12 @@ import app.trazo.gpx.GpxParser
 import app.trazo.gpx.RouteGeometry
 import app.trazo.map.TrazoMapStyle
 import app.trazo.map.rememberMapView
+import app.trazo.ui.AppMode
+import app.trazo.ui.icon
+import app.trazo.ui.label
+import app.trazo.ui.outing
+import app.trazo.ui.outingsTitle
+import app.trazo.ui.recordCta
 import app.trazo.ui.ElevationChart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -84,7 +90,7 @@ fun RidesScreen(onBack: () -> Unit, onOpen: (File) -> Unit, onRecord: () -> Unit
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis salidas") },
+                title = { Text(AppMode.current.outingsTitle) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } },
             )
         },
@@ -96,9 +102,9 @@ fun RidesScreen(onBack: () -> Unit, onOpen: (File) -> Unit, onRecord: () -> Unit
                 Modifier.fillMaxSize().padding(padding).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text("Aún no has grabado ninguna salida.", style = MaterialTheme.typography.titleMedium)
+                Text("Aún no has grabado ninguna ${AppMode.current.outing}.", style = MaterialTheme.typography.titleMedium)
                 Text("Graba una suelta o empieza a navegar una ruta: se guarda sola al terminar.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Button(onClick = onRecord) { Text("Grabar salida") }
+                Button(onClick = onRecord) { Text(AppMode.current.recordCta) }
             }
             else -> LazyColumn(
                 Modifier.fillMaxSize().padding(padding),
@@ -108,7 +114,10 @@ fun RidesScreen(onBack: () -> Unit, onOpen: (File) -> Unit, onRecord: () -> Unit
                 items(list, key = { it.file.name }) { r ->
                     Card(onClick = { onOpen(r.file) }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
                         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(r.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(r.activity.icon, contentDescription = r.activity.label, tint = MaterialTheme.colorScheme.primary)
+                                Text(r.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            }
                             Text(DATE.format(Date(r.startedAtMs)).replaceFirstChar { it.uppercase() }, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
                                 "${kmStr(r.stats.distanceMeters)} · ${formatDuration(r.stats.movingMs)} · ${kmh(r.stats.avgMovingKmh)} de media",
@@ -152,7 +161,7 @@ fun RideDetailScreen(file: File, onBack: () -> Unit, onUseAsRoute: (Gpx) -> Unit
             item {
                 Card(shape = MaterialTheme.shapes.extraLarge) { SpeedMap(r, Modifier.fillMaxWidth().height(260.dp)) }
             }
-            item { SpeedLegend() }
+            item { SpeedLegend(r.activity) }
             item {
                 Text(DATE.format(Date(r.startedAtMs)).replaceFirstChar { it.uppercase() }, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -212,10 +221,7 @@ private fun SpeedMap(ride: SavedRide, modifier: Modifier) {
                             lineColor(
                                 Expression.interpolate(
                                     Expression.linear(), Expression.get("kmh"),
-                                    Expression.stop(0, Expression.color(0xFF1F6FB2.toInt())),
-                                    Expression.stop(12, Expression.color(0xFFE0A100.toInt())),
-                                    Expression.stop(22, Expression.color(0xFFC2410C.toInt())),
-                                    Expression.stop(35, Expression.color(0xFFB3261E.toInt())),
+                                    *ride.activity.speedStops.map { (kmh, c) -> Expression.stop(kmh, Expression.color(c.toInt())) }.toTypedArray(),
                                 )
                             ),
                         )
@@ -234,11 +240,20 @@ private fun SpeedMap(ride: SavedRide, modifier: Modifier) {
 }
 
 @Composable
-private fun SpeedLegend() {
+private fun SpeedLegend(activity: app.trazo.gpx.Activity) {
+    val stops = activity.speedStops
+    fun n(v: Double) = if (v % 1.0 == 0.0) v.toInt().toString() else String.format(app.trazo.importer.ES, "%.1f", v)
+    val labels = stops.mapIndexed { i, (v, c) ->
+        val text = when (i) {
+            0 -> "< ${n(stops[1].first)} km/h"
+            stops.lastIndex -> "> ${n(v)}"
+            else -> "${n(v)}–${n(stops[i + 1].first)}"
+        }
+        text to c
+    }
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        listOf("< 12 km/h" to 0xFF1F6FB2, "12–22" to 0xFFE0A100, "22–35" to 0xFFC2410C, "> 35" to 0xFFB3261E).forEach { (t, c) ->
+        labels.forEach { (t, c) ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Box(Modifier.height(4.dp).padding(horizontal = 0.dp)) {}
                 Text("●", color = androidx.compose.ui.graphics.Color(c))
                 Text(t, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

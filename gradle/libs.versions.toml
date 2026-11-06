@@ -18,6 +18,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 maplibre-android = { group = "org.maplibre.gl", name = "android-sdk-opengl", version.ref = "maplibre" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 

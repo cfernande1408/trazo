@@ -61,6 +61,10 @@ import app.trazo.importer.metros
 import app.trazo.map.rememberMapView
 import app.trazo.nav.locationUpdates
 import app.trazo.ui.ElevationChart
+import app.trazo.gpx.Activity
+import app.trazo.ui.AppMode
+import app.trazo.ui.badge
+import app.trazo.ui.exploreHint
 import app.trazo.ui.openUrl
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -83,7 +87,12 @@ private val MADRID = LatLng(40.4168, -3.7038)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExploreMapScreen(onRouteReady: (Gpx) -> Unit, vm: ExploreMapViewModel = viewModel()) {
+fun ExploreMapScreen(
+    onRouteReady: (Gpx) -> Unit,
+    activity: Activity = AppMode.current,
+    // Un ViewModel por actividad: las rutas de bici y los senderos no se mezclan
+    vm: ExploreMapViewModel = viewModel(key = "explore-${activity.name}"),
+) {
     val context = LocalContext.current
     val routes by vm.routes.collectAsStateWithLifecycle()
     val status by vm.status.collectAsStateWithLifecycle()
@@ -107,7 +116,7 @@ fun ExploreMapScreen(onRouteReady: (Gpx) -> Unit, vm: ExploreMapViewModel = view
     LaunchedEffect(mapView) {
         mapView.getMapAsync { map ->
             map.cameraPosition = CameraPosition.Builder().target(MADRID).zoom(10.0).build()
-            map.setStyle(ExploreMapStyle.builder(context)) { style ->
+            map.setStyle(ExploreMapStyle.builder(context, activity)) { style ->
                 fun report() {
                     val v = map.projection.visibleRegion
                     val corners = listOfNotNull(v.farLeft, v.farRight, v.nearLeft, v.nearRight)
@@ -175,12 +184,14 @@ fun ExploreMapScreen(onRouteReady: (Gpx) -> Unit, vm: ExploreMapViewModel = view
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            FilterChip(
-                selected = onlyMtb,
-                onClick = vm::toggleOnlyMtb,
-                label = { Text("Solo MTB") },
-                colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            )
+            if (activity == Activity.BIKE) {
+                FilterChip(
+                    selected = onlyMtb,
+                    onClick = vm::toggleOnlyMtb,
+                    label = { Text("Solo MTB") },
+                    colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                )
+            }
             status?.let { s ->
                 Surface(
                     onClick = { if (canRetry) vm.retry() },
@@ -208,19 +219,19 @@ fun ExploreMapScreen(onRouteReady: (Gpx) -> Unit, vm: ExploreMapViewModel = view
             if (sel == null) {
                 Text(
                     if (routes.isEmpty()) "Mueve el mapa por la zona donde quieras rodar"
-                    else "Toca una bici para ver su recorrido",
+                    else activity.exploreHint,
                     modifier = Modifier.padding(20.dp),
                     style = MaterialTheme.typography.titleMedium,
                 )
             } else {
-                SelectedCard(sel, onClose = vm::clearSelection, onOpen = onRouteReady, onOsm = { context.openUrl(Overpass.osmUrl(sel.summary.id)) })
+                SelectedCard(sel, activity, onClose = vm::clearSelection, onOpen = onRouteReady, onOsm = { context.openUrl(Overpass.osmUrl(sel.summary.id)) })
             }
         }
     }
 }
 
 @Composable
-private fun SelectedCard(sel: SelectedRoute, onClose: () -> Unit, onOpen: (Gpx) -> Unit, onOsm: () -> Unit) {
+private fun SelectedCard(sel: SelectedRoute, activity: Activity, onClose: () -> Unit, onOpen: (Gpx) -> Unit, onOsm: () -> Unit) {
     val r = sel.summary
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -229,7 +240,7 @@ private fun SelectedCard(sel: SelectedRoute, onClose: () -> Unit, onOpen: (Gpx) 
                 color = if (r.isMtb) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
             ) {
                 Text(
-                    if (r.isMtb) "MTB" else "Bici",
+                    activity.badge(r.isMtb),
                     style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                 )

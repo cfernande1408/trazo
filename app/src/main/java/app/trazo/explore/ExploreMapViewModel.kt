@@ -10,6 +10,8 @@ import app.trazo.gpx.osm.Overpass
 import app.trazo.gpx.osm.WayStitcher
 import app.trazo.gpx.osm.WaymarkedTrails
 import app.trazo.gpx.Track
+import app.trazo.gpx.Activity
+import app.trazo.ui.AppMode
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -118,7 +120,7 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
      */
     private suspend fun findRoutes(area: Bbox): List<OsmRouteSummary> {
         val wmt = coroutineScope {
-            WaymarkedTrails.Flavour.entries.map { f ->
+            WaymarkedTrails.flavoursFor(AppMode.current).map { f ->
                 async {
                     runCatching {
                         val listed = WaymarkedTrails.parseList(Http.get(WaymarkedTrails.byAreaUrl(f, area)))
@@ -135,12 +137,17 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
             // Si una ruta sale en las dos listas, gana la de MTB (va primero)
             return wmt.flatMap { it.getOrDefault(emptyList()) }.distinctBy { it.id }
         }
-        return Overpass.parseSearch(Http.overpass(Overpass.bboxQuery(area)))
+        val routes = if (AppMode.current == Activity.HIKE) "hiking|foot" else "mtb|bicycle"
+        return Overpass.parseSearch(Http.overpass(Overpass.bboxQuery(area, routes)))
     }
 
     /** Trazado simplificado de Waymarked Trails: llega en un momento y sirve para ver la ruta. */
     private suspend fun quickGpx(summary: OsmRouteSummary): Gpx? = runCatching {
-        val f = if (summary.isMtb) WaymarkedTrails.Flavour.MTB else WaymarkedTrails.Flavour.CYCLING
+        val f = when {
+            AppMode.current == Activity.HIKE -> WaymarkedTrails.Flavour.HIKING
+            summary.isMtb -> WaymarkedTrails.Flavour.MTB
+            else -> WaymarkedTrails.Flavour.CYCLING
+        }
         val (bbox, desc) = WaymarkedTrails.parseDetails(Http.get(WaymarkedTrails.detailsUrl(f, summary.id)))
         val lines = WaymarkedTrails.parseSegments(Http.get(WaymarkedTrails.segmentsUrl(f, bbox!!, listOf(summary.id))))[summary.id]
         val segs = WayStitcher.stitch(lines!!)

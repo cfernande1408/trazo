@@ -48,6 +48,21 @@ import androidx.compose.ui.unit.dp
 import app.trazo.gpx.Waypoint
 import app.trazo.map.TopoPreview
 import app.trazo.ui.ElevationChart
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import app.trazo.gpx.Activity
+import app.trazo.plan.SavedRoute
+import app.trazo.ride.formatDuration
+import app.trazo.ui.ActivitySwitchDialog
+import app.trazo.ui.icon
+import app.trazo.ui.outingsTitle
+import app.trazo.ui.recordCta
+import app.trazo.ui.who
 import java.util.Locale
 
 internal val ES: Locale = Locale.forLanguageTag("es-ES")
@@ -66,37 +81,130 @@ fun ImportScreen(
     onOpenMap: () -> Unit,
     onRecord: () -> Unit = {},
     onRides: () -> Unit = {},
+    activity: Activity = Activity.BIKE,
+    onSwitchActivity: (Activity) -> Unit = {},
+    onCreateRoute: () -> Unit = {},
+    library: List<SavedRoute> = emptyList(),
+    onOpenSaved: (SavedRoute) -> Unit = {},
+    onDeleteSaved: (SavedRoute) -> Unit = {},
+    onSaveCurrent: () -> Unit = {},
 ) {
+    var switching by remember { mutableStateOf(false) }
+    val lib = Library(library, onOpenSaved, onDeleteSaved)
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Mis rutas") },
-                actions = { TextButton(onClick = onRides) { Text("Mis salidas") } },
+                actions = {
+                    // Chip con tu actividad: tocándolo cambias de biker a senderista y viceversa
+                    AssistChip(
+                        onClick = { switching = true },
+                        label = { Text(activity.who) },
+                        leadingIcon = { Icon(activity.icon, contentDescription = null, Modifier.size(18.dp)) },
+                    )
+                    TextButton(onClick = onRides) { Text(activity.outingsTitle) }
+                },
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onRecord,
                 icon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
-                text = { Text("Grabar salida") },
+                text = { Text(activity.recordCta) },
             )
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (state) {
-                ImportState.Empty -> EmptyState(onPickFile)
+                ImportState.Empty -> EmptyState(onPickFile, onCreateRoute, lib)
                 ImportState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 is ImportState.Error -> ErrorState(state.message, onPickFile)
-                is ImportState.Loaded -> Loaded(state, onPickFile, onOpenMap)
+                is ImportState.Loaded -> Loaded(state, activity, onPickFile, onOpenMap, onCreateRoute, onSaveCurrent, lib)
+            }
+        }
+    }
+    if (switching) {
+        ActivitySwitchDialog(
+            current = activity,
+            onDismiss = { switching = false },
+            onChoose = { switching = false; onSwitchActivity(it) },
+        )
+    }
+}
+
+/** "Tus rutas" guardadas en el móvil y qué hacer al tocarlas. */
+private class Library(
+    val routes: List<SavedRoute>,
+    val onOpen: (SavedRoute) -> Unit,
+    val onDelete: (SavedRoute) -> Unit,
+)
+
+private fun LazyListScope.library(lib: Library) {
+    if (lib.routes.isEmpty()) return
+    item {
+        Text(
+            "Tus rutas guardadas",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+    }
+    items(lib.routes, key = { it.file.absolutePath }) { r ->
+        Card(
+            onClick = { lib.onOpen(r) },
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        ) {
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(r.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        "${km(r.distanceMeters)} · +${metros(r.gainMeters)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                IconButton(onClick = { lib.onDelete(r) }) {
+                    Icon(Icons.Filled.Delete, contentDescription = "Borrar ruta")
+                }
             }
         }
     }
 }
 
 @Composable
-private fun EmptyState(onPickFile: () -> Unit) {
+private fun EmptyState(onPickFile: () -> Unit, onCreateRoute: () -> Unit, lib: Library) {
+    LazyColumn(
+        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item { ImportCard(onPickFile) }
+        item { CreateCard(onCreateRoute) }
+        library(lib)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CreateCard(onCreateRoute: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        onClick = onCreateRoute,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        shape = MaterialTheme.shapes.extraLarge,
+    ) {
+        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Icon(Icons.Filled.Edit, contentDescription = null, Modifier.size(28.dp))
+            Column {
+                Text("Crear ruta", style = MaterialTheme.typography.titleLarge)
+                Text("Toca puntos en el mapa y la ruta se ajusta a pistas y senderos")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ImportCard(onPickFile: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -127,7 +235,15 @@ private fun ErrorState(message: String, onPickFile: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap: () -> Unit) {
+private fun Loaded(
+    state: ImportState.Loaded,
+    activity: Activity,
+    onPickFile: () -> Unit,
+    onOpenMap: () -> Unit,
+    onCreateRoute: () -> Unit,
+    onSaveCurrent: () -> Unit,
+    lib: Library,
+) {
     val s = state.stats
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var scrub by remember(state.gpx) { mutableStateOf<Double?>(null) }
@@ -159,6 +275,14 @@ private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap:
                 Stat("Desnivel +", metros(s.elevationGainMeters), Modifier.weight(1f))
                 Stat("Desnivel −", metros(s.elevationLossMeters), Modifier.weight(1f))
             }
+        }
+        item {
+            val est = activity.estimateMs(s.distanceMeters, s.elevationGainMeters, s.elevationLossMeters)
+            Text(
+                (if (activity == Activity.HIKE) "Tiempo estimado (MIDE): " else "Tiempo estimado en bici: ") + formatDuration(est),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         item {
             Button(onClick = onOpenMap, modifier = Modifier.fillMaxWidth().height(56.dp)) {
@@ -200,10 +324,22 @@ private fun Loaded(state: ImportState.Loaded, onPickFile: () -> Unit, onOpenMap:
             else -> item { CommentsTab(state) }
         }
         item {
-            FilledTonalButton(onClick = onPickFile, modifier = Modifier.height(48.dp)) {
-                Text("Importar otra ruta")
+            val saved = lib.routes.any { it.name == state.title() && kotlin.math.abs(it.distanceMeters - s.distanceMeters) < 1.0 }
+            OutlinedButton(onClick = onSaveCurrent, enabled = !saved, modifier = Modifier.fillMaxWidth().height(48.dp)) {
+                Text(if (saved) "Guardada en tus rutas" else "Guardar en tus rutas")
             }
         }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = onPickFile, modifier = Modifier.weight(1f).height(48.dp)) {
+                    Text("Importar otra")
+                }
+                FilledTonalButton(onClick = onCreateRoute, modifier = Modifier.weight(1f).height(48.dp)) {
+                    Text("Crear ruta")
+                }
+            }
+        }
+        library(lib)
     }
 }
 

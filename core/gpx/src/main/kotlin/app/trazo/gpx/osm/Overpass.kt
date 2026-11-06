@@ -41,8 +41,8 @@ object Overpass {
      * Rutas que pasan por el recuadro. Mucho más rápida que la búsqueda por
      * radio: el mapa de Explorar pide solo la zona que estás viendo.
      */
-    fun bboxQuery(b: Bbox): String =
-        "[out:json][timeout:20];relation[\"route\"~\"^(mtb|bicycle)$\"](${f(b.south)},${f(b.west)},${f(b.north)},${f(b.east)});out tags center qt 200;"
+    fun bboxQuery(b: Bbox, routes: String = "mtb|bicycle"): String =
+        "[out:json][timeout:20];relation[\"route\"~\"^($routes)$\"](${f(b.south)},${f(b.west)},${f(b.north)},${f(b.east)});out tags center qt 200;"
 
     fun routeQuery(id: Long): String =
         "[out:json][timeout:60];relation($id);out tags;way(r);out geom;"

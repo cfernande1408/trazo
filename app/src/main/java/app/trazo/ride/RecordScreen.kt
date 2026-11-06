@@ -41,6 +41,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.trazo.gpx.GeoJson
 import app.trazo.map.TrazoMapStyle
 import app.trazo.map.rememberMapView
+import app.trazo.ui.AppMode
+import app.trazo.ui.outing
+import app.trazo.ui.outingsTitle
 import kotlinx.coroutines.delay
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
@@ -147,9 +150,9 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
                         ) { Text("Terminar", style = MaterialTheme.typography.titleMedium) }
                     }
                 } else {
-                    Text("Graba tu salida aunque no sigas ninguna ruta.", style = MaterialTheme.typography.titleMedium)
+                    Text("Graba tu ${AppMode.current.outing} aunque no sigas ninguna ruta.", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Sigue grabando con la pantalla apagada. Al terminar verás distancia, tiempo y velocidades, y la guardas en Mis salidas.",
+                        "Sigue grabando con la pantalla apagada. Al terminar verás distancia, tiempo y velocidades, y se guarda en ${AppMode.current.outingsTitle}.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Button(

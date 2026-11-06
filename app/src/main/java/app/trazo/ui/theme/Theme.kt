@@ -70,7 +70,71 @@ object Dificultad {
     }
 }
 
+/** Senderismo: tonos tierra y ámbar en lugar del lima de la bici. */
+private val HikeDark = darkColorScheme(
+    primary = Color(0xFFFFB870),
+    onPrimary = Color(0xFF4A2800),
+    primaryContainer = Color(0xFF6A3C00),
+    onPrimaryContainer = Color(0xFFFFDCBE),
+    secondary = Color(0xFFE2C0A4),
+    onSecondary = Color(0xFF412C18),
+    secondaryContainer = Color(0xFF5A4330),
+    onSecondaryContainer = Color(0xFFFFDCC2),
+    tertiary = Color(0xFFB5CEA4),
+    onTertiary = Color(0xFF223518),
+    tertiaryContainer = Color(0xFF384C2C),
+    onTertiaryContainer = Color(0xFFD1EABF),
+    background = Color(0xFF17130F),
+    onBackground = Color(0xFFECE0D8),
+    surface = Color(0xFF17130F),
+    onSurface = Color(0xFFECE0D8),
+    onSurfaceVariant = Color(0xFFD5C3B5),
+    outline = Color(0xFF9E8E81),
+    surfaceContainer = Color(0xFF241F1A),
+    surfaceContainerHigh = Color(0xFF2F2924),
+    error = Color(0xFFFFB4AB),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
+)
+
+private val HikeLight = lightColorScheme(
+    primary = Color(0xFF8A5100),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFFFDCBE),
+    onPrimaryContainer = Color(0xFF2C1600),
+    secondary = Color(0xFF735944),
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFFFDCC2),
+    onSecondaryContainer = Color(0xFF2A1707),
+    tertiary = Color(0xFF4F6545),
+    onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFD1EABF),
+    onTertiaryContainer = Color(0xFF0D2007),
+    background = Color(0xFFFFF8F4),
+    onBackground = Color(0xFF201B16),
+    surface = Color(0xFFFFF8F4),
+    onSurface = Color(0xFF201B16),
+    onSurfaceVariant = Color(0xFF52443A),
+    outline = Color(0xFF85746A),
+    surfaceContainer = Color(0xFFF7ECE4),
+    surfaceContainerHigh = Color(0xFFF1E6DE),
+    error = Color(0xFFBA1A1A),
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF410002),
+)
+
 @Composable
-fun TrazoTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = if (dark) Dark else Light, content = content)
+fun TrazoTheme(
+    activity: app.trazo.gpx.Activity? = null,
+    dark: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit,
+) {
+    val hike = activity == app.trazo.gpx.Activity.HIKE
+    val scheme = when {
+        hike && dark -> HikeDark
+        hike -> HikeLight
+        dark -> Dark
+        else -> Light
+    }
+    MaterialTheme(colorScheme = scheme, content = content)
 }

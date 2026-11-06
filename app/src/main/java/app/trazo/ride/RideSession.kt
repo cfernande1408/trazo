@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.location.Location
 import androidx.core.content.ContextCompat
+import app.trazo.gpx.Activity
 import app.trazo.gpx.ride.RideRecorder
+import app.trazo.ui.AppMode
 import app.trazo.gpx.ride.RideStats
 import app.trazo.gpx.ride.TimedPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,6 +28,7 @@ data class RideState(
     val points: List<List<TimedPoint>> = emptyList(),
     /** Si se graba siguiendo una ruta, su nombre. */
     val routeName: String? = null,
+    val activity: Activity = Activity.BIKE,
 )
 
 /**
@@ -44,10 +47,10 @@ object RideSession {
 
     private var recorder = RideRecorder()
 
-    fun start(context: Context, routeName: String? = null) {
+    fun start(context: Context, routeName: String? = null, activity: Activity = AppMode.current) {
         if (_state.value.active) return
-        recorder = RideRecorder()
-        _state.value = RideState(active = true, startedAtMs = System.currentTimeMillis(), routeName = routeName)
+        recorder = RideRecorder(activity)
+        _state.value = RideState(active = true, startedAtMs = System.currentTimeMillis(), routeName = routeName, activity = activity)
         ContextCompat.startForegroundService(context, Intent(context, RideService::class.java))
     }
 
@@ -66,9 +69,10 @@ object RideSession {
         if (!_state.value.active) return null
         context.stopService(Intent(context, RideService::class.java))
         val points = recorder.points
-        val name = _state.value.routeName ?: "Salida"
+        val activity = _state.value.activity
+        val name = _state.value.routeName ?: if (activity == Activity.HIKE) "Excursión" else "Salida"
         _state.value = RideState()
-        return if (points.sumOf { it.size } >= 2) RideStore.save(context, name, points) else null
+        return if (points.sumOf { it.size } >= 2) RideStore.save(context, name, points, activity) else null
     }
 
     /** Lo llama el servicio con cada posición del GPS. */

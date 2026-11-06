@@ -1,5 +1,6 @@
 package app.trazo.gpx.ride
 
+import app.trazo.gpx.Activity
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.Gpx
 import app.trazo.gpx.TrackStatsCalculator
@@ -47,17 +48,18 @@ object RideCalculator {
      * ¿Se acepta [p] detrás de [last]? Descarta posiciones imprecisas
      * (> 30 m), saltos imposibles y el temblor del GPS cuando estás parado.
      */
-    fun accept(last: TimedPoint?, p: TimedPoint): Boolean {
+    fun accept(last: TimedPoint?, p: TimedPoint, activity: Activity = Activity.BIKE): Boolean {
         if (p.accuracy != null && p.accuracy > 30f) return false
         if (last == null) return true
         val dt = p.timeMs - last.timeMs
         if (dt <= 0) return false
         val d = dist(last, p)
-        if (d / (dt / 1000.0) > MAX_PLAUSIBLE_MPS) return false
+        if (d / (dt / 1000.0) > activity.maxPlausibleMps) return false
         return d >= 3.0 || dt >= MAX_GAP_MS
     }
 
-    fun compute(segments: List<List<TimedPoint>>): RideStats {
+    fun compute(segments: List<List<TimedPoint>>, activity: Activity = Activity.BIKE): RideStats {
+        val movingMps = activity.movingMps
         val pts = segments.filter { it.isNotEmpty() }
         if (pts.isEmpty()) return RideStats.EMPTY
         var distance = 0.0
@@ -70,7 +72,7 @@ object RideCalculator {
                 val dt = seg[i].timeMs - seg[i - 1].timeMs
                 cum[i] = cum[i - 1] + d
                 distance += d
-                if (dt in 1..MAX_GAP_MS && d / (dt / 1000.0) >= MOVING_MPS) moving += dt
+                if (dt in 1..MAX_GAP_MS && d / (dt / 1000.0) >= movingMps) moving += dt
             }
             // Ventana deslizante de al menos 5 s para la velocidad máxima
             var j = 0
@@ -107,7 +109,7 @@ object RideCalculator {
 }
 
 /** Graba una salida: añade posiciones filtradas y admite pausas (cada pausa abre un tramo nuevo). */
-class RideRecorder {
+class RideRecorder(val activity: Activity = Activity.BIKE) {
     private val segments = mutableListOf<MutableList<TimedPoint>>(mutableListOf())
     var paused = false
         private set
@@ -118,7 +120,7 @@ class RideRecorder {
     fun add(p: TimedPoint): Boolean {
         if (paused) return false
         val current = segments.last()
-        if (!RideCalculator.accept(current.lastOrNull(), p)) return false
+        if (!RideCalculator.accept(current.lastOrNull(), p, activity)) return false
         current.add(p)
         return true
     }
@@ -133,5 +135,5 @@ class RideRecorder {
         if (segments.last().isNotEmpty()) segments.add(mutableListOf())
     }
 
-    fun stats(): RideStats = RideCalculator.compute(points)
+    fun stats(): RideStats = RideCalculator.compute(points, activity)
 }

@@ -58,6 +58,24 @@ object Http {
             }
         }
 
+    /**
+     * GET que no lanza por código HTTP: devuelve (código, cuerpo), leyendo
+     * también el cuerpo de error. BRouter explica ahí por qué no hay ruta.
+     */
+    suspend fun getWithStatus(url: String): Pair<Int, String> = withContext(Dispatchers.IO) {
+        val c = URL(url).openConnection() as HttpURLConnection
+        try {
+            c.connectTimeout = 15_000
+            c.readTimeout = 45_000
+            c.setRequestProperty("User-Agent", USER_AGENT)
+            val code = c.responseCode
+            val stream = if (code in 200..299) c.inputStream else c.errorStream
+            code to (stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: "")
+        } finally {
+            c.disconnect()
+        }
+    }
+
     /** El servidor respondió pero está lleno (429/5xx): merece la pena reintentar. */
     class BusyException(val code: Int) : IOException("Servidor saturado ($code)")
 

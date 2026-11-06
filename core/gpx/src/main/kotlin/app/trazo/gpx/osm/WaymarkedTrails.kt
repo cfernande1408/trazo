@@ -21,6 +21,13 @@ object WaymarkedTrails {
     enum class Flavour(val host: String, val mtb: Boolean) {
         MTB("mtb", true),
         CYCLING("cycling", false),
+        HIKING("hiking", false),
+    }
+
+    /** Qué capas de rutas se miran según la actividad. */
+    fun flavoursFor(activity: app.trazo.gpx.Activity): List<Flavour> = when (activity) {
+        app.trazo.gpx.Activity.BIKE -> listOf(Flavour.MTB, Flavour.CYCLING)
+        app.trazo.gpx.Activity.HIKE -> listOf(Flavour.HIKING)
     }
 
     data class Listed(val id: Long, val name: String, val ref: String?)
