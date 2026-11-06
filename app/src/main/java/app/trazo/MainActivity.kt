@@ -8,12 +8,30 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.trazo.community.CommunityScreen
+import app.trazo.explore.ExploreScreen
+import app.trazo.explore.WikilocBrowser
 import app.trazo.importer.ImportScreen
 import app.trazo.importer.ImportState
 import app.trazo.importer.ImportViewModel
@@ -29,6 +47,9 @@ class MainActivity : ComponentActivity() {
         uri?.let(importer::import)
     }
 
+    /** Pestaña seleccionada; también la cambia un GPX que llega por Abrir con / Compartir. */
+    private var tab by mutableIntStateOf(0)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MapLibre.getInstance(this)
@@ -38,15 +59,51 @@ class MainActivity : ComponentActivity() {
             TrazoTheme {
                 val state by importer.state.collectAsStateWithLifecycle()
                 var showMap by rememberSaveable { mutableStateOf(false) }
+                var showWikiloc by rememberSaveable { mutableStateOf(false) }
                 val loaded = state as? ImportState.Loaded
-                if (showMap && loaded != null) {
-                    MapScreen(loaded, onBack = { showMap = false })
-                } else {
-                    ImportScreen(
-                        state,
-                        onPickFile = { pickGpx.launch(arrayOf("*/*")) },
-                        onOpenMap = { showMap = true },
-                    )
+                val openRoute: (app.trazo.gpx.Gpx) -> Unit = { gpx ->
+                    importer.importGpx(gpx)
+                    showWikiloc = false
+                    tab = 0
+                }
+
+                when {
+                    showMap && loaded != null -> MapScreen(loaded, onBack = { showMap = false })
+                    showWikiloc -> WikilocBrowser(onClose = { showWikiloc = false }, onGpx = openRoute)
+                    else -> Scaffold(
+                        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                        bottomBar = {
+                            NavigationBar {
+                                NavigationBarItem(
+                                    selected = tab == 0, onClick = { tab = 0 },
+                                    icon = { Icon(Icons.Filled.Home, contentDescription = null) },
+                                    label = { Text("Mis rutas") },
+                                )
+                                NavigationBarItem(
+                                    selected = tab == 1, onClick = { tab = 1 },
+                                    icon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                                    label = { Text("Explorar") },
+                                )
+                                NavigationBarItem(
+                                    selected = tab == 2, onClick = { tab = 2 },
+                                    icon = { Icon(Icons.Filled.Person, contentDescription = null) },
+                                    label = { Text("Comunidad") },
+                                )
+                            }
+                        },
+                    ) { padding ->
+                        Box(Modifier.padding(padding).consumeWindowInsets(padding)) {
+                            when (tab) {
+                                0 -> ImportScreen(
+                                    state,
+                                    onPickFile = { pickGpx.launch(arrayOf("*/*")) },
+                                    onOpenMap = { showMap = true },
+                                )
+                                1 -> ExploreScreen(onRouteReady = openRoute, onOpenWikiloc = { showWikiloc = true })
+                                else -> CommunityScreen()
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -63,6 +120,9 @@ class MainActivity : ComponentActivity() {
             Intent.ACTION_SEND -> IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
             else -> null
         }
-        uri?.let(importer::import)
+        uri?.let {
+            tab = 0
+            importer.import(it)
+        }
     }
 }

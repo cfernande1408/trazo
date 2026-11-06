@@ -46,15 +46,29 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
                         .openInputStream(uri)
                         ?.use(GpxParser::parse)
                         ?: error("No se pudo abrir el archivo")
-                    if (gpx.segments.isEmpty()) error("El GPX no tiene ningún track")
-                    ImportState.Loaded(
-                        gpx = gpx,
-                        stats = TrackStatsCalculator.compute(gpx.segments),
-                        preview = gpx.segments.map { RouteGeometry.downsample(it, 400) },
-                        profile = RouteGeometry.downsample(ElevationProfile.of(gpx.segments), 300),
-                    )
+                    loaded(gpx)
                 }.getOrElse { ImportState.Error(it.message ?: "Archivo no válido") }
             }
         }
+    }
+
+    /** Para rutas que no vienen de un archivo: Explorar (OSM) o el navegador de Wikiloc. */
+    fun importGpx(gpx: Gpx) {
+        _state.value = ImportState.Loading
+        viewModelScope.launch {
+            _state.value = withContext(Dispatchers.Default) {
+                runCatching { loaded(gpx) }.getOrElse { ImportState.Error(it.message ?: "Ruta no válida") }
+            }
+        }
+    }
+
+    private fun loaded(gpx: Gpx): ImportState.Loaded {
+        if (gpx.segments.isEmpty()) error("El GPX no tiene ningún track")
+        return ImportState.Loaded(
+            gpx = gpx,
+            stats = TrackStatsCalculator.compute(gpx.segments),
+            preview = gpx.segments.map { RouteGeometry.downsample(it, 400) },
+            profile = RouteGeometry.downsample(ElevationProfile.of(gpx.segments), 300),
+        )
     }
 }
