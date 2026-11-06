@@ -162,9 +162,10 @@ function refreshTrees() {
   lastPlant = performance.now();
   const z = map.getZoom();
   if (z < 12.5) { map.getSource('trees').setData(EMPTY); return; }
-  // Más cerca, árboles más juntos; alrededor del centro de la vista (en el vuelo, el ciclista)
-  const stepM = z >= 15 ? 26 : z >= 14 ? 40 : 65;
-  const radius = stepM * 48;
+  // Más cerca, árboles más juntos; alrededor del centro de la vista (en el vuelo, el ciclista).
+  // Separación ×1,75 respecto a la primera versión: un tercio de árboles, se ve el monte
+  const stepM = z >= 15 ? 45 : z >= 14 ? 70 : 115;
+  const radius = stepM * 40;
   const c = map.getCenter();
   const dLat = radius / 111320, dLon = dLat / Math.cos(c.lat * RAD);
   const area = { w: c.lng - dLon, e: c.lng + dLon, s: c.lat - dLat, n: c.lat + dLat, clat: Math.round(c.lat * 2) / 2 };
@@ -275,7 +276,7 @@ function start(style, track, b) {
     const wood = ['==', ['get', 'class'], 'wood'];
     // Borde del bosque, siempre de pinos
     map.addLayer({ id: 'trees-edge', type: 'symbol', source: 'omt', 'source-layer': 'landcover', minzoom: 12, filter: wood,
-      layout: Object.assign({ 'symbol-placement': 'line', 'symbol-spacing': 34, 'icon-image': 'pino-pie',
+      layout: Object.assign({ 'symbol-placement': 'line', 'symbol-spacing': 70, 'icon-image': 'pino-pie',
         'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.45, 14, 0.8, 16, 1.2] }, treeLayout) }, 'place-label');
     // Interior: la rejilla de plant(), con mezcla de pinos y frondosas según la estación
     map.addSource('trees', { type: 'geojson', data: EMPTY });
