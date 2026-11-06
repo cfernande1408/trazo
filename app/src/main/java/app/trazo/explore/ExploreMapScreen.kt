@@ -24,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -80,6 +81,7 @@ private val MADRID = LatLng(40.4168, -3.7038)
  * Las rutas se piden solo para la zona que ves y se van sumando al moverte.
  * Al tocar una bici se dibuja su recorrido y abajo salen sus datos.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExploreMapScreen(onRouteReady: (Gpx) -> Unit, vm: ExploreMapViewModel = viewModel()) {
     val context = LocalContext.current
@@ -87,6 +89,7 @@ fun ExploreMapScreen(onRouteReady: (Gpx) -> Unit, vm: ExploreMapViewModel = view
     val status by vm.status.collectAsStateWithLifecycle()
     val onlyMtb by vm.onlyMtb.collectAsStateWithLifecycle()
     val selected by vm.selected.collectAsStateWithLifecycle()
+    val canRetry by vm.canRetry.collectAsStateWithLifecycle()
 
     BackHandler(enabled = selected != null) { vm.clearSelection() }
 
@@ -179,9 +182,14 @@ fun ExploreMapScreen(onRouteReady: (Gpx) -> Unit, vm: ExploreMapViewModel = view
                 colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             )
             status?.let { s ->
-                Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                Surface(
+                    onClick = { if (canRetry) vm.retry() },
+                    enabled = canRetry,
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ) {
                     Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        if (s.startsWith("Buscando")) {
+                        if (s.startsWith("Buscando") || s.endsWith("reintentando…")) {
                             CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
                             Box(Modifier.size(8.dp))
                         }

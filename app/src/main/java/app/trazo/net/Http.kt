@@ -17,6 +17,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.net.URL
@@ -127,6 +128,12 @@ object Http {
         is BusyException -> "El servidor está saturado. Prueba en un par de minutos."
         is UnknownHostException -> "Sin conexión con el servidor de rutas. Comprueba internet y vuelve a probar."
         is SocketTimeoutException -> "El servidor de rutas tarda demasiado. Prueba en un rato."
+        // "Software caused connection abort", "Connection reset"…: el sistema cortó la conexión
+        is SocketException -> "Se cortó la conexión con el servidor de rutas."
+        is IOException -> when (val cause = e.cause) {
+            is SocketException, is UnknownHostException, is SocketTimeoutException -> friendly(cause)
+            else -> e.message ?: "No se pudo conectar"
+        }
         null -> "No se pudo conectar"
         else -> e.message ?: "No se pudo conectar"
     }

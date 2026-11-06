@@ -51,10 +51,19 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
         _onlyMtb.value = !_onlyMtb.value
     }
 
+    /** Última zona pedida, para poder reintentarla tocando el aviso. */
+    private var lastView: Pair<Bbox, Double>? = null
+
+    /** true si el aviso actual es un error que se puede reintentar tocándolo. */
+    private val _canRetry = MutableStateFlow(false)
+    val canRetry: StateFlow<Boolean> = _canRetry.asStateFlow()
+
     /** Se llama cada vez que el mapa se para. Carga las rutas de la zona visible si faltan. */
     fun onViewport(view: Bbox, zoom: Double) {
+        lastView = view to zoom
         if (zoom < MIN_ZOOM) {
             loadJob?.cancel()
+            _canRetry.value = false
             _status.value = ZOOM_HINT
             return
         }
@@ -65,19 +74,35 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             delay(350) // por si sigues moviendo el mapa
+            _canRetry.value = false
             _status.value = "Buscando rutas en esta zona…"
-            val area = view.expand(0.3)
-            try {
-                val found = Overpass.parseSearch(Http.overpass(Overpass.bboxQuery(area)))
-                _routes.value = _routes.value + found.associateBy { it.id }
-                covered += area
-                _status.value = if (_routes.value.isEmpty()) "No hay rutas mapeadas en esta zona" else null
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _status.value = Http.friendly(e)
+            val area = view.expand(0.15)
+            // Cortes de red sueltos (cambio wifi/datos, la app un momento en segundo plano): reintento solo
+            for ((attempt, wait) in listOf(0L, 2_000L, 5_000L).withIndex()) {
+                if (wait > 0) {
+                    _status.value = "Se cortó la conexión, reintentando…"
+                    delay(wait)
+                }
+                try {
+                    val found = Overpass.parseSearch(Http.overpass(Overpass.bboxQuery(area)))
+                    _routes.value = _routes.value + found.associateBy { it.id }
+                    covered += area
+                    _status.value = if (_routes.value.isEmpty()) "No hay rutas mapeadas en esta zona" else null
+                    return@launch
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    if (attempt == 2) {
+                        _status.value = Http.friendly(e) + " Toca para reintentar."
+                        _canRetry.value = true
+                    }
+                }
             }
         }
+    }
+
+    fun retry() {
+        lastView?.let { (v, z) -> onViewport(v, z) }
     }
 
     fun select(id: Long) {
@@ -106,7 +131,7 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
 
     companion object {
         /** Más alejado que esto la zona es enorme y la consulta tardaría demasiado. */
-        const val MIN_ZOOM = 9.0
+        const val MIN_ZOOM = 10.0
         const val ZOOM_HINT = "Acerca el mapa para ver las rutas"
     }
 }
