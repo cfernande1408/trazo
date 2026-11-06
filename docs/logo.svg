@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C5F26B"/>
+      <stop offset="1" stop-color="#8CCB5E"/>
+    </linearGradient>
+    <clipPath id="tile"><rect width="160" height="160" rx="40"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="160" height="160" fill="url(#sky)"/>
+    <!-- Sierra al fondo y monte delante -->
+    <path d="M0 112 L38 70 L58 88 L88 50 L122 92 L138 78 L160 98 L160 160 L0 160 Z" fill="#4F7F33"/>
+    <path d="M88 50 L100 64 L94 62 L88 70 L82 61 L77 63 Z" fill="#FFFFFF" opacity="0.9"/>
+    <path d="M0 132 L44 104 L84 122 L124 102 L160 118 L160 160 L0 160 Z" fill="#2E4F00"/>
+    <!-- Pinos -->
+    <g fill="#1F3700">
+      <path d="M26 128 L33 114 L30 114 L36 102 L42 114 L39 114 L46 128 Z"/>
+      <path d="M128 122 L134 110 L131 110 L136 100 L141 110 L138 110 L144 122 Z"/>
+    </g>
+    <!-- El trazo: la ruta que sube el monte -->
+    <path d="M18 150 C 50 140, 46 118, 78 116 S 104 84, 122 74" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
+    <path d="M18 150 C 50 140, 46 118, 78 116 S 104 84, 122 74" fill="none" stroke="#C2410C" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="122" cy="74" r="10" fill="#C2410C" stroke="#FFFFFF" stroke-width="4"/>
+  </g>
+</svg>

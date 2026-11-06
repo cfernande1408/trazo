@@ -1,106 +1,139 @@
+<div align="center">
+
+<img src="docs/logo.svg" width="128" alt="Logo de Trazo">
+
 # Trazo
 
-App Android para salir al monte en **bici de montaña o a pie**: importa
-rutas GPX (por ejemplo, las que descargas de Wikiloc), explora las rutas
-de OpenStreetMap de tu zona, crea las tuyas y navégalas con avisos de
-desvío, perfil de desnivel y vista 3D.
+**Rutas de montaña, en bici o a pie, con un mapa que da gusto mirar.**
 
-Kotlin · Jetpack Compose · Material Design 3 · MapLibre
+Importa tus GPX de Wikiloc, encuentra las rutas de OpenStreetMap de tu zona, crea las tuyas
+y síguelas con avisos de desvío, perfil de desnivel y vista 3D. Sin cuentas, sin anuncios
+y sin claves de API.
+
+![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.1-7F52FF?logo=kotlin&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
+![MapLibre](https://img.shields.io/badge/MapLibre-13.6-396CB2?logo=maplibre&logoColor=white)
+![OpenStreetMap](https://img.shields.io/badge/datos-OpenStreetMap-7EBC6F?logo=openstreetmap&logoColor=white)
+![Estado](https://img.shields.io/badge/estado-en%20desarrollo-E0A100)
+
+[Qué hace](#qué-hace) · [Capturas](#capturas) · [Instalar](#instalar) · [Cómo está hecho](#cómo-está-hecho) · [Datos y servicios](#datos-y-servicios) · [Hoja de ruta](#hoja-de-ruta)
+
+</div>
+
+> [!NOTE]
+> Trazo es un proyecto personal en desarrollo (v0.1). Puede tener fallos: si encuentras uno, abre un *issue*.
+
+## Capturas
+
+| Explorar | Buscar | Ruta | Navegar |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/explorar.png" width="200"> | <img src="docs/screenshots/buscar.png" width="200"> | <img src="docs/screenshots/ruta.png" width="200"> | <img src="docs/screenshots/mapa.png" width="200"> |
+| **Vista 3D** | **Crear ruta** | **Grabar** | **Senderismo** |
+| <img src="docs/screenshots/3d.png" width="200"> | <img src="docs/screenshots/crear.png" width="200"> | <img src="docs/screenshots/salida.png" width="200"> | <img src="docs/screenshots/senderismo.png" width="200"> |
 
 ## Qué hace
 
-- **Biker o senderista.** Se elige al abrir la app por primera vez y lo
-  adapta todo: tema, rutas que se muestran, umbrales de navegación,
-  estadísticas y tiempo estimado (MIDE en senderismo).
-- **Mis rutas.** Importa GPX con *Abrir con…* o *Compartir → Trazo*.
-  Resumen con mapa topo, distancia, desnivel, tiempo estimado, perfil
-  arrastrable, puntos del autor y enlace a los comentarios en Wikiloc.
-  Biblioteca local de rutas guardadas.
-- **Crear ruta.** Tocas puntos en el mapa y [BRouter](https://brouter.de)
-  traza la ruta por pistas (perfil `mtb`) o senderos de montaña
-  (`hiking-mountain`). Deshacer, cerrar circular y guardar.
-- **Explorar.** Mapa de tu zona con un icono por cada ruta MTB/ciclista o
-  sendero de OSM (vía [Waymarked Trails](https://waymarkedtrails.org),
-  con Overpass de respaldo). Al tocarlo se dibuja y se puede abrir.
-- **Wikiloc.** Navegador integrado: lo que descargas en GPX se importa
-  solo. Trazo no hace *scraping* de Wikiloc.
-- **Navegar.** Posición en el mapa, aviso con vibración al salirte de la
-  ruta, próxima subida, empezar desde el inicio o desde un punto
-  (parking) y *Cómo llegar* con Google Maps.
-- **Vista 3D.** Relieve con exageración automática, edificios, pinos y
-  recorrido virtual de la ruta.
-- **Grabar salidas.** Servicio en primer plano (sigue con la pantalla
-  apagada), velocidad, tiempo en movimiento, mapa coloreado por
-  velocidad y exportación a GPX.
+🚵 **Biker o senderista.** Lo eliges al abrir la app por primera vez y se adapta todo: el tema,
+las rutas que ves, a cuántos metros salta el aviso de desvío, las estadísticas y el tiempo
+estimado (método MIDE en senderismo). Lo cambias cuando quieras.
 
-## Estructura
+🔎 **Buscador.** Escribe *Bola del Mundo* o *PR-M 13*: te lleva al sitio y te enseña las rutas
+de alrededor, o directamente las que se llaman así. Con un botón de **Lista** para ver todas
+las de la zona de la más cercana a la más lejana.
 
-```
-core/gpx/   Kotlin puro (sin dependencias de Android), con tests JUnit
-  gpx/        parser y escritor GPX, estadísticas, perfil, GeoJSON
-  gpx/nav/    navegador: emparejado con la ruta, desvíos, subidas
-  gpx/osm/    Overpass, Waymarked Trails, unión de vías, altitud
-  gpx/ride/   grabación y estadísticas de salidas
-  gpx/plan/   BRouter (crear rutas)
-  Activity.kt biker / senderista: umbrales, perfiles y tiempo estimado
-app/        Android: Compose + Material 3
-  importer/   Mis rutas
-  explore/    Explorar y navegador de Wikiloc
-  map/        mapa topo, navegación y vista 3D
-  plan/       crear ruta y biblioteca de rutas
-  ride/       grabar salidas y su historial
-  ui/         tema, modo biker/senderista, gráficos
-```
+🗺️ **Explorar.** Un mapa de tu zona con un icono por cada ruta MTB, ciclista o sendero de
+OpenStreetMap. Tócalo y se dibuja el recorrido, con distancia, desnivel y perfil.
 
-Toda la lógica que se puede probar sin un móvil vive en `core/gpx`.
+📥 **Tus GPX de Wikiloc.** Descárgalos en el navegador integrado o ábrelos con *Compartir → Trazo*.
+Resumen con mapa topo, perfil arrastrable, puntos del autor y enlace a los comentarios en Wikiloc.
 
-## Requisitos
+✏️ **Crear rutas.** Toca puntos en el mapa y la ruta se ajusta sola a pistas o senderos.
+Deshacer, cerrar en circular, guardar. Se quedan en el móvil y funcionan sin conexión.
 
-- Android Studio o JDK 17+ con el SDK de Android (compileSdk 35)
-- Móvil con Android 8.0 (API 26) o superior
+🧭 **Navegar.** Tu posición sobre la ruta, vibración al salirte, la próxima subida, empezar
+desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 
-Crea `local.properties` con la ruta al SDK si no lo hace Android Studio:
+🏔️ **Vista 3D.** Relieve con exageración automática, casas en volumen, bosques de árboles de pie
+y un recorrido virtual que vuela la ruta.
 
-```properties
-sdk.dir=/ruta/a/Android/Sdk
+⏺️ **Grabar salidas.** Sigue grabando con la pantalla apagada. Velocidad media y máxima, tiempo en
+movimiento, el recorrido coloreado por velocidad y exportación a GPX.
+
+🍂 **Según la estación.** El mapa, los árboles y el acento del tema cambian con el año: flores en
+primavera, hojas naranjas en otoño, pinos nevados en invierno. Y un consejo de temporada antes de salir.
+
+🌞 **Modo sol.** Tema claro de alto contraste para leer la pantalla a pleno sol, y oscuro para el resto.
+
+## Instalar
+
+Todavía no hay APK publicada. Para compilarla necesitas JDK 17+ y el SDK de Android (compileSdk 35):
+
+```bash
+git clone https://github.com/cfernande1408/trazo.git
+cd trazo
+echo "sdk.dir=$HOME/Android/Sdk" > local.properties   # si no lo crea Android Studio
+./gradlew :app:installDebug                            # con el móvil conectado por USB
 ```
 
-## Comandos
+Funciona en Android 8.0 (API 26) o superior. No necesita Google Play Services.
+
+## Cómo está hecho
+
+| | |
+| --- | --- |
+| **Interfaz** | Kotlin, Jetpack Compose y Material Design 3 |
+| **Mapa** | MapLibre Native con un estilo topo propio (sombreado de relieve y árboles dibujados) |
+| **3D** | MapLibre GL JS en una WebView, con relieve, edificios y árboles |
+| **Ubicación** | `LocationManager` de Android, sin el proveedor de Google |
+| **Núcleo** | Módulo de Kotlin puro, sin dependencias, con tests |
+
+```
+core/gpx/      Kotlin puro: todo lo que se puede probar sin móvil
+  gpx/           parser y escritor GPX, estadísticas, perfil, GeoJSON, estaciones
+  gpx/nav/       navegación: emparejar con la ruta, desvíos, subidas
+  gpx/osm/       Overpass, Waymarked Trails, Nominatim, unión de tramos, altitud
+  gpx/ride/      grabación y estadísticas de salidas
+  gpx/plan/      BRouter (crear rutas)
+app/           Android
+  importer/      Mis rutas
+  explore/       Explorar, buscador y navegador de Wikiloc
+  map/           mapa topo, navegación y vista 3D
+  plan/          crear ruta y biblioteca de rutas
+  ride/          grabar salidas y su historial
+  ui/            tema, modo biker/senderista, gráficos
+```
 
 ```bash
 ./gradlew :core:gpx:test        # tests del núcleo
 ./gradlew :app:assembleDebug    # APK de debug
-./gradlew :app:installDebug     # instalar en el móvil conectado
+./scripts/screenshot.sh ruta    # captura del móvil para el README
 ```
 
-Para probar la importación sin Wikiloc:
+## Datos y servicios
 
-```bash
-adb push core/gpx/src/test/resources/wikiloc_sample.gpx /sdcard/Download/
-```
+Todo son servicios abiertos y gratuitos. Trazo no tiene servidor propio ni recoge datos:
+tus rutas, salidas y ajustes se quedan en el móvil.
 
-y abre el archivo desde el gestor de archivos con Trazo.
-
-## Servicios y datos
-
-Trazo no usa claves de API ni cuentas. Todo son servicios abiertos:
-
-| Uso | Servicio | Datos |
+| Para qué | Servicio | Datos |
 | --- | --- | --- |
-| Mapa base | [OpenFreeMap](https://openfreemap.org) | © OpenStreetMap |
-| Relieve y 3D | [Terrain Tiles en AWS](https://registry.opendata.aws/terrain-tiles/) | Mapzen / varias fuentes |
-| Rutas de la zona | [Waymarked Trails](https://waymarkedtrails.org), [Overpass API](https://overpass-api.de) | © OpenStreetMap |
-| Crear rutas | [BRouter](https://brouter.de) | © OpenStreetMap |
-| Altitud | [Open-Meteo Elevation](https://open-meteo.com) | Copernicus DEM |
+| Mapa base | [OpenFreeMap](https://openfreemap.org) | © colaboradores de OpenStreetMap |
+| Relieve y 3D | [Terrain Tiles en AWS](https://registry.opendata.aws/terrain-tiles/) | Mapzen y otras fuentes |
+| Rutas de la zona | [Waymarked Trails](https://waymarkedtrails.org) y [Overpass API](https://overpass-api.de) | © colaboradores de OpenStreetMap |
+| Buscar lugares | [Nominatim](https://nominatim.org) | © colaboradores de OpenStreetMap |
+| Crear rutas | [BRouter](https://brouter.de) | © colaboradores de OpenStreetMap |
+| Altitud | [Open-Meteo](https://open-meteo.com) | Copernicus DEM |
 | Vista 3D | [MapLibre GL JS](https://maplibre.org) | — |
 
-Datos de OpenStreetMap © colaboradores de OpenStreetMap, bajo licencia
-[ODbL](https://www.openstreetmap.org/copyright).
+Los datos de OpenStreetMap están bajo licencia [ODbL](https://www.openstreetmap.org/copyright).
 
-Wikiloc es una marca de sus propietarios. Trazo no está afiliada a
-Wikiloc: solo abre su web y lee los GPX que el usuario descarga.
+Wikiloc es una marca de sus propietarios y Trazo no está afiliada a ella. La app solo abre su
+web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma automática.
 
-## Estado
+## Hoja de ruta
 
-Proyecto personal en desarrollo (v0.1). La pestaña Comunidad está en
-construcción.
+- [ ] Arrastrar los puntos de una ruta creada
+- [ ] Avisos por voz en los cruces
+- [ ] Mapas sin conexión por zonas
+- [ ] Dificultad de OSM (`mtb:scale`, `sac_scale`) en las rutas
+- [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…)
