@@ -63,6 +63,8 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
         val track = GeoJson.track(state.gpx.segments.map { RouteGeometry.downsample(it, 1500) })
         val b = RouteGeometry.bounds(state.gpx.segments)
         val bounds = b?.let { "[[${it.minLon},${it.minLat}],[${it.maxLon},${it.maxLat}]]" } ?: "null"
+        // Diferencia entre el punto más alto y el más bajo, para ajustar la exageración del relieve
+        val relief = (state.stats.maxElevation ?: 0.0) - (state.stats.minElevation ?: 0.0)
 
         WebView(context).apply {
             // Sin esto la WebView se mide "al contenido" y una página de alto 100 % queda a 0
@@ -77,7 +79,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
             }, "Trazo")
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView, url: String?) {
-                    view.evaluateJavascript("init($style, $track, $bounds);", null)
+                    view.evaluateJavascript("init($style, $track, $bounds, $relief);", null)
                 }
             }
             // Los mensajes de la página van al logcat: adb logcat | grep Trazo3D

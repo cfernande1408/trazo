@@ -65,13 +65,16 @@ function pineImage() {
 }
 
 let waitedFrames = 0;
-function init(style, track, b) {
+/** Exageración del relieve según cuánto sube y baja la ruta: más en rutas suaves, poca en sierra. */
+let exaggeration = 1.3;
+function init(style, track, b, reliefMeters) {
+  if (reliefMeters > 0) exaggeration = Math.max(1.3, Math.min(2.8, 750 / reliefMeters));
   // Si el mapa se crea con la vista aún a 0×0, la cámara sale NaN y no se pinta nada.
   const el = document.getElementById('map');
   if (el.clientWidth === 0 || el.clientHeight === 0) {
     if (waitedFrames === 0) console.log('Esperando tamaño de la vista…');
     if (++waitedFrames > 300) { show('La vista 3D no tiene tamaño (' + el.clientWidth + 'x' + el.clientHeight + ').'); return; }
-    requestAnimationFrame(() => init(style, track, b));
+    requestAnimationFrame(() => init(style, track, b, reliefMeters));
     return;
   }
   console.log('Vista ' + el.clientWidth + 'x' + el.clientHeight);
@@ -92,8 +95,10 @@ function start(style, track, b) {
     pitch: 60, bearing: -20, maxPitch: 70,
     // La pantalla del móvil tiene densidad ~3,5: a 2 se ve igual de bien y va mucho más fluido
     pixelRatio: Math.min(2, window.devicePixelRatio || 1),
-    attributionControl: { compact: true },
+    attributionControl: false,
   });
+  // Créditos arriba a la derecha, recogidos, para que no los tape el botón de abajo
+  map.addControl(new maplibregl.AttributionControl({ compact: true }), 'top-right');
   window.addEventListener('resize', () => map.resize());
   map.on('idle', () => console.log('Mapa listo y pintado'));
   map.on('error', e => console.error('MapLibre: ' + (e && e.error ? e.error.message : e)));
@@ -114,7 +119,8 @@ function start(style, track, b) {
     }
     map.fitBounds(b, { padding: 40, pitch: 60, bearing: -20, duration: 0 });
     console.log('Cámara zoom ' + map.getZoom().toFixed(2) + ' centro ' + map.getCenter().toArray().map(v => v.toFixed(4)));
-    map.setTerrain({ source: 'terrain3d', exaggeration: 1.25 });
+    console.log('Exageración del relieve ' + exaggeration.toFixed(2));
+    map.setTerrain({ source: 'terrain3d', exaggeration: exaggeration });
     try {
       // Cielo azul y niebla solo en la línea del horizonte
       map.setSky({ 'sky-color': '#7FB7E3', 'horizon-color': '#DCE8F0', 'fog-color': '#E4E9E6',
@@ -143,7 +149,7 @@ function fly() {
   const duration = Math.min(90000, Math.max(30000, total / 1000 * 2500));
   let start = null;
   // Cámara algo más alta: menos teselas por segundo y sin "paredes" de relieve sin cargar
-  const ZOOM = 13.6, PITCH = 60;
+  const ZOOM = 14.0, PITCH = 66;
   map.jumpTo({ center: line[0], zoom: ZOOM, pitch: PITCH, bearing: bearing(line[0], at(Math.min(total, 300))) });
   const step = t => {
     if (start === null) start = t;
