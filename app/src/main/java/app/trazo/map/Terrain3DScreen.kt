@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import app.trazo.gpx.GeoJson
+import app.trazo.ui.AppMode
 import app.trazo.gpx.RouteGeometry
 import app.trazo.importer.ImportState
 
@@ -57,7 +58,9 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
     var flying by remember { mutableStateOf(false) }
 
     val webView = remember {
-        val style = context.assets.open("trazo_topo.json").bufferedReader().use { it.readText() }
+        val season = AppMode.season
+        val style = TrazoMapStyle.styleJson(context, season)
+        val palette = season.paletteJson()
         val html = context.assets.open("terrain3d.html").bufferedReader().use { it.readText() }
         // Track reducido: el vuelo y la línea no necesitan miles de puntos
         val track = GeoJson.track(state.gpx.segments.map { RouteGeometry.downsample(it, 1500) })
@@ -79,7 +82,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
             }, "Trazo")
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView, url: String?) {
-                    view.evaluateJavascript("init($style, $track, $bounds, $relief);", null)
+                    view.evaluateJavascript("init($style, $track, $bounds, $relief, $palette);", null)
                 }
             }
             // Los mensajes de la página van al logcat: adb logcat | grep Trazo3D

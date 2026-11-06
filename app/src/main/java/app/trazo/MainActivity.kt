@@ -87,12 +87,14 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handleIntent(intent)
         setContent {
             val chosen by AppMode.activity.collectAsStateWithLifecycle()
+            val seasonOverride by AppMode.seasonOverride.collectAsStateWithLifecycle()
+            val season = seasonOverride ?: AppMode.todaySeason()
             val context = LocalContext.current
             // Primera vez: ¿biker o senderista?
             val activity = chosen
             if (activity == null) {
                 TrazoTheme { OnboardingScreen(onChoose = { AppMode.set(context, it) }) }
-            } else TrazoTheme(activity) {
+            } else TrazoTheme(activity, season) {
                 val state by importer.state.collectAsStateWithLifecycle()
                 var showMap by rememberSaveable { mutableStateOf(false) }
                 var show3D by rememberSaveable { mutableStateOf(false) }
@@ -208,6 +210,9 @@ class MainActivity : ComponentActivity() {
                                     onRides = { showRides = true },
                                     activity = activity,
                                     onSwitchActivity = { AppMode.set(context, it) },
+                                    season = season,
+                                    seasonOverride = seasonOverride,
+                                    onSeason = { AppMode.setSeason(context, it) },
                                     onCreateRoute = { showPlanner = true },
                                     library = library,
                                     onOpenSaved = { r ->

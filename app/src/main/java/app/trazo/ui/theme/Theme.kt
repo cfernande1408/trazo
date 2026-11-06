@@ -6,6 +6,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import app.trazo.gpx.Season
 
 private val Dark = darkColorScheme(
     primary = Color(0xFFC5F26B),
@@ -123,18 +124,43 @@ private val HikeLight = lightColorScheme(
     onErrorContainer = Color(0xFF410002),
 )
 
+/**
+ * Acento de la estación: el color terciario (chips, avisos, detalles) cambia
+ * con el año; el principal sigue siendo el de tu actividad.
+ */
+private class SeasonTint(
+    val light: Color, val lightContainer: Color, val onLightContainer: Color,
+    val dark: Color, val darkContainer: Color, val onDarkContainer: Color,
+)
+
+private fun tint(season: Season) = when (season) {
+    // Flor de jara y cerezo
+    Season.SPRING -> SeasonTint(Color(0xFF9C4069), Color(0xFFFFD9E3), Color(0xFF3E0021), Color(0xFFFFB0CB), Color(0xFF7E2951), Color(0xFFFFD9E3))
+    // Cielo de verano
+    Season.SUMMER -> SeasonTint(Color(0xFF00658E), Color(0xFFC7E7FF), Color(0xFF001E2E), Color(0xFF84CFFF), Color(0xFF004C6C), Color(0xFFC7E7FF))
+    // Hojas de roble y castaño
+    Season.AUTUMN -> SeasonTint(Color(0xFF9A4521), Color(0xFFFFDBCE), Color(0xFF370E00), Color(0xFFFFB597), Color(0xFF7B2E0B), Color(0xFFFFDBCE))
+    // Hielo
+    Season.WINTER -> SeasonTint(Color(0xFF3D5F90), Color(0xFFD5E3FF), Color(0xFF001B3C), Color(0xFFA7C8FF), Color(0xFF234776), Color(0xFFD5E3FF))
+}
+
 @Composable
 fun TrazoTheme(
     activity: app.trazo.gpx.Activity? = null,
+    season: Season? = null,
     dark: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
     val hike = activity == app.trazo.gpx.Activity.HIKE
-    val scheme = when {
+    val base = when {
         hike && dark -> HikeDark
         hike -> HikeLight
         dark -> Dark
         else -> Light
     }
+    val scheme = season?.let { tint(it) }?.let { t ->
+        if (dark) base.copy(tertiary = t.dark, tertiaryContainer = t.darkContainer, onTertiaryContainer = t.onDarkContainer, onTertiary = t.darkContainer)
+        else base.copy(tertiary = t.light, tertiaryContainer = t.lightContainer, onTertiaryContainer = t.onLightContainer, onTertiary = Color.White)
+    } ?: base
     MaterialTheme(colorScheme = scheme, content = content)
 }

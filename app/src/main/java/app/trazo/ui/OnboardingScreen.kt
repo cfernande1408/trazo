@@ -25,6 +25,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.trazo.gpx.Activity
+import app.trazo.gpx.Season
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 
 /** Primera pantalla: ¿biker o senderista? */
 @Composable
@@ -78,18 +83,45 @@ private fun ChoiceCard(activity: Activity, text: String, onChoose: (Activity) ->
     }
 }
 
-/** Diálogo para cambiar de actividad más tarde. */
+/**
+ * Ajustes rápidos: cambiar de actividad y elegir la estación del mapa
+ * (por defecto va con el calendario).
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ActivitySwitchDialog(current: Activity, onDismiss: () -> Unit, onChoose: (Activity) -> Unit) {
+fun ActivitySwitchDialog(
+    current: Activity,
+    onDismiss: () -> Unit,
+    onChoose: (Activity) -> Unit,
+    seasonOverride: Season? = null,
+    onSeason: (Season?) -> Unit = {},
+) {
+    val other = if (current == Activity.BIKE) Activity.HIKE else Activity.BIKE
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(current.icon, contentDescription = null) },
         title = { Text("¿Cómo sales hoy?") },
-        text = { Text("Ahora mismo: ${current.label}. Las rutas, avisos y estadísticas se adaptan.") },
-        confirmButton = {
-            val other = if (current == Activity.BIKE) Activity.HIKE else Activity.BIKE
-            TextButton(onClick = { onChoose(other) }) { Text("Cambiar a ${other.label.lowercase()}") }
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Ahora mismo: ${current.label}. Las rutas, avisos y estadísticas se adaptan.")
+                FilledTonalButton(onClick = { onChoose(other) }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(other.icon, contentDescription = null, Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text("Cambiar a ${other.label.lowercase()}")
+                }
+                Text("Estación del mapa", style = MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = seasonOverride == null,
+                        onClick = { onSeason(null) },
+                        label = { Text("Automática (${AppMode.todaySeason().label.lowercase()})") },
+                    )
+                    Season.entries.forEach { s ->
+                        FilterChip(selected = seasonOverride == s, onClick = { onSeason(s) }, label = { Text(s.label) })
+                    }
+                }
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Seguir así") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Listo") } },
     )
 }

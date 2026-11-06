@@ -44,55 +44,158 @@ function at(d) {
   return [line[lo][0] + (line[hi][0] - line[lo][0]) * t, line[lo][1] + (line[hi][1] - line[lo][1]) * t];
 }
 
+// Colores de los árboles según la estación (Trazo los manda en init)
+let pal = { pineLight: '#5E9340', pineShade: '#3F6F2A', broadleaf: '#6FA048', broadleafShade: '#4D7F31',
+            blossom: null, snow: false, broadleafShare: 0.3 };
+
+function canvas(wDp, hDp) {
+  const dpr = window.devicePixelRatio || 1, w = Math.round(wDp * dpr), h = Math.round(hDp * dpr);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  return { g: c.getContext('2d'), w, h, dpr };
+}
+function poly(g, pts, X, Y, color) {
+  g.fillStyle = color; g.beginPath();
+  pts.forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y)));
+  g.closePath(); g.fill();
+}
+
 // Pino "de pie" para el 3D: más alto y con sombra en la base, se dibuja mirando siempre a la cámara
 function standingPine() {
-  const dpr = window.devicePixelRatio || 1, w = Math.round(30 * dpr), h = Math.round(46 * dpr);
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const g = c.getContext('2d');
+  const { g, w, h, dpr } = canvas(30, 46);
   const k = w / 24, X = v => w / 2 + v * k, Y = v => h - 2 * dpr + (v - 4) * k * 1.05;
   g.fillStyle = 'rgba(40,50,30,0.25)';
   g.beginPath(); g.ellipse(w / 2, h - 3 * dpr, w * 0.32, 2.5 * dpr, 0, 0, 2 * Math.PI); g.fill();
   g.fillStyle = '#6B4F35'; g.fillRect(X(-1.6), Y(-7), 3.2 * k, 11 * k);
-  const tiers = [[[0,-40],[9,-25],[5,-25],[12,-8],[-12,-8],[-5,-25],[-9,-25]], [[0,-40],[9,-25],[5,-25],[12,-8],[0,-8]]];
-  ['#5E9340', '#3F6F2A'].forEach((col, t) => {
-    g.fillStyle = col; g.beginPath();
-    tiers[t].forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y)));
-    g.closePath(); g.fill();
-  });
+  poly(g, [[0,-40],[9,-25],[5,-25],[12,-8],[-12,-8],[-5,-25],[-9,-25]], X, Y, pal.pineLight);
+  poly(g, [[0,-40],[9,-25],[5,-25],[12,-8],[0,-8]], X, Y, pal.pineShade);
+  if (pal.snow) {
+    poly(g, [[0,-40],[4.5,-32.5],[-4.5,-32.5]], X, Y, '#FFFFFF');
+    poly(g, [[-9,-25],[9,-25],[7.5,-22.5],[-7.5,-22.5]], X, Y, '#FFFFFF');
+    poly(g, [[-12,-8],[12,-8],[10.5,-5.5],[-10.5,-5.5]], X, Y, '#FFFFFF');
+  }
   return { image: g.getImageData(0, 0, w, h), pixelRatio: dpr };
 }
 
-// Mismo pino que en el mapa 2D, dibujado en un canvas
+// Árbol de hoja ancha de pie (encina, roble, haya): verde, en flor u otoñal
+function standingBroadleaf() {
+  const { g, w, h, dpr } = canvas(30, 40);
+  const k = w / 24, X = v => w / 2 + v * k, Y = v => h - 2 * dpr + (v - 4) * k * 1.0;
+  g.fillStyle = 'rgba(40,50,30,0.25)';
+  g.beginPath(); g.ellipse(w / 2, h - 3 * dpr, w * 0.34, 2.5 * dpr, 0, 0, 2 * Math.PI); g.fill();
+  g.fillStyle = '#6B4F35'; g.fillRect(X(-1.8), Y(-12), 3.6 * k, 16 * k);
+  const blob = (x, y, r, col) => { g.fillStyle = col; g.beginPath(); g.arc(X(x), Y(y), r * k, 0, 2 * Math.PI); g.fill(); };
+  blob(0, -24, 11, pal.broadleaf); blob(-6, -17, 7.5, pal.broadleaf);
+  blob(6, -17, 7.5, pal.broadleafShade); blob(4, -27, 7.5, pal.broadleafShade);
+  if (pal.blossom) [[-6,-27],[2,-32],[7,-21],[-3,-18],[-8,-21],[1,-24]].forEach(([x, y]) => blob(x, y, 1.7, pal.blossom));
+  return { image: g.getImageData(0, 0, w, h), pixelRatio: dpr };
+}
+
+// Mismo pino que en el mapa 2D (por si el estilo lo pide antes de ocultar esa capa)
 function pineImage() {
-  const dpr = window.devicePixelRatio || 1, s = Math.round(72 * dpr);
-  const c = document.createElement('canvas'); c.width = c.height = s;
-  const g = c.getContext('2d');
-  function pine(cx, by, h) {
-    const k = h / 44, X = v => cx + v * k, Y = v => by - 4 * k + v * k;
+  const { g, w, dpr } = canvas(72, 72), s = w;
+  const pine = (cx, by, hh) => {
+    const k = hh / 44, X = v => cx + v * k, Y = v => by - 4 * k + v * k;
     g.fillStyle = '#7A5C3E'; g.fillRect(X(-1.5), Y(-6), 3 * k, 10 * k);
-    g.fillStyle = '#6E9F48'; g.beginPath();
-    [[0,-40],[9,-25],[5,-25],[12,-8],[-12,-8],[-5,-25],[-9,-25]].forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y)));
-    g.closePath(); g.fill();
-    g.fillStyle = '#4F7F33'; g.beginPath();
-    [[0,-40],[9,-25],[5,-25],[12,-8],[0,-8]].forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y)));
-    g.closePath(); g.fill();
-  }
+    poly(g, [[0,-40],[9,-25],[5,-25],[12,-8],[-12,-8],[-5,-25],[-9,-25]], X, Y, pal.pineLight);
+    poly(g, [[0,-40],[9,-25],[5,-25],[12,-8],[0,-8]], X, Y, pal.pineShade);
+  };
   pine(s * 0.25, s * 0.40, s * 0.25);
   pine(s * 0.75, s * 0.90, s * 0.22);
   return { image: g.getImageData(0, 0, s, s), pixelRatio: dpr };
 }
 
+// ── Árboles dentro de los bosques ─────────────────────────────────────────
+// El mapa base solo trae el contorno de cada bosque, así que se "planta" una
+// rejilla fija en el mundo (no se mueve con la cámara) con un pequeño
+// desorden por celda, y se queda con los puntos que caen dentro.
+function hash2(a, b) {
+  let h = Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+function inRing(x, y, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+// Par-impar: un claro (agujero) dentro del bosque queda fuera
+function inPolygon(x, y, rings) {
+  let inside = false;
+  for (const r of rings) if (inRing(x, y, r)) inside = !inside;
+  return inside;
+}
+/** polygons: [[anillo exterior, agujeros…]]; area: {w, s, e, n, clat}; devuelve Features de punto. */
+function plant(polygons, area, stepM, max, broadleafShare) {
+  const dLat = stepM / 111320, dLon = dLat / Math.cos(area.clat * Math.PI / 180);
+  const seen = new Set(), out = [];
+  for (const rings of polygons) {
+    if (!rings.length) continue;
+    let w = Infinity, s = Infinity, e = -Infinity, n = -Infinity;
+    for (const [x, y] of rings[0]) { if (x < w) w = x; if (x > e) e = x; if (y < s) s = y; if (y > n) n = y; }
+    w = Math.max(w, area.w); e = Math.min(e, area.e); s = Math.max(s, area.s); n = Math.min(n, area.n);
+    if (w > e || s > n) continue;
+    for (let i = Math.floor(s / dLat); i * dLat <= n; i++) {
+      for (let j = Math.floor(w / dLon); j * dLon <= e; j++) {
+        const key = i + ':' + j;
+        if (seen.has(key)) continue;
+        const lat = (i + 0.15 + 0.7 * hash2(i, j)) * dLat;
+        const lon = (j + 0.15 + 0.7 * hash2(j + 7, i + 3)) * dLon;
+        if (lat < s || lat > n || lon < w || lon > e || !inPolygon(lon, lat, rings)) continue;
+        seen.add(key);
+        out.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] },
+                   properties: { k: hash2(i * 3 + 1, j * 5 + 2) < broadleafShare ? 1 : 0, s: 0.8 + 0.45 * hash2(i + 11, j + 13) } });
+        if (out.length >= max) return out;
+      }
+    }
+  }
+  return out;
+}
+
+const EMPTY = { type: 'FeatureCollection', features: [] };
+let lastPlant = 0, plantTimer = null;
+function refreshTrees() {
+  plantTimer = null;
+  if (!map || !map.getSource('trees')) return;
+  lastPlant = performance.now();
+  const z = map.getZoom();
+  if (z < 12.5) { map.getSource('trees').setData(EMPTY); return; }
+  // Más cerca, árboles más juntos; alrededor del centro de la vista (en el vuelo, el ciclista)
+  const stepM = z >= 15 ? 26 : z >= 14 ? 40 : 65;
+  const radius = stepM * 48;
+  const c = map.getCenter();
+  const dLat = radius / 111320, dLon = dLat / Math.cos(c.lat * RAD);
+  const area = { w: c.lng - dLon, e: c.lng + dLon, s: c.lat - dLat, n: c.lat + dLat, clat: Math.round(c.lat * 2) / 2 };
+  const polys = [];
+  map.querySourceFeatures('omt', { sourceLayer: 'landcover', filter: ['==', ['get', 'class'], 'wood'] }).forEach(f => {
+    const g = f.geometry;
+    if (g.type === 'Polygon') polys.push(g.coordinates);
+    else if (g.type === 'MultiPolygon') g.coordinates.forEach(p => polys.push(p));
+  });
+  const trees = plant(polys, area, stepM, 4500, pal.broadleafShare);
+  map.getSource('trees').setData({ type: 'FeatureCollection', features: trees });
+}
+// Como mucho cada 1,2 s, y siempre una última vez al parar
+function scheduleTrees() {
+  if (plantTimer) return;
+  const wait = Math.max(150, 1200 - (performance.now() - lastPlant));
+  plantTimer = setTimeout(refreshTrees, wait);
+}
+
 let waitedFrames = 0;
 /** Exageración del relieve según cuánto sube y baja la ruta: más en rutas suaves, poca en sierra. */
 let exaggeration = 1.3;
-function init(style, track, b, reliefMeters) {
+function init(style, track, b, reliefMeters, palette) {
+  if (palette) pal = Object.assign(pal, palette);
   if (reliefMeters > 0) exaggeration = Math.max(1.3, Math.min(2.8, 750 / reliefMeters));
   // Si el mapa se crea con la vista aún a 0×0, la cámara sale NaN y no se pinta nada.
   const el = document.getElementById('map');
   if (el.clientWidth === 0 || el.clientHeight === 0) {
     if (waitedFrames === 0) console.log('Esperando tamaño de la vista…');
     if (++waitedFrames > 300) { show('La vista 3D no tiene tamaño (' + el.clientWidth + 'x' + el.clientHeight + ').'); return; }
-    requestAnimationFrame(() => init(style, track, b, reliefMeters));
+    requestAnimationFrame(() => init(style, track, b, reliefMeters, palette));
     return;
   }
   console.log('Vista ' + el.clientWidth + 'x' + el.clientHeight);
@@ -157,20 +260,34 @@ function start(style, track, b) {
       },
     }, 'place-label');
 
-    // Pinos de pie: a lo largo del borde de cada bosque y uno en su centro
-    const sp = standingPine();
+    // Árboles de pie. La trama plana de pinos del mapa 2D se oculta: en 3D parecía una pegatina en el suelo
+    if (map.getLayer('landcover-wood-pines')) map.setLayoutProperty('landcover-wood-pines', 'visibility', 'none');
+    const sp = standingPine(), sb = standingBroadleaf();
     map.addImage('pino-pie', sp.image, { pixelRatio: sp.pixelRatio });
+    map.addImage('frondosa-pie', sb.image, { pixelRatio: sb.pixelRatio });
     const treeLayout = {
-      'icon-image': 'pino-pie', 'icon-anchor': 'bottom',
+      'icon-anchor': 'bottom',
       'icon-pitch-alignment': 'viewport', 'icon-rotation-alignment': 'viewport',
       'icon-allow-overlap': true, 'icon-ignore-placement': true,
-      'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.45, 14, 0.8, 16, 1.2],
+      // Los de delante tapan a los de detrás
+      'symbol-z-order': 'viewport-y',
     };
     const wood = ['==', ['get', 'class'], 'wood'];
+    // Borde del bosque, siempre de pinos
     map.addLayer({ id: 'trees-edge', type: 'symbol', source: 'omt', 'source-layer': 'landcover', minzoom: 12, filter: wood,
-      layout: Object.assign({ 'symbol-placement': 'line', 'symbol-spacing': 26 }, treeLayout) }, 'place-label');
-    map.addLayer({ id: 'trees-center', type: 'symbol', source: 'omt', 'source-layer': 'landcover', minzoom: 12, filter: wood,
-      layout: Object.assign({ 'symbol-placement': 'point' }, treeLayout) }, 'place-label');
+      layout: Object.assign({ 'symbol-placement': 'line', 'symbol-spacing': 34, 'icon-image': 'pino-pie',
+        'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.45, 14, 0.8, 16, 1.2] }, treeLayout) }, 'place-label');
+    // Interior: la rejilla de plant(), con mezcla de pinos y frondosas según la estación
+    map.addSource('trees', { type: 'geojson', data: EMPTY });
+    map.addLayer({ id: 'trees-fill', type: 'symbol', source: 'trees', minzoom: 12.5,
+      layout: Object.assign({
+        'icon-image': ['match', ['get', 'k'], 1, 'frondosa-pie', 'pino-pie'],
+        'icon-size': ['interpolate', ['linear'], ['zoom'],
+          12.5, ['*', 0.4, ['get', 's']], 14, ['*', 0.72, ['get', 's']], 16, ['*', 1.1, ['get', 's']]],
+      }, treeLayout) }, 'place-label');
+    map.on('moveend', scheduleTrees);
+    map.on('sourcedata', e => { if (e.sourceId === 'omt' && e.isSourceLoaded) scheduleTrees(); });
+    map.once('idle', refreshTrees);
 
     collapseAttribution();
 
@@ -214,6 +331,7 @@ function fly() {
     const diff = ((target - cur + 540) % 360) - 180;
     map.jumpTo({ center: p, bearing: cur + diff * 0.06, pitch: PITCH, zoom: ZOOM });
     map.getSource('rider').setData({ type: 'Point', coordinates: p });
+    scheduleTrees();
     if (f < 1) anim = requestAnimationFrame(step);
     else { anim = null; if (window.Trazo) Trazo.onFlyEnd(); }
   };

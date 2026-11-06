@@ -56,6 +56,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import app.trazo.gpx.Activity
+import app.trazo.gpx.Season
 import app.trazo.plan.SavedRoute
 import app.trazo.ride.formatDuration
 import app.trazo.ui.ActivitySwitchDialog
@@ -88,6 +89,9 @@ fun ImportScreen(
     onOpenSaved: (SavedRoute) -> Unit = {},
     onDeleteSaved: (SavedRoute) -> Unit = {},
     onSaveCurrent: () -> Unit = {},
+    season: Season = Season.AUTUMN,
+    seasonOverride: Season? = null,
+    onSeason: (Season?) -> Unit = {},
 ) {
     var switching by remember { mutableStateOf(false) }
     val lib = Library(library, onOpenSaved, onDeleteSaved)
@@ -119,7 +123,7 @@ fun ImportScreen(
                 ImportState.Empty -> EmptyState(onPickFile, onCreateRoute, lib)
                 ImportState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 is ImportState.Error -> ErrorState(state.message, onPickFile)
-                is ImportState.Loaded -> Loaded(state, activity, onPickFile, onOpenMap, onCreateRoute, onSaveCurrent, lib)
+                is ImportState.Loaded -> Loaded(state, activity, season, onPickFile, onOpenMap, onCreateRoute, onSaveCurrent, lib)
             }
         }
     }
@@ -128,6 +132,8 @@ fun ImportScreen(
             current = activity,
             onDismiss = { switching = false },
             onChoose = { switching = false; onSwitchActivity(it) },
+            seasonOverride = seasonOverride,
+            onSeason = onSeason,
         )
     }
 }
@@ -238,6 +244,7 @@ private fun ErrorState(message: String, onPickFile: () -> Unit) {
 private fun Loaded(
     state: ImportState.Loaded,
     activity: Activity,
+    season: Season,
     onPickFile: () -> Unit,
     onOpenMap: () -> Unit,
     onCreateRoute: () -> Unit,
@@ -284,6 +291,7 @@ private fun Loaded(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        item { SeasonTip(season) }
         item {
             Button(onClick = onOpenMap, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                 Text("Ver en el mapa", style = MaterialTheme.typography.titleMedium)
@@ -370,6 +378,17 @@ private fun CommentsTab(state: ImportState.Loaded) {
             }
         }
         Hint("Los comentarios se leen en Wikiloc: Trazo no los copia.")
+    }
+}
+
+/** Consejo de la estación, con el color de acento de la estación. */
+@Composable
+private fun SeasonTip(season: Season) {
+    Card(colors = CardDefaults.cardColors(
+        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+    )) {
+        Text(season.tip, Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.bodyMedium)
     }
 }
 

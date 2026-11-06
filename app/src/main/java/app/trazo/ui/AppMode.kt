@@ -6,6 +6,8 @@ import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Hiking
 import androidx.compose.ui.graphics.vector.ImageVector
 import app.trazo.gpx.Activity
+import app.trazo.gpx.Season
+import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,11 +30,32 @@ object AppMode {
     fun init(context: Context) {
         val saved = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null)
         _activity.value = saved?.let { runCatching { Activity.valueOf(it) }.getOrNull() }
+        loadSeason(context)
     }
 
     fun set(context: Context, activity: Activity) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, activity.name).apply()
         _activity.value = activity
+    }
+
+    private const val KEY_SEASON = "season"
+    private val _seasonOverride = MutableStateFlow<Season?>(null)
+    /** Estación elegida a mano, o null para que vaya con el calendario. */
+    val seasonOverride: StateFlow<Season?> = _seasonOverride.asStateFlow()
+
+    /** La estación que se usa ahora: la elegida o la de hoy. */
+    val season: Season get() = _seasonOverride.value ?: todaySeason()
+
+    fun todaySeason(): Season = LocalDate.now().let { Season.of(it.monthValue, it.dayOfMonth) }
+
+    fun setSeason(context: Context, season: Season?) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_SEASON, season?.name).apply()
+        _seasonOverride.value = season
+    }
+
+    private fun loadSeason(context: Context) {
+        val saved = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_SEASON, null)
+        _seasonOverride.value = saved?.let { runCatching { Season.valueOf(it) }.getOrNull() }
     }
 }
 
