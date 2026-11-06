@@ -28,17 +28,21 @@ import org.maplibre.android.style.sources.GeoJsonSource
 object TrazoMapStyle {
 
     private const val TRACK_COLOR = "#C2410C"
-    private var cachedJson: String? = null
+
+    /**
+     * Se carga por URI y no con fromJson: con fromJson el estilo termina de
+     * cargar dentro del constructor de MapSnapshotter, antes de que exista su
+     * objeto nativo, y al añadir la ruta falla con "invalid native peer".
+     */
+    private const val STYLE_URI = "asset://trazo_topo.json"
 
     fun builder(context: Context, state: ImportState.Loaded): Style.Builder {
-        val json = cachedJson ?: context.assets.open("trazo_topo.json").bufferedReader().use { it.readText() }
-            .also { cachedJson = it }
         val segs = state.gpx.segments
         val ends = listOfNotNull(segs.firstOrNull()?.firstOrNull(), segs.lastOrNull()?.lastOrNull())
         val wpts = state.gpx.waypoints.map { it.lat to it.lon }
 
         return Style.Builder()
-            .fromJson(json)
+            .fromUri(STYLE_URI)
             .withImage("pino", pineTile(context.resources.displayMetrics.density))
             .withSource(GeoJsonSource("track", GeoJson.track(segs)))
             .withLayer(

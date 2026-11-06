@@ -41,20 +41,23 @@ fun TopoPreview(state: ImportState.Loaded, modifier: Modifier = Modifier) {
 
         DisposableEffect(state.gpx, wDp, hDp) {
             val region = TrazoMapStyle.bounds(state, margin = 0.15)
+            // Si la vista previa falla, se queda la silueta: nunca debe tumbar la app.
             val snapshotter = if (region != null && wDp > 0 && hDp > 0) {
-                MapSnapshotter(
-                    context,
-                    MapSnapshotter.Options(wDp, hDp)
-                        .withPixelRatio(density)
-                        .withRegion(region)
-                        .withLogo(false)
-                        .withStyleBuilder(TrazoMapStyle.builder(context, state)),
-                ).also { s ->
-                    s.start(
-                        { snapshot -> bitmap = snapshot.bitmap },
-                        { error -> Log.w("Trazo", "Vista previa del mapa: $error") },
-                    )
-                }
+                runCatching {
+                    MapSnapshotter(
+                        context,
+                        MapSnapshotter.Options(wDp, hDp)
+                            .withPixelRatio(density)
+                            .withRegion(region)
+                            .withLogo(false)
+                            .withStyleBuilder(TrazoMapStyle.builder(context, state)),
+                    ).also { s ->
+                        s.start(
+                            { snapshot -> bitmap = snapshot.bitmap },
+                            { error -> Log.w("Trazo", "Vista previa del mapa: $error") },
+                        )
+                    }
+                }.onFailure { Log.w("Trazo", "No se pudo generar la vista previa", it) }.getOrNull()
             } else null
             onDispose { snapshotter?.cancel() }
         }
