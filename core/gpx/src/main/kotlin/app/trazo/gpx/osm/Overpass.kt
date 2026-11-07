@@ -19,6 +19,8 @@ data class OsmRouteSummary(
     val description: String?,
     /** true si OSM la marca como ruta de montaña (route=mtb); false si es ciclista general. */
     val isMtb: Boolean = true,
+    /** Circular, lineal o sin saber (si se sale de la zona cargada). */
+    val shape: RouteShape = RouteShape.UNKNOWN,
 )
 
 /** Consultas a la API Overpass de OpenStreetMap y lectura de sus respuestas. */
@@ -67,6 +69,7 @@ object Overpass {
                 distanceKm = (tags["distance"] as? String)?.let(::parseKm),
                 description = (tags["description"] ?: tags["note"]) as? String,
                 isMtb = tags["route"] != "bicycle",
+                shape = RouteShapes.fromTag(tags["roundtrip"] as? String),
             )
         }
 

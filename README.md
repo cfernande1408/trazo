@@ -41,7 +41,8 @@ de alrededor, o directamente las que se llaman así. Con un botón de **Lista** 
 las de la zona de la más cercana a la más lejana.
 
 **Explorar.** Un mapa de tu zona con un icono por cada ruta MTB, ciclista o sendero de
-OpenStreetMap. Tócalo y se dibuja el recorrido, con distancia, desnivel y perfil.
+OpenStreetMap. Tócalo y se dibuja el recorrido, con distancia, desnivel y perfil. Se pueden
+filtrar las circulares o las lineales, como en Wikiloc.
 
 **Tus GPX de Wikiloc.** Descárgalos en el navegador integrado o ábrelos con *Compartir → Trazo*.
 Resumen con mapa topo, perfil arrastrable, puntos del autor y enlace a los comentarios en Wikiloc.
@@ -199,5 +200,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Marcar puntos con nota y foto mientras grabas
 - [x] Por dónde va la ruta: asfalto, pista, sendero y escaleras
 - [x] Recalcular al salirte de la ruta
+- [x] Filtrar rutas circulares o lineales en *Explorar*
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones

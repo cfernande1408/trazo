@@ -1,5 +1,11 @@
 package app.trazo.explore
 
+import androidx.compose.foundation.layout.widthIn
+import app.trazo.gpx.nav.RouteStart
+import app.trazo.gpx.osm.RouteShape
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -139,6 +145,9 @@ fun ExploreMapScreen(
     val routes by vm.routes.collectAsStateWithLifecycle()
     val status by vm.status.collectAsStateWithLifecycle()
     val onlyMtb by vm.onlyMtb.collectAsStateWithLifecycle()
+    val shape by vm.shape.collectAsStateWithLifecycle()
+    /** Si la ruta pasa los filtros de arriba (solo MTB, circular o lineal). */
+    fun passes(r: OsmRouteSummary) = (!onlyMtb || r.isMtb) && (shape == null || r.shape == shape)
     val selected by vm.selected.collectAsStateWithLifecycle()
     val canRetry by vm.canRetry.collectAsStateWithLifecycle()
     val search by vm.search.collectAsStateWithLifecycle()
@@ -226,10 +235,10 @@ fun ExploreMapScreen(
 
     LaunchedEffect(ready, hazards) { ready?.second?.showHazards(hazards) }
 
-    LaunchedEffect(ready, routes, onlyMtb) {
+    LaunchedEffect(ready, routes, onlyMtb, shape) {
         val (_, style) = ready ?: return@LaunchedEffect
         val markers = routes.values
-            .filter { !onlyMtb || it.isMtb }
+            .filter(::passes)
             .map { MapMarker(it.id, it.lat, it.lon, it.name, it.isMtb) }
         style.getSourceAs<GeoJsonSource>(ExploreMapStyle.ROUTES)?.setGeoJson(GeoJson.markers(markers))
     }
@@ -298,6 +307,7 @@ fun ExploreMapScreen(
                             colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                         )
                     }
+                    ShapeChip(shape, vm::setShape)
                     status?.let { s ->
                         Surface(
                             onClick = { if (canRetry) vm.retry() },
@@ -354,13 +364,13 @@ fun ExploreMapScreen(
         }
 
         // Rutas que se ven ahora, de la más cercana al centro a la más lejana
-        val visible = remember(routes, view, onlyMtb) {
+        val visible = remember(routes, view, onlyMtb, shape) {
             val v = view ?: return@remember emptyList<OsmRouteSummary>()
             val cLat = (v.south + v.north) / 2
             val cLon = (v.west + v.east) / 2
             val k = kotlin.math.cos(Math.toRadians(cLat))
             routes.values
-                .filter { it.lat in v.south..v.north && it.lon in v.west..v.east && (!onlyMtb || it.isMtb) }
+                .filter { it.lat in v.south..v.north && it.lon in v.west..v.east && passes(it) }
                 .sortedBy { (it.lat - cLat).let { d -> d * d } + ((it.lon - cLon) * k).let { d -> d * d } }
         }
 
@@ -492,7 +502,10 @@ private fun RouteList(routes: List<OsmRouteSummary>, activity: Activity, onPick:
         }
         LazyColumn(Modifier.heightIn(max = 340.dp), contentPadding = PaddingValues(bottom = 8.dp)) {
             items(routes, key = { it.id }) { r ->
-                ResultRow(activity.icon, r.name, listOfNotNull(activity.badge(r.isMtb), r.ref, r.network).joinToString(" · ")) { onPick(r) }
+                ResultRow(
+                    activity.icon, r.name,
+                    listOfNotNull(activity.badge(r.isMtb), r.shape.label.ifEmpty { null }, r.ref, r.network).joinToString(" · "),
+                ) { onPick(r) }
             }
         }
     }
@@ -557,9 +570,11 @@ private fun SelectedCard(sel: SelectedRoute, activity: Activity, onClose: () -> 
             }
             else -> {
                 val dist = loaded?.stats?.distanceMeters ?: TrackStatsCalculator.compute(gpx.segments).distanceMeters
+                // Con el trazado entero ya se sabe seguro si acaba donde empieza
+                val form = if (RouteStart.isLoop(gpx.segments)) "Circular" else "Lineal"
                 Text(
-                    if (loaded != null) "${km(dist)} · +${metros(loaded.stats.elevationGainMeters)} · −${metros(loaded.stats.elevationLossMeters)}"
-                    else "${km(dist)} · calculando desnivel…",
+                    if (loaded != null) "${km(dist)} · +${metros(loaded.stats.elevationGainMeters)} · −${metros(loaded.stats.elevationLossMeters)} · $form"
+                    else "${km(dist)} · $form · calculando desnivel…",
                     style = MaterialTheme.typography.titleSmall,
                 )
                 if (loaded != null && loaded.profile.size >= 2) {
@@ -625,4 +640,30 @@ private fun ZoneDialog(zone: Bbox, onDismiss: () -> Unit, onDownload: (Boolean) 
         confirmButton = { TextButton(onClick = { onDownload(topo) }, enabled = !tooBig) { Text("Descargar") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
     )
+}
+
+/** Filtro como el de Wikiloc: todas, solo circulares o solo lineales. */
+@Composable
+private fun ShapeChip(shape: RouteShape?, onPick: (RouteShape?) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        FilterChip(
+            selected = shape != null,
+            onClick = { open = true },
+            label = { Text(shape?.let { if (it == RouteShape.LOOP) "Circulares" else "Lineales" } ?: "Circular o lineal") },
+            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null, Modifier.size(18.dp)) },
+            colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        )
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            listOf(null to "Todas", RouteShape.LOOP to "Solo circulares", RouteShape.LINEAR to "Solo lineales").forEach { (s, label) ->
+                DropdownMenuItem(text = { Text(label) }, onClick = { onPick(s); open = false })
+            }
+            Text(
+                "Las que se salen de la pantalla no se saben hasta que alejas el mapa.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 240.dp),
+            )
+        }
+    }
 }

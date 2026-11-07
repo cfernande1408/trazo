@@ -7,6 +7,7 @@ import app.trazo.gpx.Gpx
 import app.trazo.gpx.osm.Bbox
 import app.trazo.gpx.osm.OsmRouteSummary
 import app.trazo.gpx.osm.Overpass
+import app.trazo.gpx.osm.RouteShape
 import app.trazo.gpx.osm.WayStitcher
 import app.trazo.gpx.osm.WaymarkedTrails
 import app.trazo.gpx.osm.Place
@@ -79,6 +80,14 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
         _onlyMtb.value = !_onlyMtb.value
     }
 
+    /** Filtro de forma: null = todas, o solo circulares, o solo lineales. */
+    private val _shape = MutableStateFlow<RouteShape?>(null)
+    val shape: StateFlow<RouteShape?> = _shape.asStateFlow()
+
+    fun setShape(s: RouteShape?) {
+        _shape.value = s
+    }
+
     /** Última zona pedida, para poder reintentarla tocando el aviso. */
     private var lastView: Pair<Bbox, Double>? = null
 
@@ -114,7 +123,12 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 try {
                     val found = findRoutes(area)
-                    _routes.value = _routes.value + found.associateBy { it.id }
+                    // Una ruta vista entera antes sabe su forma; si ahora se ve solo un trozo, no se olvida
+                    val old = _routes.value
+                    _routes.value = old + found.associate { r ->
+                        val known = old[r.id]?.shape?.takeIf { it != RouteShape.UNKNOWN }
+                        r.id to if (r.shape == RouteShape.UNKNOWN && known != null) r.copy(shape = known) else r
+                    }
                     covered += area
                     _status.value = if (_routes.value.isEmpty()) "No hay rutas mapeadas en esta zona" else null
                     return@launch
@@ -148,7 +162,7 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
                         val segs = WaymarkedTrails.parseSegments(
                             Http.get(WaymarkedTrails.segmentsUrl(f, WaymarkedTrails.mercBbox(area), listed.map { it.id }))
                         )
-                        WaymarkedTrails.summaries(f, listed, segs)
+                        withContext(Dispatchers.Default) { WaymarkedTrails.summaries(f, listed, segs, area) }
                     }
                 }
             }.awaitAll()

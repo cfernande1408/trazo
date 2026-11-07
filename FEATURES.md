@@ -82,6 +82,9 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Mapa de tu zona, centrado en tu posición (o en Madrid si no hay ubicación)
 - Un icono por cada ruta de OpenStreetMap; se van cargando al mover el mapa
 - Filtro *Solo MTB* en bici
+- Filtro **Circular o lineal** (como en Wikiloc): todas, solo circulares o solo lineales
+- La forma sale del trazado: si acaba donde empieza (o con un tramo de acceso de ida y vuelta) es circular; si no, lineal. Las que se salen de la pantalla no se saben hasta alejar el mapa
+- En la lista y en la tarjeta de cada ruta pone si es circular o lineal
 - Rutas desde Waymarked Trails (casi instantáneo), con Overpass de respaldo en varios servidores
 - Reintenta solo si se corta la conexión, y tocando el aviso si falla
 - Al tocar una ruta se dibuja primero el trazado rápido y luego el exacto de OSM

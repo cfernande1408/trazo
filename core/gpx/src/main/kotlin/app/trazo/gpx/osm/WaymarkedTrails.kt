@@ -112,13 +112,19 @@ object WaymarkedTrails {
         return bbox to (root["description"] as? String ?: root["note"] as? String)
     }
 
-    /** Une lo listado con su trazado: el icono va a mitad del tramo más largo que se ve. */
-    fun summaries(f: Flavour, listed: List<Listed>, segments: Map<Long, List<List<GeoPoint>>>): List<OsmRouteSummary> =
+    /**
+     * Une lo listado con su trazado: el icono va a mitad del tramo más largo que se ve.
+     * Con [area] (la zona pedida) también se mira si cada ruta es circular o lineal.
+     */
+    fun summaries(f: Flavour, listed: List<Listed>, segments: Map<Long, List<List<GeoPoint>>>, area: Bbox? = null): List<OsmRouteSummary> =
         listed.mapNotNull { l ->
             val lines = segments[l.id] ?: return@mapNotNull null
             val longest = lines.maxByOrNull { TrackStatsCalculator.compute(listOf(it)).distanceMeters } ?: return@mapNotNull null
             val half = TrackStatsCalculator.compute(listOf(longest)).distanceMeters / 2
             val c = RouteGeometry.pointAt(listOf(longest), half) ?: longest.first()
-            OsmRouteSummary(l.id, l.name, l.ref, null, c.lat, c.lon, distanceKm = null, description = null, isMtb = f.mtb)
+            OsmRouteSummary(
+                l.id, l.name, l.ref, null, c.lat, c.lon, distanceKm = null, description = null, isMtb = f.mtb,
+                shape = if (area != null) RouteShapes.of(lines, area) else RouteShape.UNKNOWN,
+            )
         }
 }
