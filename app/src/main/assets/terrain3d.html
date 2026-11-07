@@ -191,17 +191,22 @@ function scheduleTrees() {
 }
 
 let waitedFrames = 0;
-/** Exageración del relieve según cuánto sube y baja la ruta: más en rutas suaves, poca en sierra. */
-let exaggeration = 1.3;
-function init(style, track, b, reliefMeters, palette) {
+/** Botones de relieve: cambia la exageración al momento, sin recargar. */
+function setExaggeration(x) {
+  exaggeration = x;
+  if (map && map.getSource('terrain3d')) map.setTerrain({ source: 'terrain3d', exaggeration: x });
+}
+/** Exageración del relieve: la calcula Trazo (Relief.kt) según la ruta y el nivel que elijas. */
+let exaggeration = 2.0;
+function init(style, track, b, exag, palette) {
   if (palette) pal = Object.assign(pal, palette);
-  if (reliefMeters > 0) exaggeration = Math.max(1.3, Math.min(2.8, 750 / reliefMeters));
+  if (exag > 0) exaggeration = exag;
   // Si el mapa se crea con la vista aún a 0×0, la cámara sale NaN y no se pinta nada.
   const el = document.getElementById('map');
   if (el.clientWidth === 0 || el.clientHeight === 0) {
     if (waitedFrames === 0) console.log('Esperando tamaño de la vista…');
     if (++waitedFrames > 300) { show('La vista 3D no tiene tamaño (' + el.clientWidth + 'x' + el.clientHeight + ').'); return; }
-    requestAnimationFrame(() => init(style, track, b, reliefMeters, palette));
+    requestAnimationFrame(() => init(style, track, b, exag, palette));
     return;
   }
   console.log('Vista ' + el.clientWidth + 'x' + el.clientHeight);

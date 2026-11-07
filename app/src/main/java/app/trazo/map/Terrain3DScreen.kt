@@ -42,6 +42,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import app.trazo.gpx.GeoJson
+import app.trazo.gpx.Relief
+import android.content.Context
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.mutableIntStateOf
 import app.trazo.ui.AppMode
 import app.trazo.gpx.RouteGeometry
 import app.trazo.importer.ImportState
@@ -56,6 +64,10 @@ import app.trazo.importer.ImportState
 fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
     val context = LocalContext.current
     var flying by remember { mutableStateOf(false) }
+    val prefs = remember { context.getSharedPreferences("trazo", Context.MODE_PRIVATE) }
+    var level by remember { mutableIntStateOf(prefs.getInt("relief3d", Relief.DEFAULT_LEVEL)) }
+    // Diferencia entre el punto más alto y el más bajo, para ajustar la exageración del relieve
+    val relief = (state.stats.maxElevation ?: 0.0) - (state.stats.minElevation ?: 0.0)
 
     val webView = remember {
         val season = AppMode.season
@@ -66,8 +78,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
         val track = GeoJson.track(state.gpx.segments.map { RouteGeometry.downsample(it, 1500) })
         val b = RouteGeometry.bounds(state.gpx.segments)
         val bounds = b?.let { "[[${it.minLon},${it.minLat}],[${it.maxLon},${it.maxLat}]]" } ?: "null"
-        // Diferencia entre el punto más alto y el más bajo, para ajustar la exageración del relieve
-        val relief = (state.stats.maxElevation ?: 0.0) - (state.stats.minElevation ?: 0.0)
+        val exaggeration = Relief.exaggeration(relief, level)
 
         WebView(context).apply {
             // Sin esto la WebView se mide "al contenido" y una página de alto 100 % queda a 0
@@ -82,7 +93,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
             }, "Trazo")
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView, url: String?) {
-                    view.evaluateJavascript("init($style, $track, $bounds, $relief, $palette);", null)
+                    view.evaluateJavascript("init($style, $track, $bounds, $exaggeration, $palette);", null)
                 }
             }
             // Los mensajes de la página van al logcat: adb logcat | grep Trazo3D
@@ -107,6 +118,32 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
             modifier = Modifier.statusBarsPadding().padding(16.dp).size(56.dp),
         ) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+        }
+
+        // Relieve: más o menos exagerado, se recuerda para la próxima vez
+        val setLevel = { l: Int ->
+            level = l.coerceIn(0, Relief.LEVELS.lastIndex)
+            prefs.edit().putInt("relief3d", level).apply()
+            webView.evaluateJavascript("setExaggeration(${Relief.exaggeration(relief, level)});", null)
+        }
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f),
+            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(vertical = 4.dp)) {
+                IconButton(onClick = { setLevel(level + 1) }, enabled = level < Relief.LEVELS.lastIndex) {
+                    Icon(Icons.Filled.Add, contentDescription = "Más relieve")
+                }
+                Text(
+                    "×" + String.format(java.util.Locale.forLanguageTag("es-ES"), "%.1f", Relief.exaggeration(relief, level)),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                Text("relieve", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                IconButton(onClick = { setLevel(level - 1) }, enabled = level > 0) {
+                    Icon(Icons.Filled.Remove, contentDescription = "Menos relieve")
+                }
+            }
         }
 
         val controls = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp).fillMaxWidth().height(56.dp)
