@@ -62,7 +62,7 @@ relieve y topo IGN, y navega sin cobertura en plena sierra.
 
 **Pendiente y dificultad.** La ruta coloreada por pendiente, la rampa más dura y la
 dificultad técnica de OpenStreetMap (escala MTB S0–S6 o SAC T1–T6) de los caminos por los
-que pasa.
+que pasa, y cuántos km van por asfalto, pista, sendero o escaleras.
 
 **Navegar.** Tu posición sobre la ruta, vibración al salirte, la próxima subida, empezar
 desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
@@ -196,5 +196,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Descargar cualquier zona desde *Explorar*
 - [x] Desnivel con el barómetro del móvil
 - [x] Marcar puntos con nota y foto mientras grabas
+- [x] Por dónde va la ruta: asfalto, pista, sendero y escaleras
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones

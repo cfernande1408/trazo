@@ -319,6 +319,7 @@ private fun Loaded(
         when (tab) {
             0 -> {
                 item { DifficultyCard(state, activity) }
+                item { SurfaceCard(state) }
                 if (state.profile.size >= 2) {
                 item { SlopeCard(state) }
                 item {

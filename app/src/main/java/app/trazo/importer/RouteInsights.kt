@@ -1,6 +1,12 @@
 package app.trazo.importer
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import app.trazo.gpx.osm.Surface
+import app.trazo.gpx.osm.SurfaceSummary
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -158,6 +164,72 @@ internal fun DifficultyCard(state: ImportState.Loaded, activity: Activity) {
         }
     }
 }
+
+private sealed interface Surfaced {
+    data object Loading : Surfaced
+    data class Ready(val s: SurfaceSummary) : Surfaced
+    data class Failed(val message: String) : Surfaced
+}
+
+/** Por dónde va la ruta (asfalto, pista, sendero, escaleras), según OpenStreetMap. */
+@Composable
+internal fun SurfaceCard(state: ImportState.Loaded) {
+    var attempt by remember { mutableIntStateOf(0) }
+    val surfaced by produceState<Surfaced>(Surfaced.Loading, state.gpx, attempt) {
+        value = Surfaced.Loading
+        value = runCatching {
+            val json = Http.overpass(Surface.query(state.gpx.segments))
+            Surfaced.Ready(withContext(Dispatchers.Default) { Surface.summarize(state.gpx.segments, Surface.parse(json)) })
+        }.getOrElse { Surfaced.Failed(Http.friendly(it)) }
+    }
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Por dónde va", style = MaterialTheme.typography.titleMedium)
+            when (val r = surfaced) {
+                Surfaced.Loading -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Text("Mirando los caminos en OpenStreetMap…", style = MaterialTheme.typography.bodyMedium)
+                }
+                is Surfaced.Failed -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(r.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { attempt++ }) { Text("Reintentar") }
+                }
+                is Surfaced.Ready -> {
+                    val s = r.s
+                    if (s.knownMeters < 1) {
+                        Text("La ruta no coincide con caminos de OpenStreetMap.", style = MaterialTheme.typography.bodyMedium)
+                    } else {
+                        // Barra con cada tipo en su color, como en Komoot
+                        Row(Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp))) {
+                            s.metersByKind.forEach { (kind, m) ->
+                                Box(Modifier.weight((m / s.knownMeters).toFloat().coerceAtLeast(0.001f)).height(12.dp).background(surfaceColor(kind.color)))
+                            }
+                        }
+                        s.metersByKind.forEach { (kind, m) ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("●", color = surfaceColor(kind.color))
+                                Text(" ${kind.label}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                                Text(
+                                    "${km(m)} · ${(s.share(kind) * 100).roundToInt()} %",
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                            }
+                        }
+                        if (s.routeMeters - s.knownMeters > 200) {
+                            Text(
+                                "Sin dato en ${km(s.routeMeters - s.knownMeters)}: por ahí no hay camino en OpenStreetMap.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun surfaceColor(hex: String) = Color(android.graphics.Color.parseColor(hex))
 
 /** Descargar el mapa de la zona de la ruta para usarlo sin cobertura. */
 @Composable

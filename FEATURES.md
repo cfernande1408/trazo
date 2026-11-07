@@ -56,6 +56,8 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Capa **Pendiente** en el mapa de la ruta: tramos de 100 m coloreados de verde (< 5 %) a rojo (> 20 %), con leyenda
 - **Dificultad técnica de OpenStreetMap** junto al track: escala MTB (S0–S6) en bici y SAC (T1–T6) a pie
 - Grado principal, el tramo más difícil y cuántos km van por cada grado, para cualquier GPX (no solo rutas de OSM)
+- **Por dónde va**: km y porcentaje por asfalto, pista, sendero y escaleras, con una barra de colores (como Komoot)
+- Sale de la superficie y el tipo de cada camino de OpenStreetMap; los tramos sin camino en OSM se dicen aparte
 
 ## El tiempo en la ruta
 
