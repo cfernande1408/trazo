@@ -114,6 +114,10 @@ Hay tres versiones, que se instalan como apps distintas y pueden convivir, cada 
 La estable es la de salir al monte; la beta, para probar lo nuevo sin arriesgar tus rutas. Descarga
 el APK y ábrelo en el móvil (hay que permitir instalar apps de esa fuente).
 
+La pestaña **Info** de la app dice qué versión llevas. La estable se llama como su etiqueta
+(`0.3.0`); la beta y la debug añaden un número que sube con cada cambio (`0.3.0.58-beta`,
+`0.3.0.12-debug`), además del commit del que salen.
+
 Funciona en Android 8.0 (API 26) o superior y no necesita Google Play Services.
 
 Para compilarla, publicar versiones o activar la comunidad, mira [docs/DESARROLLO.md](docs/DESARROLLO.md).

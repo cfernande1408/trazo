@@ -197,6 +197,14 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - Usar una salida grabada como ruta
 - Borrar salidas
 
+## Info
+
+- Pestaña **Info** con el icono de la estación, la versión, el canal (estable, beta o debug) y el commit
+- La versión sube sola con cada cambio: `0.3.0` la estable, `0.3.0.58-beta` la beta y `0.3.0.12-debug` la que compilas tú
+- Qué es Trazo, enlaces al código en GitHub, a las novedades de cada versión, a la lista de funciones y para avisar de un fallo
+- Espacio para donar (sale cuando haya enlace)
+- Créditos de los datos y la nota de privacidad
+
 ## Diseño
 
 - Material Design 3 con Jetpack Compose

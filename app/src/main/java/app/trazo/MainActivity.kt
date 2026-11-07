@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -200,6 +201,11 @@ class MainActivity : ComponentActivity() {
                                     icon = { Icon(Icons.Filled.Person, contentDescription = null) },
                                     label = { Text("Comunidad") },
                                 )
+                                NavigationBarItem(
+                                    selected = tab == 4, onClick = { tab = 4 },
+                                    icon = { Icon(Icons.Filled.Info, contentDescription = null) },
+                                    label = { Text("Info") },
+                                )
                             }
                             }
                         },
@@ -240,7 +246,8 @@ class MainActivity : ComponentActivity() {
                                 )
                                 1 -> ExploreMapScreen(onRouteReady = openRoute, activity = activity)
                                 2 -> WikilocBrowser(onGpx = openRoute)
-                                else -> CommunityScreen()
+                                3 -> CommunityScreen()
+                                else -> app.trazo.ui.AboutScreen()
                             }
                         }
                     }

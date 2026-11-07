@@ -6,6 +6,23 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+/**
+ * Salida de un comando de git, o null si falla (sin git, sin historial…).
+ * Sirve para numerar las compilaciones locales.
+ */
+fun git(vararg args: String): String? = runCatching {
+    providers.exec {
+        commandLine("git", *args)
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim().ifEmpty { null }
+}.getOrNull()
+
+// En local, la versión sale de git: la última estable y los commits desde ella
+// (0.3.0.12), así cada cambio sube un número. En GitHub Actions la ponen los workflows.
+val lastTag = git("describe", "--tags", "--abbrev=0", "--match", "v[0-9]*")
+val sinceTag = lastTag?.let { git("rev-list", "--count", "$it..HEAD") } ?: "0"
+val commit = System.getenv("GITHUB_SHA")?.take(7) ?: git("rev-parse", "--short=7", "HEAD") ?: "?"
+
 android {
     namespace = "app.trazo"
     compileSdk = 35
@@ -14,9 +31,13 @@ android {
         applicationId = "app.trazo"
         minSdk = 26
         targetSdk = 35
-        // En las releases los pone GitHub Actions a partir de la etiqueta (v0.2.0) y el nº de ejecución
-        versionCode = System.getenv("TRAZO_VERSION_CODE")?.toIntOrNull() ?: 1
-        versionName = System.getenv("TRAZO_VERSION_NAME")?.removePrefix("v") ?: "0.1.0"
+        // Estable: la etiqueta (0.3.0). Beta: la estable y el nº de ejecución (0.3.0.58).
+        // Local: la estable y los commits desde ella (0.3.0.12). Debug y beta llevan su sufijo.
+        versionCode = System.getenv("TRAZO_VERSION_CODE")?.toIntOrNull()
+            ?: git("rev-list", "--count", "HEAD")?.toIntOrNull() ?: 1
+        versionName = System.getenv("TRAZO_VERSION_NAME")?.removePrefix("v")
+            ?: "${lastTag?.removePrefix("v") ?: "0.0.0"}.$sinceTag"
+        buildConfigField("String", "COMMIT", "\"$commit\"")
 
         // Comunidad (Supabase): de las variables de entorno (GitHub Actions) o de local.properties.
         // La clave "anon" es pública por diseño: la seguridad la ponen las políticas RLS de la base.
