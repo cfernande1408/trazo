@@ -8,6 +8,10 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -32,6 +36,12 @@ class RideService : Service() {
 
     private var lastNotifyMs = 0L
     private var falls: FallMonitor? = null
+
+    /** Barómetro del móvil (si tiene): da un desnivel mucho más fiable que el GPS. */
+    private val pressure = object : SensorEventListener {
+        override fun onSensorChanged(event: SensorEvent) = RideSession.onPressure(event.values[0].toDouble())
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
+    }
 
     private val listener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
@@ -63,6 +73,9 @@ class RideService : Service() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0,
         )
         startLocation()
+        getSystemService(SensorManager::class.java).let { sm ->
+            sm.getDefaultSensor(Sensor.TYPE_PRESSURE)?.let { sm.registerListener(pressure, it, 200_000) }
+        }
         falls = FallMonitor(this).also { it.start() }
         BleSensors.connectSaved(this)
     }
@@ -83,6 +96,7 @@ class RideService : Service() {
 
     override fun onDestroy() {
         getSystemService(LocationManager::class.java).removeUpdates(listener)
+        getSystemService(SensorManager::class.java).unregisterListener(pressure)
         falls?.stop()
         BleSensors.disconnectAll()
         super.onDestroy()

@@ -123,6 +123,9 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - En el resumen de la ruta: a qué hora anochece y a qué hora terminarías si sales ya
 - **Agua y refugios por delante**: fuentes, manantiales y refugios de OpenStreetMap a menos de 150 m de la ruta, en el mapa, en la pestaña *Puntos* con su km y en navegación («Fuente en 1,2 km»)
 - Las fuentes marcadas como no potables no salen
+- **Altímetro barométrico**: si el móvil tiene barómetro, la altitud y el desnivel de lo que grabas salen de la presión, que no da saltos como el GPS
+- El GPS solo fija el nivel: al empezar, con la media de sus primeras lecturas, y luego poco a poco, así que también corrige la deriva cuando cambia el tiempo
+- Al grabar pone «desnivel con barómetro» cuando está en marcha; sin barómetro se usa el GPS como siempre
 
 ## Comunidad (en preparación)
 

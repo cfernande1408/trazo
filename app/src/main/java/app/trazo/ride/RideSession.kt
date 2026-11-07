@@ -3,9 +3,11 @@ package app.trazo.ride
 import android.content.Context
 import android.content.Intent
 import android.location.Location
+import android.os.SystemClock
 import app.trazo.sensors.BleSensors
 import androidx.core.content.ContextCompat
 import app.trazo.gpx.Activity
+import app.trazo.gpx.ride.BaroAltimeter
 import app.trazo.gpx.ride.RideRecorder
 import app.trazo.ui.AppMode
 import app.trazo.gpx.ride.RideStats
@@ -30,6 +32,8 @@ data class RideState(
     /** Si se graba siguiendo una ruta, su nombre. */
     val routeName: String? = null,
     val activity: Activity = Activity.BIKE,
+    /** true si la altitud y el desnivel salen del barómetro del móvil. */
+    val barometer: Boolean = false,
 )
 
 /**
@@ -47,6 +51,7 @@ object RideSession {
     val fixes: SharedFlow<Location> = _fixes.asSharedFlow()
 
     private var recorder = RideRecorder()
+    private var baro = BaroAltimeter()
 
     /** Última posición del GPS, para el SOS y la detección de caídas. */
     @Volatile
@@ -56,6 +61,7 @@ object RideSession {
     fun start(context: Context, routeName: String? = null, activity: Activity = AppMode.current) {
         if (_state.value.active) return
         recorder = RideRecorder(activity)
+        baro = BaroAltimeter()
         _state.value = RideState(active = true, startedAtMs = System.currentTimeMillis(), routeName = routeName, activity = activity)
         ContextCompat.startForegroundService(context, Intent(context, RideService::class.java))
     }
@@ -81,6 +87,9 @@ object RideSession {
         return if (points.sumOf { it.size } >= 2) RideStore.save(context, name, points, activity) else null
     }
 
+    /** Lo llama el servicio con cada lectura del sensor de presión, en hPa. */
+    internal fun onPressure(hPa: Double) = baro.onPressure(hPa, SystemClock.elapsedRealtime())
+
     /** Lo llama el servicio con cada posición del GPS. */
     internal fun onLocation(loc: Location) {
         lastLocation = loc
@@ -88,10 +97,16 @@ object RideSession {
         val s = _state.value
         if (!s.active) return
         val sensors = BleSensors.fresh()
+        // Con barómetro, la altitud sale de la presión y el GPS solo fija el nivel
+        val ele = baro.altitude(
+            if (loc.hasAltitude()) loc.altitude else null,
+            if (loc.hasVerticalAccuracy()) loc.verticalAccuracyMeters else null,
+            SystemClock.elapsedRealtime(),
+        )
         val accepted = recorder.add(
             TimedPoint(
                 loc.latitude, loc.longitude,
-                if (loc.hasAltitude()) loc.altitude else null,
+                ele,
                 loc.time,
                 if (loc.hasAccuracy()) loc.accuracy else null,
                 hr = sensors?.hr,
@@ -103,6 +118,7 @@ object RideSession {
             stats = if (accepted) recorder.stats() else s.stats,
             currentKmh = if (loc.hasSpeed()) loc.speed * 3.6 else s.currentKmh,
             points = if (accepted) recorder.points else s.points,
+            barometer = baro.active,
         )
     }
 }

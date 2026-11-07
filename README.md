@@ -72,6 +72,7 @@ desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 - **Avisos por voz** en los giros, al empezar cada subida, al pasar por una fuente y si te sales.
 - **Luz restante**: cuánta luz te sobra o te falta para terminar a tu ritmo real, con aviso si vas justo.
 - **Agua y refugios por delante**: fuentes y refugios de OSM a lo largo de la ruta, con su km.
+- **Altímetro barométrico**: si el móvil tiene barómetro, el desnivel sale de la presión y no de los saltos del GPS.
 
 **Comunidad (en preparación).** Avisos en el mapa de otros usuarios (hielo, árbol caído, camino
 cortado…) que caducan solos y se votan, y valoraciones con estrellas y comentarios de cada ruta.
@@ -188,5 +189,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Mapas sin conexión de la zona de una ruta
 - [x] Dificultad de OSM (`mtb:scale`, `sac_scale`) y pendiente por tramos
 - [x] Descargar cualquier zona desde *Explorar*
+- [x] Desnivel con el barómetro del móvil
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones

@@ -149,7 +149,10 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
                         color = if (state.paused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                     )
                     RideStatsGrid(state.stats, currentKmh = state.currentKmh ?: 0.0)
-                    Text("Total ${formatDuration(now - state.startedAtMs)}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "Total ${formatDuration(now - state.startedAtMs)}" + if (state.barometer) " · desnivel con barómetro" else "",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         FilledTonalButton(
                             onClick = { if (state.paused) RideSession.resume() else RideSession.pause() },
