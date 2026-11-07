@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
         AppMode.init(this)
         app.trazo.map.MapPrefs.init(this)
         app.trazo.offline.OfflineMaps.refresh(this)
+        app.trazo.safety.Safety.init(this)
         enableEdgeToEdge()
         if (savedInstanceState == null) handleIntent(intent)
         setContent {

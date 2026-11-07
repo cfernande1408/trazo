@@ -125,6 +125,12 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
         FilledTonalIconButton(onClick = onClose, modifier = Modifier.statusBarsPadding().padding(16.dp).size(56.dp)) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
         }
+        var showSos by remember { mutableStateOf(false) }
+        app.trazo.safety.SosButton(
+            onClick = { showSos = true },
+            modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(16.dp),
+        )
+        if (showSos) app.trazo.safety.SosSheet(onDismiss = { showSos = false })
         Card(
             modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp).fillMaxWidth(),
             shape = MaterialTheme.shapes.extraLarge,

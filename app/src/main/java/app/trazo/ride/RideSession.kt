@@ -47,6 +47,11 @@ object RideSession {
 
     private var recorder = RideRecorder()
 
+    /** Última posición del GPS, para el SOS y la detección de caídas. */
+    @Volatile
+    var lastLocation: Location? = null
+        private set
+
     fun start(context: Context, routeName: String? = null, activity: Activity = AppMode.current) {
         if (_state.value.active) return
         recorder = RideRecorder(activity)
@@ -77,6 +82,7 @@ object RideSession {
 
     /** Lo llama el servicio con cada posición del GPS. */
     internal fun onLocation(loc: Location) {
+        lastLocation = loc
         _fixes.tryEmit(loc)
         val s = _state.value
         if (!s.active) return

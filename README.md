@@ -74,6 +74,10 @@ desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 - **Luz restante**: cuánta luz te sobra o te falta para terminar a tu ritmo real, con aviso si vas justo.
 - **Agua y refugios por delante**: fuentes y refugios de OSM a lo largo de la ruta, con su km.
 
+**Seguridad.** Volver al inicio por donde has venido (sin conexión) o por el camino más
+corto. Botón SOS con tu posición en UTM y grados para dictarla al 112, llamar o mandarla por
+SMS. Y detección de caídas: si te caes y no respondes en 60 s, avisa a tu contacto por SMS.
+
 **Vista 3D.** Relieve con exageración automática, casas en volumen, bosques de árboles de pie
 y un recorrido virtual que vuela la ruta.
 
@@ -144,6 +148,7 @@ core/gpx/      Kotlin puro: todo lo que se puede probar sin móvil
   gpx/weather/   previsión a lo largo de la ruta
   gpx/layers/    tipos de mapa y capas
   gpx/offline/   zona y tamaño de los mapas sin conexión
+  gpx/safety/    UTM, mensaje de SOS y detección de caídas
 app/           Android
   importer/      Mis rutas
   explore/       Explorar, buscador y navegador de Wikiloc
@@ -188,9 +193,9 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [ ] Arrastrar los puntos de una ruta creada
 - [x] Avisos por voz en los giros
 - [x] Subidas en directo, luz restante y agua y refugios por delante
-- [ ] Volver al coche por el camino más corto (TracBack)
-- [ ] Mi posición para el 112 (UTM y grados, por SMS)
-- [ ] Detección de caídas con aviso a un contacto
+- [x] Volver al inicio por donde has venido o por el camino más corto
+- [x] Mi posición para el 112 (UTM y grados, por SMS)
+- [x] Detección de caídas con aviso a un contacto
 - [ ] Sensores Bluetooth: pulso, cadencia y potencia
 - [ ] Compañero virtual contra tu salida anterior
 - [x] Mapas sin conexión de la zona de una ruta

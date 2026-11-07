@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import app.trazo.MainActivity
 import app.trazo.R
+import app.trazo.safety.FallMonitor
 import java.util.Locale
 
 /**
@@ -29,6 +30,7 @@ import java.util.Locale
 class RideService : Service() {
 
     private var lastNotifyMs = 0L
+    private var falls: FallMonitor? = null
 
     private val listener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
@@ -60,9 +62,13 @@ class RideService : Service() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0,
         )
         startLocation()
+        falls = FallMonitor(this).also { it.start() }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_IM_OK) falls?.cancelAlarm()
+        return START_STICKY
+    }
 
     @SuppressLint("MissingPermission")
     private fun startLocation() {
@@ -75,6 +81,7 @@ class RideService : Service() {
 
     override fun onDestroy() {
         getSystemService(LocationManager::class.java).removeUpdates(listener)
+        falls?.stop()
         super.onDestroy()
     }
 
@@ -100,6 +107,8 @@ class RideService : Service() {
 
     companion object {
         private const val CHANNEL = "ride"
+        /** Botón "Estoy bien" de la notificación de caída. */
+        const val ACTION_IM_OK = "app.trazo.IM_OK"
         private const val NOTIFICATION_ID = 1
     }
 }

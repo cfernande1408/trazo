@@ -76,6 +76,18 @@ import app.trazo.importer.title
 import app.trazo.nav.Alerts
 import app.trazo.ride.RideSession
 import app.trazo.ui.AppMode
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import app.trazo.safety.SosSheet
+import app.trazo.safety.SosButton
+import app.trazo.net.Http
+import app.trazo.gpx.GeoPoint
+import app.trazo.gpx.GpxParser
+import app.trazo.gpx.plan.BRouter
+import app.trazo.gpx.nav.Retrace
 import androidx.compose.runtime.produceState
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -135,11 +147,18 @@ fun MapScreen(
     var startAlong by rememberSaveable { mutableStateOf(0.0) }
     var showStartSheet by remember { mutableStateOf(false) }
     val startOptions = remember(state.gpx) { RouteStart.options(state.gpx) }
-    val navSegments = remember(state.gpx, startAlong) { RouteStart.from(state.gpx.segments, startAlong) }
+    /** Vuelta al inicio (por donde has venido o por el camino más corto); null si sigues la ruta. */
+    var returnSegs by remember { mutableStateOf<List<List<GeoPoint>>?>(null) }
+    var showReturn by remember { mutableStateOf(false) }
+    var showSos by remember { mutableStateOf(false) }
+    val routeSegments = remember(state.gpx, startAlong) { RouteStart.from(state.gpx.segments, startAlong) }
+    val navSegments = returnSegs ?: routeSegments
     val navProfile = remember(navSegments) { RouteGeometry.downsample(ElevationProfile.of(navSegments), 300) }
     var navState by remember { mutableStateOf<NavState?>(null) }
     var navError by remember { mutableStateOf<String?>(null) }
     var extras by remember { mutableStateOf(NavExtras()) }
+    var returnError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     // Lo que se calcula una vez por ruta para la navegación: giros, subidas y pendientes
     val fullProfile = remember(navSegments) { ElevationProfile.of(navSegments) }
@@ -183,6 +202,22 @@ fun MapScreen(
     val layers by MapPrefs.state.collectAsStateWithLifecycle()
     var showLayers by remember { mutableStateOf(false) }
     LaunchedEffect(ready, layers) { ready?.second?.applyLayers(layers, AppMode.current) }
+
+    // Camino de vuelta en azul discontinuo, encima de la ruta
+    LaunchedEffect(ready, returnSegs) {
+        val (_, style) = ready ?: return@LaunchedEffect
+        val json = GeoJson.track(returnSegs.orEmpty())
+        val src = style.getSourceAs<GeoJsonSource>(RETURN)
+        if (src != null) { src.setGeoJson(json); return@LaunchedEffect }
+        style.addSource(GeoJsonSource(RETURN, json))
+        val line = LineLayer(RETURN, RETURN).withProperties(
+            PropertyFactory.lineColor("#1565C0"),
+            PropertyFactory.lineWidth(5f),
+            PropertyFactory.lineDasharray(arrayOf(1.5f, 1f)),
+            PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+        )
+        if (style.getLayer("track-line") != null) style.addLayerAbove(line, "track-line") else style.addLayer(line)
+    }
 
     // Fuentes y refugios en el mapa
     LaunchedEffect(ready, pois) {
@@ -409,10 +444,41 @@ fun MapScreen(
             }
         }
 
-        LayersButton(
-            onClick = { showLayers = true },
-            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp),
-        )
+        Column(
+            Modifier.align(Alignment.CenterEnd).padding(end = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            LayersButton(onClick = { showLayers = true })
+            SosButton(onClick = { showSos = true })
+        }
+        if (showSos) SosSheet(onDismiss = { showSos = false })
+        if (showReturn) {
+            ReturnDialog(
+                onDismiss = { showReturn = false },
+                onRetrace = {
+                    showReturn = false
+                    val along = navState?.alongMeters ?: 0.0
+                    Retrace.backToStart(routeSegments, along).takeIf { it.isNotEmpty() }?.let { returnSegs = it }
+                },
+                onShortest = {
+                    showReturn = false
+                    val here = RideSession.lastLocation
+                    val start = routeSegments.firstOrNull()?.firstOrNull()
+                    if (here != null && start != null) {
+                        scope.launch {
+                            returnError = null
+                            val pts = listOf(GeoPoint(here.latitude, here.longitude), start)
+                            runCatching {
+                                val (code, body) = Http.getWithStatus(BRouter.url(pts, AppMode.current))
+                                check(code in 200..299) { BRouter.friendlyError(body) }
+                                GpxParser.parse(body).segments
+                            }.onSuccess { returnSegs = it }
+                                .onFailure { returnError = it.message ?: "No se pudo calcular. Prueba «por donde he venido»." }
+                        }
+                    }
+                },
+            )
+        }
         if (showLayers) {
             LayersSheet(
                 layers, AppMode.current, onChange = { MapPrefs.set(context, it) }, onDismiss = { showLayers = false },
@@ -448,8 +514,16 @@ fun MapScreen(
                             highlight = s?.nextClimb?.let { it.startMeters..it.endMeters },
                         )
                     }
-                    FilledTonalButton(onClick = stopNav, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                        Text("Terminar y guardar", style = MaterialTheme.typography.titleMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { if (returnSegs != null) returnSegs = null else showReturn = true },
+                            modifier = Modifier.weight(1f).height(56.dp),
+                        ) {
+                            Text(if (returnSegs != null) "Seguir la ruta" else "Volver al inicio")
+                        }
+                        FilledTonalButton(onClick = stopNav, modifier = Modifier.weight(1f).height(56.dp)) {
+                            Text("Terminar y guardar")
+                        }
                     }
                 } else {
                     Text(
@@ -467,6 +541,8 @@ fun MapScreen(
                         ScrubbableProfile(state.profile, scrub, onScrub = { scrub = it }, chartHeight = 72.dp)
                     }
                     navError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    returnError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    if (returnSegs != null) Text("Volviendo al inicio", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                     Button(
                         onClick = { showStartSheet = true },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -691,3 +767,23 @@ private fun SlopeLegend(modifier: Modifier = Modifier) {
 }
 
 private const val POIS = "pois"
+
+private const val RETURN = "return"
+
+/** Volver al coche: por donde has venido (sin conexión) o por el camino más corto (BRouter). */
+@Composable
+private fun ReturnDialog(onDismiss: () -> Unit, onRetrace: () -> Unit, onShortest: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Volver al inicio") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = onRetrace, modifier = Modifier.fillMaxWidth()) { Text("Por donde he venido") }
+                Text("La ruta al revés hasta el inicio. Funciona sin conexión.", style = MaterialTheme.typography.bodySmall)
+                FilledTonalButton(onClick = onShortest, modifier = Modifier.fillMaxWidth()) { Text("Por el camino más corto") }
+                Text("Calculado por pistas y senderos desde donde estás. Necesita conexión.", style = MaterialTheme.typography.bodySmall)
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+    )
+}

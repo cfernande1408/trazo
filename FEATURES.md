@@ -122,6 +122,16 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - **Agua y refugios por delante**: fuentes, manantiales y refugios de OpenStreetMap a menos de 150 m de la ruta, en el mapa, en la pestaña *Puntos* con su km y en navegación («Fuente en 1,2 km»)
 - Las fuentes marcadas como no potables no salen
 
+## Seguridad
+
+- **Volver al inicio** durante la navegación: *por donde he venido* (la ruta al revés hasta el inicio, sin conexión) o *por el camino más corto* por pistas y senderos (BRouter); se dibuja en azul discontinuo y se navega como una ruta más
+- Botón **SOS** en el mapa y al grabar: tu posición en grande en **UTM** (huso, X, Y) y en grados (decimal y grados-minutos-segundos), con altitud y precisión
+- Llamar al 112 con un toque, mandar la posición por SMS al contacto de emergencia o compartirla por cualquier app
+- El SMS lleva coordenadas, UTM, altitud, hora y un enlace al mapa, y se entiende sin tener Trazo
+- **Detección de caídas** mientras grabas o navegas: golpe fuerte seguido de 20 s sin moverte; suena una alarma con «¿Estás bien?» y, si no respondes en 60 s, manda tu posición por SMS al contacto
+- No salta si te levantas, sigues pedaleando o el GPS dice que avanzas
+- Contacto de emergencia y detección de caídas se configuran en la hoja de SOS
+
 ## Vista 3D
 
 - Relieve en 3D con la exageración ajustada a cada ruta (más en rutas suaves, menos en sierra)
