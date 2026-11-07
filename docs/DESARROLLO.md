@@ -23,6 +23,23 @@ Comandos útiles:
 python3 scripts/icons.py . /tmp # regenera los iconos de las cuatro estaciones
 ```
 
+## Trazo web
+
+Está en `web/`: TypeScript, Vite y MapLibre GL JS. Usa el mismo estilo de mapa que la app
+(`app/src/main/assets/trazo_topo.json`) y los cálculos del núcleo pasados a `web/src/geo.ts`: si
+cambian en `core/gpx`, hay que cambiarlos también ahí. Necesitas Node 20 o superior.
+
+```bash
+cd web
+npm install
+npm run dev      # en http://localhost:5173, se recarga sola al guardar
+npm test         # tests (lectura de GPX, desnivel, pendiente, altitudes)
+npm run build    # la web lista en web/dist
+```
+
+Cada push a `main` que toque `web/` la publica en GitHub Pages con `.github/workflows/pages.yml`.
+La primera vez hay que activarlo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
 ## Publicar una versión estable
 
 Cada push a `main` pasa los tests y compila en GitHub Actions, y actualiza la beta. Las versiones

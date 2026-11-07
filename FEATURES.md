@@ -229,6 +229,20 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - Espacio para donar (sale cuando haya enlace)
 - Créditos de los datos y la nota de privacidad
 
+## Trazo web
+
+- Web para **revisar rutas desde el ordenador** (no para navegar): [cfernande1408.github.io/trazo](https://cfernande1408.github.io/trazo/)
+- Abre o suelta uno o varios GPX; con varios, una lista para pasar de uno a otro
+- El recorrido en el mapa topo de Trazo (con los colores y árboles de la estación), el topo IGN o la ortofoto PNOA, con relieve
+- Capa de pendiente en el mapa, con leyenda
+- Perfil coloreado por pendiente: al pasar el ratón marca el punto en el mapa con su km, altitud y pendiente
+- Distancia, desnivel, tiempo estimado en bici o a pie (MIDE), altitud máxima y mínima, y si es circular o lineal
+- Rampa más dura, metros a más del 10 % y del 15 % y la bajada más fuerte
+- Puntos del autor: en el mapa con su nota y en una lista que lleva a cada uno
+- Si el GPX no trae altitudes, las pide a Open-Meteo
+- **Descargar el GPX** para abrirlo en el móvil, y enlace a la ruta en Wikiloc si viene de allí
+- Los archivos no salen del navegador
+
 ## Diseño
 
 - Material Design 3 con Jetpack Compose

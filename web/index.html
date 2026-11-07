@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trazo web</title>
+    <meta name="description" content="Revisa tus rutas GPX de bici de montaña y senderismo: mapa topo, perfil, pendiente y tiempo estimado." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="./" aria-label="Trazo">
+        <img id="logo" alt="" width="32" height="32" />
+        <span>Trazo</span>
+        <small>web</small>
+      </a>
+      <div class="top-actions">
+        <div class="segmented" role="radiogroup" aria-label="Actividad">
+          <button type="button" role="radio" data-activity="bike">Bici</button>
+          <button type="button" role="radio" data-activity="hike">A pie</button>
+        </div>
+        <button type="button" class="btn primary" id="open">Abrir GPX</button>
+        <input type="file" id="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" multiple hidden />
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel" id="panel">
+        <section class="empty" id="empty">
+          <h1>Revisa tus rutas antes de salir</h1>
+          <p>
+            Abre o suelta aquí los GPX que descargues de Wikiloc o de donde quieras: verás el recorrido sobre el mapa
+            topo, el perfil, dónde están las rampas y cuánto tardarás. Nada sale de tu ordenador.
+          </p>
+          <button type="button" class="btn primary big" id="open2">Abrir GPX</button>
+          <p class="muted small">Para seguir la ruta en el monte, pásala al móvil y ábrela con la app Trazo.</p>
+        </section>
+
+        <section id="routes" class="routes" hidden></section>
+
+        <section id="summary" class="summary" hidden>
+          <div class="title-row">
+            <h2 id="name"></h2>
+          </div>
+          <div class="tags" id="tags"></div>
+          <div class="stats" id="stats"></div>
+          <div class="card" id="slope"></div>
+          <div class="card tip" id="tip"></div>
+          <div class="card" id="points"></div>
+          <div class="actions">
+            <button type="button" class="btn primary" id="download">Descargar GPX para el móvil</button>
+            <a class="btn" id="source" target="_blank" rel="noopener" hidden>Ver en Wikiloc</a>
+          </div>
+          <p class="muted small" id="note"></p>
+        </section>
+      </aside>
+
+      <div class="mapwrap">
+        <div id="map"></div>
+        <div class="layers card" id="layers">
+          <div class="layers-title">Tipo de mapa</div>
+          <div class="layers-row" id="bases"></div>
+          <label class="check"><input type="checkbox" id="relief" checked /> Relieve</label>
+          <label class="check"><input type="checkbox" id="slopeLayer" /> Pendiente</label>
+        </div>
+        <div class="legend card" id="legend" hidden></div>
+      </div>
+
+      <section class="profile" id="profile" hidden>
+        <div class="profile-head">
+          <span>Perfil</span>
+          <span id="readout" class="muted"></span>
+        </div>
+        <canvas id="chart"></canvas>
+      </section>
+    </main>
+
+    <div class="drop" id="drop" hidden><div>Suelta aquí tus GPX</div></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

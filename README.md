@@ -127,6 +127,16 @@ Funciona en Android 8.0 (API 26) o superior y no necesita Google Play Services.
 
 Para compilarla, publicar versiones o activar la comunidad, mira [docs/DESARROLLO.md](docs/DESARROLLO.md).
 
+### Trazo web
+
+Para revisar rutas desde el ordenador antes de salir: **[cfernande1408.github.io/trazo](https://cfernande1408.github.io/trazo/)**.
+Abres o sueltas tus GPX y ves el recorrido sobre el mapa topo de Trazo, el topo IGN o la ortofoto,
+el perfil coloreado por pendiente (al pasar el ratón se marca el punto en el mapa), las rampas
+más duras, el tiempo estimado en bici o a pie y los puntos del autor. Desde ahí descargas el GPX
+para abrirlo en el móvil. No es para navegar: para seguir la ruta en el monte está la app.
+
+Los archivos no salen del navegador; solo se piden las altitudes a Open-Meteo si el GPX no las trae.
+
 ## Cómo está hecho
 
 | | |
@@ -151,6 +161,7 @@ core/gpx/      Kotlin puro: todo lo que se puede probar sin móvil
   gpx/sensors/   lectura de sensores Bluetooth (pulso, cadencia, potencia)
   gpx/community/ valoraciones y avisos: reglas, URLs y JSON de Supabase
 supabase/      esquema de la base de la comunidad
+web/           Trazo web (TypeScript, Vite y MapLibre GL JS), para revisar rutas en el ordenador
 app/           Android
   importer/      Inicio (resumen de la ruta) y Guardadas
   explore/       Explorar, buscador y navegador de Wikiloc
