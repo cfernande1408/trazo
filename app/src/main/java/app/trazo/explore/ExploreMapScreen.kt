@@ -138,6 +138,9 @@ private val MADRID = LatLng(40.4168, -3.7038)
 fun ExploreMapScreen(
     onRouteReady: (Gpx) -> Unit,
     activity: Activity = AppMode.current,
+    /** Zona a la que llevar el mapa al abrirlo (p. ej. la de un mapa descargado). */
+    focus: LatLngBounds? = null,
+    onFocused: () -> Unit = {},
     // Un ViewModel por actividad: las rutas de bici y los senderos no se mezclan
     vm: ExploreMapViewModel = viewModel(key = "explore-${activity.name}"),
 ) {
@@ -234,6 +237,13 @@ fun ExploreMapScreen(
     }
 
     LaunchedEffect(ready, hazards) { ready?.second?.showHazards(hazards) }
+
+    LaunchedEffect(ready, focus) {
+        val (map, _) = ready ?: return@LaunchedEffect
+        val b = focus ?: return@LaunchedEffect
+        map.animateCamera(CameraUpdateFactory.newLatLngBounds(b, 48))
+        onFocused()
+    }
 
     LaunchedEffect(ready, routes, onlyMtb, shape) {
         val (_, style) = ready ?: return@LaunchedEffect

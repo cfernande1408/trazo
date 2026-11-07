@@ -13,6 +13,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material3.ExtendedFloatingActionButton
+import app.trazo.offline.SavedMap
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -59,13 +62,28 @@ fun LibraryScreen(
     onDeleteRoute: (SavedRoute) -> Unit,
     onOpenRide: (File) -> Unit,
     onRecord: () -> Unit,
+    /** Elegir uno o varios GPX del móvil y guardarlos directamente. */
+    onImport: () -> Unit,
+    /** Ver en Explorar la zona de un mapa descargado. */
+    onOpenMap: (SavedMap) -> Unit,
 ) {
     var shelf by rememberSaveable { mutableStateOf(Shelf.ROUTES) }
     val maps by OfflineMaps.maps.collectAsStateWithLifecycle()
     // "Mis salidas" → "Salidas"
     val outings = activity.outingsTitle.removePrefix("Mis ").replaceFirstChar { it.uppercase() }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Guardadas") }) }) { padding ->
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Guardadas") }) },
+        floatingActionButton = {
+            if (shelf == Shelf.ROUTES) {
+                ExtendedFloatingActionButton(
+                    onClick = onImport,
+                    icon = { Icon(Icons.Filled.FileOpen, contentDescription = null) },
+                    text = { Text("Importar GPX") },
+                )
+            }
+        },
+    ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             Row(
                 Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
@@ -73,14 +91,18 @@ fun LibraryScreen(
             ) {
                 FilterChip(selected = shelf == Shelf.ROUTES, onClick = { shelf = Shelf.ROUTES }, label = { Text("Rutas · ${routes.size}") })
                 FilterChip(selected = shelf == Shelf.RIDES, onClick = { shelf = Shelf.RIDES }, label = { Text(outings) })
-                FilterChip(selected = shelf == Shelf.MAPS, onClick = { shelf = Shelf.MAPS }, label = { Text("Mapas sin conexión · ${maps.size}") })
+                FilterChip(selected = shelf == Shelf.MAPS, onClick = { shelf = Shelf.MAPS }, label = { Text("Mapas · ${maps.size}") })
             }
             when (shelf) {
                 Shelf.ROUTES ->
                     if (routes.isEmpty()) EmptyShelf(
                         "Aún no has guardado ninguna ruta",
-                        "Abre una de Wikiloc o de Explorar, o crea la tuya, y pulsa «Guardar en tus rutas». Las guardadas funcionan sin conexión.",
-                    ) else LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        "Pulsa «Importar GPX» para traer los que tengas en el móvil (puedes elegir varios), o abre una ruta " +
+                            "de Wikiloc o de Explorar y pulsa «Guardar en tus rutas». Las guardadas funcionan sin conexión.",
+                    ) else LazyColumn(
+                        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 96.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
                         items(routes, key = { it.file.absolutePath }) { SavedRouteRow(it, onOpenRoute, onDeleteRoute) }
                     }
                 Shelf.RIDES -> RidesList(onOpenRide, onRecord)
@@ -89,7 +111,15 @@ fun LibraryScreen(
                         "No tienes mapas descargados",
                         "En el resumen de una ruta, «Descargar mapa»; o en Explorar, el botón de la nube para la zona que ves.",
                     ) else LazyColumn(contentPadding = PaddingValues(16.dp)) {
-                        item { OfflineMapsList(maps, title = false) }
+                        item {
+                            Text(
+                                "Toca un mapa para ver su zona en Explorar.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 8.dp),
+                            )
+                        }
+                        item { OfflineMapsList(maps, title = false, onOpen = onOpenMap) }
                     }
             }
         }

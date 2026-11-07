@@ -313,13 +313,22 @@ internal fun OfflineCard(state: ImportState.Loaded) {
 }
 
 /** Lista de mapas descargados, en "Mis rutas". */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-internal fun OfflineMapsList(maps: List<SavedMap>, title: Boolean = true) {
+internal fun OfflineMapsList(maps: List<SavedMap>, title: Boolean = true, onOpen: ((SavedMap) -> Unit)? = null) {
     val context = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (title) Text("Mapas sin conexión", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
         maps.forEach { m ->
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+            Card(
+                onClick = { onOpen?.invoke(m) },
+                enabled = onOpen != null,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            ) {
                 Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.CloudDone, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Column(Modifier.weight(1f).padding(start = 12.dp)) {

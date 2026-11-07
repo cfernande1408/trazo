@@ -1,5 +1,8 @@
 package app.trazo
 
+import app.trazo.gpx.GpxParser
+import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Row
@@ -93,6 +96,36 @@ class MainActivity : ComponentActivity() {
     /** Pestaña seleccionada; también la cambia un GPX que llega por Abrir con / Compartir. */
     private var tab by mutableIntStateOf(0)
 
+    /** Se incrementa al guardar o borrar para volver a leer "Tus rutas". */
+    private var libVersion by mutableIntStateOf(0)
+
+    /** Importar GPX desde Guardadas: uno o varios, y se guardan directamente. */
+    private val importToLibrary = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isEmpty()) return@registerForActivityResult
+        lifecycleScope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                uris.count { uri ->
+                    runCatching {
+                        val gpx = contentResolver.openInputStream(uri)!!.use(GpxParser::parse)
+                        check(gpx.segments.any { it.size >= 2 }) { "Sin recorrido" }
+                        RoutesLibrary.save(this@MainActivity, gpx)
+                    }.isSuccess
+                }
+            }
+            libVersion++
+            val failed = uris.size - saved
+            Toast.makeText(
+                this@MainActivity,
+                when {
+                    failed == 0 -> if (saved == 1) "Ruta guardada" else "$saved rutas guardadas"
+                    saved == 0 -> "No se pudo leer ningún GPX"
+                    else -> "$saved guardadas, $failed no se pudieron leer"
+                },
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -119,12 +152,12 @@ class MainActivity : ComponentActivity() {
                 var showRecord by rememberSaveable { mutableStateOf(false) }
                 var showRides by rememberSaveable { mutableStateOf(false) }
                 var showPlanner by rememberSaveable { mutableStateOf(false) }
-                /** Se incrementa al guardar o borrar para volver a leer "Tus rutas". */
-                var libVersion by remember { mutableIntStateOf(0) }
                 val library by produceState(emptyList<SavedRoute>(), libVersion) {
                     value = withContext(Dispatchers.IO) { RoutesLibrary.list(context) }
                 }
                 val scope = rememberCoroutineScope()
+                /** Zona a la que llevar Explorar (al tocar un mapa descargado en Guardadas). */
+                var exploreFocus by remember { mutableStateOf<org.maplibre.android.geometry.LatLngBounds?>(null) }
                 /** Ruta del archivo de la salida abierta en detalle. */
                 var rideFile by rememberSaveable { mutableStateOf<String?>(null) }
                 val ride by RideSession.state.collectAsStateWithLifecycle()
@@ -231,7 +264,10 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                 )
-                                1 -> ExploreMapScreen(onRouteReady = openRoute, activity = activity)
+                                1 -> ExploreMapScreen(
+                                    onRouteReady = openRoute, activity = activity,
+                                    focus = exploreFocus, onFocused = { exploreFocus = null },
+                                )
                                 2 -> WikilocBrowser(onGpx = openRoute)
                                 3 -> app.trazo.importer.LibraryScreen(
                                     activity = activity,
@@ -248,6 +284,13 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onOpenRide = openRide,
                                     onRecord = { showRecord = true },
+                                    onImport = { importToLibrary.launch(arrayOf("*/*")) },
+                                    onOpenMap = { m ->
+                                        (m.region.definition as? org.maplibre.android.offline.OfflineTilePyramidRegionDefinition)?.bounds?.let {
+                                            exploreFocus = it
+                                            tab = 1
+                                        }
+                                    },
                                 )
                                 4 -> CommunityScreen()
                                 else -> app.trazo.ui.AboutScreen()

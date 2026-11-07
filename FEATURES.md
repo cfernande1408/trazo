@@ -36,9 +36,10 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 ## Guardadas
 
 - Todo lo que tienes en el móvil, con un chip arriba para cada cosa, como la biblioteca de Spotify
-- **Rutas**: las que guardas desde Wikiloc, Explorar o *Crear ruta*; se abren con un toque y se borran con confirmación
+- **Rutas**: las que guardas desde Wikiloc, Explorar o *Crear ruta*; se abren con un toque (con su resumen, mapa y navegación) y se borran con confirmación
+- Botón **Importar GPX** para traer los que tengas en el móvil, uno o varios a la vez, directos a tus rutas
 - **Salidas** (o *Excursiones*): lo que has grabado, de lo más reciente a lo más antiguo
-- **Mapas sin conexión**: las zonas descargadas, con lo que ocupa cada una y para borrarlas
+- **Mapas**: las zonas descargadas, con lo que ocupa cada una y para borrarlas; tocando una se ve su zona en *Explorar*
 
 ## Inicio
 
