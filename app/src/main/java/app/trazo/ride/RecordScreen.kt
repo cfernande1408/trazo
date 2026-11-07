@@ -126,11 +126,16 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
         }
         var showSos by remember { mutableStateOf(false) }
-        app.trazo.safety.SosButton(
-            onClick = { showSos = true },
-            modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(16.dp),
-        )
+        var showSensors by remember { mutableStateOf(false) }
+        Column(
+            Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            app.trazo.safety.SosButton(onClick = { showSos = true })
+            app.trazo.sensors.SensorsButton(onClick = { showSensors = true })
+        }
         if (showSos) app.trazo.safety.SosSheet(onDismiss = { showSos = false })
+        if (showSensors) app.trazo.sensors.SensorsSheet(onDismiss = { showSensors = false })
         Card(
             modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp).fillMaxWidth(),
             shape = MaterialTheme.shapes.extraLarge,

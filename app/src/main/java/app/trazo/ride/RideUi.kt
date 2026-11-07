@@ -50,6 +50,18 @@ fun RideStatsGrid(stats: RideStats, currentKmh: Double? = null, elapsedMs: Long?
             Big("Máxima", kmh(stats.maxKmh), Modifier.weight(1f))
             Big("Desnivel +", String.format(ES, "%.0f m", stats.gainMeters), Modifier.weight(1f))
         }
+        // Solo si llevabas sensores
+        val sensors = listOfNotNull(
+            stats.avgHr?.let { "Pulso medio" to "$it ppm" },
+            stats.maxHr?.let { "Pulso máx." to "$it ppm" },
+            stats.avgCadence?.let { "Cadencia" to "$it rpm" },
+            stats.avgPower?.let { "Potencia" to "$it W" },
+        )
+        if (sensors.isNotEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                sensors.take(3).forEach { (l, v) -> Big(l, v, Modifier.weight(1f)) }
+            }
+        }
     }
 }
 

@@ -20,6 +20,7 @@ import androidx.core.app.ServiceCompat
 import app.trazo.MainActivity
 import app.trazo.R
 import app.trazo.safety.FallMonitor
+import app.trazo.sensors.BleSensors
 import java.util.Locale
 
 /**
@@ -63,6 +64,7 @@ class RideService : Service() {
         )
         startLocation()
         falls = FallMonitor(this).also { it.start() }
+        BleSensors.connectSaved(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -82,6 +84,7 @@ class RideService : Service() {
     override fun onDestroy() {
         getSystemService(LocationManager::class.java).removeUpdates(listener)
         falls?.stop()
+        BleSensors.disconnectAll()
         super.onDestroy()
     }
 

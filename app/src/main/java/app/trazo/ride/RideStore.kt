@@ -34,7 +34,7 @@ object RideStore {
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.ROOT).format(Date(start))
         val suffix = if (activity == Activity.HIKE) "-hike" else ""
         val file = File(dir(context), "$stamp$suffix.gpx")
-        file.writeText(GpxWriter.write(name, points))
+        file.writeText(GpxWriter.write(name, points, type = if (activity == Activity.HIKE) "hiking" else "mountain_biking"))
         return file
     }
 

@@ -13,8 +13,11 @@ data class TimedPoint(
     val ele: Double? = null,
     val timeMs: Long,
     val accuracy: Float? = null,
+    val hr: Int? = null,
+    val cad: Int? = null,
+    val power: Int? = null,
 ) {
-    fun geo() = GeoPoint(lat, lon, ele, Instant.ofEpochMilli(timeMs).toString())
+    fun geo() = GeoPoint(lat, lon, ele, Instant.ofEpochMilli(timeMs).toString(), hr, cad, power)
 }
 
 data class RideStats(
@@ -27,6 +30,12 @@ data class RideStats(
     val maxKmh: Double,
     val gainMeters: Double,
     val lossMeters: Double,
+    /** Sensores: null si no se grabaron. */
+    val avgHr: Int? = null,
+    val maxHr: Int? = null,
+    val avgCadence: Int? = null,
+    val avgPower: Int? = null,
+    val maxPower: Int? = null,
 ) {
     companion object {
         val EMPTY = RideStats(0.0, 0, 0, 0.0, 0.0, 0.0, 0.0)
@@ -84,6 +93,11 @@ object RideCalculator {
         }
         val total = pts.last().last().timeMs - pts.first().first().timeMs
         val ele = TrackStatsCalculator.compute(pts.map { seg -> seg.map { it.geo() } })
+        val all = pts.flatten()
+        val hr = all.mapNotNull { it.hr }.filter { it in 30..230 }
+        // La cadencia media se cuenta pedaleando (sin los ratos a 0)
+        val cad = all.mapNotNull { it.cad }.filter { it > 0 }
+        val power = all.mapNotNull { it.power }.filter { it >= 0 }
         return RideStats(
             distanceMeters = distance,
             totalMs = total,
@@ -92,6 +106,11 @@ object RideCalculator {
             maxKmh = maxMps * 3.6,
             gainMeters = ele.elevationGainMeters,
             lossMeters = ele.elevationLossMeters,
+            avgHr = hr.takeIf { it.isNotEmpty() }?.average()?.toInt(),
+            maxHr = hr.maxOrNull(),
+            avgCadence = cad.takeIf { it.isNotEmpty() }?.average()?.toInt(),
+            avgPower = power.takeIf { it.isNotEmpty() }?.average()?.toInt(),
+            maxPower = power.maxOrNull(),
         )
     }
 
@@ -100,7 +119,7 @@ object RideCalculator {
         gpx.segments.map { seg ->
             seg.mapNotNull { p ->
                 val t = p.time?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() } ?: return@mapNotNull null
-                TimedPoint(p.lat, p.lon, p.ele, t)
+                TimedPoint(p.lat, p.lon, p.ele, t, hr = p.hr, cad = p.cad, power = p.power)
             }
         }.filter { it.isNotEmpty() }
 

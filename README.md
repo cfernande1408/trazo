@@ -74,6 +74,10 @@ desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 - **Luz restante**: cuánta luz te sobra o te falta para terminar a tu ritmo real, con aviso si vas justo.
 - **Agua y refugios por delante**: fuentes y refugios de OSM a lo largo de la ruta, con su km.
 
+**Entrenamiento.** Sensores Bluetooth de pulso, cadencia y potencia, grabados en el GPX
+para Strava. Seis cifras de navegación a tu gusto y un compañero virtual que te dice cuánto vas
+por delante o por detrás de la última vez que hiciste la ruta.
+
 **Seguridad.** Volver al inicio por donde has venido (sin conexión) o por el camino más
 corto. Botón SOS con tu posición en UTM y grados para dictarla al 112, llamar o mandarla por
 SMS. Y detección de caídas: si te caes y no respondes en 60 s, avisa a tu contacto por SMS.
@@ -149,6 +153,7 @@ core/gpx/      Kotlin puro: todo lo que se puede probar sin móvil
   gpx/layers/    tipos de mapa y capas
   gpx/offline/   zona y tamaño de los mapas sin conexión
   gpx/safety/    UTM, mensaje de SOS y detección de caídas
+  gpx/sensors/   lectura de sensores Bluetooth (pulso, cadencia, potencia)
 app/           Android
   importer/      Mis rutas
   explore/       Explorar, buscador y navegador de Wikiloc
@@ -196,8 +201,9 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Volver al inicio por donde has venido o por el camino más corto
 - [x] Mi posición para el 112 (UTM y grados, por SMS)
 - [x] Detección de caídas con aviso a un contacto
-- [ ] Sensores Bluetooth: pulso, cadencia y potencia
-- [ ] Compañero virtual contra tu salida anterior
+- [x] Sensores Bluetooth: pulso, cadencia y potencia
+- [x] Compañero virtual contra tu salida anterior
+- [x] Pantalla de datos de navegación a tu gusto
 - [x] Mapas sin conexión de la zona de una ruta
 - [x] Dificultad de OSM (`mtb:scale`, `sac_scale`) y pendiente por tramos
 - [x] Descargar cualquier zona desde *Explorar*

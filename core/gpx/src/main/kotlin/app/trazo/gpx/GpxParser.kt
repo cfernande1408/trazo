@@ -71,6 +71,12 @@ object GpxParser {
                         "trkseg" -> if (segment.isNotEmpty()) segments.add(segment)
                         "trk" -> if (segments.isNotEmpty()) tracks.add(Track(trackName, segments))
                         "rte" -> if (segment.isNotEmpty()) tracks.add(Track(trackName, listOf(segment)))
+                        // Extensiones de sensores dentro del punto (gpxtpx:hr, gpxtpx:cad, power…)
+                        else -> if (p != null) when (e.name.substringAfter(':')) {
+                            "hr" -> p.hr = value?.toDoubleOrNull()?.toInt()
+                            "cad" -> p.cad = value?.toDoubleOrNull()?.toInt()
+                            "power", "PowerInWatts" -> p.power = value?.toDoubleOrNull()?.toInt()
+                        }
                     }
                     stack.removeLast()
                     text.clear()
@@ -98,8 +104,11 @@ object GpxParser {
         var time: String? = null
         var name: String? = null
         var desc: String? = null
+        var hr: Int? = null
+        var cad: Int? = null
+        var power: Int? = null
 
-        fun toGeoPoint() = GeoPoint(lat, lon, ele, time)
+        fun toGeoPoint() = GeoPoint(lat, lon, ele, time, hr, cad, power)
         fun toWaypoint() = Waypoint(lat, lon, ele, name, desc)
 
         companion object {

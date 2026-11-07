@@ -76,6 +76,19 @@ import app.trazo.importer.title
 import app.trazo.nav.Alerts
 import app.trazo.ride.RideSession
 import app.trazo.ui.AppMode
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import androidx.compose.material3.RadioButton
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.clickable
+import app.trazo.sensors.SensorsSheet
+import app.trazo.sensors.SensorsButton
+import app.trazo.sensors.BleSensors
+import app.trazo.ride.formatDuration
+import app.trazo.ride.RideStore
+import app.trazo.gpx.nav.VirtualPartner
+import app.trazo.gpx.nav.DataField
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.OutlinedButton
@@ -172,6 +185,23 @@ fun MapScreen(
     var voiceOn by remember { mutableStateOf(prefs.getBoolean("voice", true)) }
     val voice = remember { Voice(context) }
     DisposableEffect(Unit) { onDispose { voice.release() } }
+
+    // Pantalla de datos configurable y compañero virtual
+    var fields by remember { mutableStateOf(DataField.decode(prefs.getString("nav_fields", null))) }
+    var picking by remember { mutableStateOf<Int?>(null) }
+    var showSensors by remember { mutableStateOf(false) }
+    val ride by RideSession.state.collectAsStateWithLifecycle()
+    val sensorTick by BleSensors.readings.collectAsStateWithLifecycle()
+    val partner by produceState<VirtualPartner?>(null, routeSegments) {
+        value = withContext(Dispatchers.IO) {
+            // La salida anterior más reciente con el mismo nombre de ruta que cubra el recorrido
+            RideStore.list(context).asSequence()
+                .filter { it.name == state.title() }
+                .map { VirtualPartner(it.points, routeSegments) }
+                .firstOrNull { it.usable }
+        }
+    }
+    val partnerGap = navState?.let { st -> partner?.gapMs(st.alongMeters, System.currentTimeMillis() - ride.startedAtMs) }
 
     // Navegar = grabar la salida: el servicio mantiene el GPS y los avisos con la pantalla apagada
     val startNav = {
@@ -449,7 +479,20 @@ fun MapScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             LayersButton(onClick = { showLayers = true })
+            SensorsButton(onClick = { showSensors = true })
             SosButton(onClick = { showSos = true })
+        }
+        if (showSensors) SensorsSheet(onDismiss = { showSensors = false })
+        picking?.let { slot ->
+            FieldPicker(
+                current = fields[slot],
+                onDismiss = { picking = null },
+                onPick = { f ->
+                    fields = fields.toMutableList().also { it[slot] = f }
+                    prefs.edit().putString("nav_fields", DataField.encode(fields)).apply()
+                    picking = null
+                },
+            )
         }
         if (showSos) SosSheet(onDismiss = { showSos = false })
         if (showReturn) {
@@ -501,10 +544,14 @@ fun MapScreen(
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 val s = navState
                 if (navigating) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Stat("Quedan", s?.let { km(it.remainingMeters) } ?: "—", Modifier.weight(1f))
-                        Stat("Por subir", s?.let { metros(it.remainingGainMeters) } ?: "—", Modifier.weight(1f))
-                        Stat("Recorrido", s?.let { km(it.alongMeters) } ?: "—", Modifier.weight(1f))
+                    // Seis cifras a tu gusto: toca una para cambiarla
+                    val values = NavValues(s, extras, ride, sensorTick.takeIf { BleSensors.fresh() != null }, partnerGap, fullProfile, grades)
+                    fields.chunked(3).forEachIndexed { row, chunk ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            chunk.forEachIndexed { col, f ->
+                                Stat(f.label, values.text(f), Modifier.weight(1f).clickable { picking = row * 3 + col })
+                            }
+                        }
                     }
                     if (navProfile.size >= 2) {
                         ElevationChart(
@@ -785,5 +832,68 @@ private fun ReturnDialog(onDismiss: () -> Unit, onRetrace: () -> Unit, onShortes
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+    )
+}
+
+/** Todo lo que puede salir en las cifras de navegación. */
+private class NavValues(
+    val nav: NavState?,
+    val extras: NavExtras,
+    val ride: app.trazo.ride.RideState,
+    val sensors: app.trazo.sensors.Readings?,
+    val partnerGapMs: Long?,
+    val profile: List<app.trazo.gpx.ProfilePoint>,
+    val grades: List<app.trazo.gpx.Grade>,
+) {
+    fun text(f: DataField): String {
+        val n = nav
+        return when (f) {
+            DataField.REMAINING -> n?.let { km(it.remainingMeters) }
+            DataField.REMAINING_GAIN -> n?.let { metros(it.remainingGainMeters) }
+            DataField.DONE -> n?.let { km(it.alongMeters) }
+            DataField.SPEED -> ride.currentKmh?.let { String.format(ES, "%.1f km/h", it) }
+            DataField.AVG_SPEED -> ride.stats.avgMovingKmh.takeIf { it > 0 }?.let { String.format(ES, "%.1f km/h", it) }
+            DataField.MOVING_TIME -> formatDuration(ride.stats.movingMs)
+            DataField.ALTITUDE -> n?.let { ElevationProfile.eleAt(profile, it.alongMeters) }?.let { metros(it) }
+            DataField.GRADE -> n?.let { Slope.at(grades, it.alongMeters) }?.let { String.format(ES, "%.0f %%", it) }
+            DataField.ETA -> extras.finishAtMs?.let {
+                java.time.format.DateTimeFormatter.ofPattern("HH:mm").format(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()))
+            }
+            DataField.LIGHT -> extras.lightMarginMinutes?.let { (if (it < 0) "−" else "+") + durationText(kotlin.math.abs(it)) }
+            DataField.HEART_RATE -> sensors?.hr?.let { "$it ppm" }
+            DataField.CADENCE -> sensors?.cadence?.let { "$it rpm" }
+            DataField.POWER -> sensors?.power?.let { "$it W" }
+            DataField.PARTNER -> partnerGapMs?.let { g ->
+                val sec = kotlin.math.abs(g) / 1000
+                (if (g >= 0) "+" else "−") + String.format(java.util.Locale.ROOT, "%d:%02d", sec / 60, sec % 60)
+            }
+        } ?: "—"
+    }
+}
+
+/** Elegir qué cifra va en un hueco de la pantalla de navegación. */
+@Composable
+private fun FieldPicker(current: DataField, onDismiss: () -> Unit, onPick: (DataField) -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("¿Qué quieres ver aquí?") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                DataField.entries.forEach { f ->
+                    Row(
+                        Modifier.fillMaxWidth().clickable { onPick(f) }.padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = f == current, onClick = { onPick(f) })
+                        Text(f.label + when (f) {
+                            DataField.HEART_RATE, DataField.CADENCE, DataField.POWER -> " (sensor)"
+                            DataField.PARTNER -> " (tu salida anterior)"
+                            else -> ""
+                        })
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Cerrar") } },
     )
 }

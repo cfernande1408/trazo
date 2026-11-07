@@ -3,6 +3,7 @@ package app.trazo.ride
 import android.content.Context
 import android.content.Intent
 import android.location.Location
+import app.trazo.sensors.BleSensors
 import androidx.core.content.ContextCompat
 import app.trazo.gpx.Activity
 import app.trazo.gpx.ride.RideRecorder
@@ -86,12 +87,16 @@ object RideSession {
         _fixes.tryEmit(loc)
         val s = _state.value
         if (!s.active) return
+        val sensors = BleSensors.fresh()
         val accepted = recorder.add(
             TimedPoint(
                 loc.latitude, loc.longitude,
                 if (loc.hasAltitude()) loc.altitude else null,
                 loc.time,
                 if (loc.hasAccuracy()) loc.accuracy else null,
+                hr = sensors?.hr,
+                cad = sensors?.cadence,
+                power = sensors?.power,
             )
         )
         _state.value = s.copy(

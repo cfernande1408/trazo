@@ -6,6 +6,10 @@ data class GeoPoint(
     val lon: Double,
     val ele: Double? = null,
     val time: String? = null,
+    /** Sensores grabados (extensiones de Garmin): pulso, cadencia y potencia. */
+    val hr: Int? = null,
+    val cad: Int? = null,
+    val power: Int? = null,
 )
 
 /** Punto de interés del autor (fuente, mirador, bajada técnica…). */

@@ -123,6 +123,15 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - **Agua y refugios por delante**: fuentes, manantiales y refugios de OpenStreetMap a menos de 150 m de la ruta, en el mapa, en la pestaña *Puntos* con su km y en navegación («Fuente en 1,2 km»)
 - Las fuentes marcadas como no potables no salen
 
+## Entrenamiento
+
+- **Sensores Bluetooth** estándar de cualquier marca: banda de pulso, sensor de cadencia y potenciómetro (con su cadencia)
+- Se buscan y emparejan desde el botón de sensores del mapa o al grabar, y se conectan solos al empezar
+- Pulso, cadencia y potencia se graban en el GPX como las extensiones de Garmin, así que Strava los lee
+- En cada salida: pulso medio y máximo, cadencia media (sin los ratos sin pedalear) y potencia media
+- **Pantalla de datos a tu gusto**: seis cifras en la tarjeta de navegación; toca una para elegir entre quedan, por subir, recorrido, velocidad, media, tiempo en movimiento, altitud, pendiente, hora de llegada, luz, pulso, cadencia, potencia y compañero virtual
+- **Compañero virtual**: si ya hiciste esa ruta, «Vs. anterior» dice cuánto vas por delante (+1:20) o por detrás (−0:45) de tu salida más reciente en el mismo punto
+
 ## Seguridad
 
 - **Volver al inicio** durante la navegación: *por donde he venido* (la ruta al revés hasta el inicio, sin conexión) o *por el camino más corto* por pistas y senderos (BRouter); se dibuja en azul discontinuo y se navega como una ruta más
