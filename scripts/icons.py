@@ -7,10 +7,10 @@ D = root + '/app/src/debug/res'
 
 # Cielo arriba/abajo, sierra, nieve, monte de delante, árboles
 SEASONS = {
-    'spring': dict(top='#BFE6FF', bottom='#DDF3C4', ridge='#5FA03A', snow='#E6FFFFFF', hill='#3E7A23', tree='#9BD36A', bloom='#F4A7C0'),
-    'summer': dict(top='#C5F26B', bottom='#8CCB5E', ridge='#4F7F33', snow='#E6FFFFFF', hill='#2E4F00', tree='#7FB24F', bloom=None),
-    'autumn': dict(top='#FFE0A8', bottom='#F2A65A', ridge='#7C6A2B', snow='#E6FFFFFF', hill='#5E3410', tree='#E08A2E', bloom=None),
-    'winter': dict(top='#DCEBFA', bottom='#AFC9E6', ridge='#7E97AE', snow='#FFFFFFFF', hill='#E8F0F6', tree='#3D6B44', bloom=None),
+    'spring': dict(top='#BFE6FF', bottom='#DDF3C4', ridge='#5FA03A', snow='#E6FFFFFF', hill='#3E7A23', tree='#9BD36A', shade='#5E9E36', bloom='#F4A7C0'),
+    'summer': dict(top='#C5F26B', bottom='#8CCB5E', ridge='#4F7F33', snow='#E6FFFFFF', hill='#2E4F00', tree='#7FB24F', shade='#4E8A2E', bloom=None),
+    'autumn': dict(top='#FFE0A8', bottom='#F2A65A', ridge='#7C6A2B', snow='#E6FFFFFF', hill='#5E3410', tree='#E08A2E', shade='#B5532A', bloom=None),
+    'winter': dict(top='#DCEBFA', bottom='#AFC9E6', ridge='#7E97AE', snow='#FFFFFFFF', hill='#E8F0F6', tree='#3D6B44', shade='#264A2D', bloom=None),
 }
 RIDGE = 'M0,70L26,46L38,56L58,34L80,58L90,50L108,62L108,108L0,108Z'
 SNOW = 'M58,34L66,43L62,42L58,47L54,41L51,42Z'
@@ -20,7 +20,19 @@ PINES = ['M30,84L34.5,75L32.5,75L36.5,67L40.5,75L38.5,75L43,84Z', 'M70,80L74,72L
 # La ruta termina en la ladera, por debajo de la cresta
 ROUTE = 'M30,92C46,86 44,74 54,72S62,59 64,52'
 END = (64, 52)
-BLOOMS = [(36, 72), (40, 79), (74, 70), (78, 76), (33, 80)]
+BLOOMS = [(36, 72), (40, 79), (74, 70), (78, 76), (33, 80), (49, 75), (53, 79)]
+
+def pine(cx, base, h):
+    """Pino de dos pisos (mitad iluminada y mitad en sombra) y su tronco."""
+    k = h / 17
+    pts = [(-6.5, 0), (-2, -9), (-4, -9), (0, -17), (4, -9), (2, -9), (6.5, 0)]
+    full = 'M' + 'L'.join(f'{cx + x * k:.2f},{base + y * k:.2f}' for x, y in pts) + 'Z'
+    half = 'M' + 'L'.join(f'{cx + x * k:.2f},{base + y * k:.2f}' for x, y in pts[3:]) + f'L{cx:.2f},{base:.2f}Z'
+    trunk = f'M{cx - 1.1 * k:.2f},{base:.2f}h{2.2 * k:.2f}v{3 * k:.2f}h{-2.2 * k:.2f}z'
+    return full, half, trunk
+
+# Delante del trazo, tapando un trozo: así la ruta pasa por detrás y parece 3D
+FRONT = [pine(50.5, 82.5, 16)]
 
 def circle(cx, cy, r):
     return f'M{cx},{cy}m-{r},0a{r},{r} 0,1 1,{2*r},0a{r},{r} 0,1 1,-{2*r},0'
@@ -49,6 +61,11 @@ def fg(s, debug=False):
     c = SEASONS[s]
     trees = '\n'.join(f'    <path android:fillColor="{c["tree"]}" android:pathData="{p}" />' for p in PINES)
     blooms = '\n'.join(f'    <path android:fillColor="{c["bloom"]}" android:pathData="{circle(x, y, 1.6)}" />' for x, y in BLOOMS) if c['bloom'] else ''
+    front = '\n'.join(
+        f'    <path android:fillColor="#6B4F35" android:pathData="{t}" />\n'
+        f'    <path android:fillColor="{c["tree"]}" android:pathData="{f}" />\n'
+        f'    <path android:fillColor="{c["shade"]}" android:pathData="{h}" />'
+        for f, h, t in FRONT)
     badge = f'''    <!-- Versión debug: marca amarilla arriba a la izquierda -->
     <path android:fillColor="#FFD54F" android:strokeColor="#3A2E00" android:strokeWidth="2" android:pathData="{circle(36, 36, 6)}" />''' if debug else ''
     return f'''<?xml version="1.0" encoding="utf-8"?>
@@ -57,10 +74,11 @@ def fg(s, debug=False):
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
 {trees}
-{blooms}
     <path android:strokeColor="#FFFFFF" android:strokeWidth="7.5" android:strokeLineCap="round" android:pathData="{ROUTE}" />
     <path android:strokeColor="#C2410C" android:strokeWidth="4.2" android:strokeLineCap="round" android:pathData="{ROUTE}" />
     <path android:fillColor="#C2410C" android:strokeColor="#FFFFFF" android:strokeWidth="2.2" android:pathData="{circle(*END, 5.5)}" />
+{front}
+{blooms}
 {badge}
 </vector>
 '''
@@ -111,10 +129,11 @@ def svg(s, i):
 <clipPath id="m{i}"><circle cx="54" cy="54" r="36"/></clipPath></defs>
 <g clip-path="url(#m{i})"><rect width="108" height="108" fill="url(#g{i})"/>
 <path fill="{c['ridge']}" d="{RIDGE}"/><path fill="#fff" fill-opacity=".92" d="{snow}"/><path fill="{c['hill']}" d="{HILL}"/>
-{''.join(f'<path fill="{c["tree"]}" d="{p}"/>' for p in PINES)}{blooms}
+{''.join(f'<path fill="{c["tree"]}" d="{p}"/>' for p in PINES)}
 <path fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" d="{ROUTE}"/>
 <path fill="none" stroke="#C2410C" stroke-width="4.2" stroke-linecap="round" d="{ROUTE}"/>
-<circle cx="{END[0]}" cy="{END[1]}" r="5.5" fill="#C2410C" stroke="#fff" stroke-width="2.2"/></g></svg>'''
+<circle cx="{END[0]}" cy="{END[1]}" r="5.5" fill="#C2410C" stroke="#fff" stroke-width="2.2"/>
+{''.join(f'<path fill="#6B4F35" d="{t}"/><path fill="{c["tree"]}" d="{f}"/><path fill="{c["shade"]}" d="{h}"/>' for f, h, t in FRONT)}{blooms}</g></svg>'''
 html = '<body style="margin:0;background:#1d1b16;display:flex;gap:16px;padding:12px;color:#eee;font:14px sans-serif">' + \
     ''.join(f'<div style="text-align:center">{svg(s, i)}<br>{s}</div>' for i, s in enumerate(SEASONS)) + '</body>'
 open(out + '/icons.html', 'w').write(html)
