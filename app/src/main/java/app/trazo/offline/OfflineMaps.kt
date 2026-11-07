@@ -50,13 +50,35 @@ object OfflineMaps {
                 }
                 if (regions.isEmpty()) { _maps.value = emptyList(); return }
                 val found = mutableListOf<SavedMap>()
+                var skipped = 0
                 regions.forEach { (r, meta) ->
                     r.getStatus(object : OfflineRegion.OfflineRegionStatusCallback {
-                        override fun onStatus(status: OfflineRegionStatus?) = add(SavedMap(r, meta, status?.completedResourceSize ?: 0))
+                        override fun onStatus(status: OfflineRegionStatus?) {
+                            // Descarga que se quedó a medias (app cerrada, fallo): se borra para poder repetirla
+                            if (status?.isComplete != true && meta.routeKey !in _downloads.value) {
+                                r.delete(object : OfflineRegion.OfflineRegionDeleteCallback {
+                                    override fun onDelete() {}
+                                    override fun onError(error: String) {}
+                                })
+                                pending(r)
+                                return
+                            }
+                            add(SavedMap(r, meta, status!!.completedResourceSize))
+                        }
                         override fun onError(error: String?) = add(SavedMap(r, meta, 0))
                         private fun add(m: SavedMap) {
                             found += m
-                            if (found.size == regions.size) _maps.value = found.sortedByDescending { it.meta.createdAtMs }
+                            done()
+                        }
+                        private fun pending(@Suppress("UNUSED_PARAMETER") r: OfflineRegion) {
+                            skipped++
+                            done()
+                        }
+                        private fun done() {
+                            if (found.size + skipped == regions.size) {
+                                _maps.value = found.filter { it.bytes > 0 || it.meta.routeKey !in _downloads.value }
+                                    .sortedByDescending { it.meta.createdAtMs }
+                            }
                         }
                     })
                 }
@@ -76,7 +98,7 @@ object OfflineMaps {
         if (_downloads.value[key]?.error == null && key in _downloads.value) return
         _downloads.value = _downloads.value + (key to Download(0f))
         val definition = OfflineTilePyramidRegionDefinition(
-            TrazoMapStyle.offlineStyleUri(context, withTopo),
+            LocalStyleServer.urlFor(TrazoMapStyle.offlineStyleFile(context, withTopo)),
             LatLngBounds.from(b.maxLat, b.maxLon, b.minLat, b.minLon),
             OfflineArea.MIN_ZOOM.toDouble(),
             (if (withTopo) OfflineArea.TOPO_MAX_ZOOM else OfflineArea.MAX_ZOOM).toDouble(),

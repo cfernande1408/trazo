@@ -54,11 +54,22 @@ object Difficulty {
     fun label(grade: Int, mtb: Boolean): Pair<String, String> =
         if (mtb) MTB_LABELS[grade.coerceIn(0, 6)] else SAC_LABELS[(grade - 1).coerceIn(0, 5)]
 
-    /** Consulta: caminos con dificultad a menos de 15 m del track (reducido a ~120 puntos). */
-    fun query(segments: List<List<GeoPoint>>, radiusMeters: Int = 15): String {
-        val pts = RouteGeometry.downsample(segments.flatten(), 120)
-        val line = pts.joinToString(",") { String.format(Locale.ROOT, "%.5f,%.5f", it.lat, it.lon) }
-        return "[out:json][timeout:25];way(around:$radiusMeters,$line)[~\"^(mtb:scale|sac_scale)$\"~\".\"];out tags geom;"
+    /**
+     * Consulta: caminos con dificultad en recuadros pequeños a lo largo del
+     * track (uno cada ~40 puntos de 400). Mucho más ligera para Overpass que
+     * "a menos de X m de la línea", que con rutas largas acababa cortándose.
+     */
+    fun query(segments: List<List<GeoPoint>>, marginMeters: Double = 30.0): String {
+        val pts = RouteGeometry.downsample(segments.flatten(), 400)
+        val boxes = pts.chunked(40).map { chunk ->
+            val lat = chunk.map { it.lat }
+            val lon = chunk.map { it.lon }
+            val dLat = marginMeters / 110_540
+            val dLon = marginMeters / (111_320 * cos(Math.toRadians(lat.average())))
+            String.format(Locale.ROOT, "%.5f,%.5f,%.5f,%.5f", lat.min() - dLat, lon.min() - dLon, lat.max() + dLat, lon.max() + dLon)
+        }
+        val filter = "[~\"^(mtb:scale|sac_scale)$\"~\".\"]"
+        return "[out:json][timeout:25];(" + boxes.joinToString("") { "way$filter($it);" } + ");out tags geom;"
     }
 
     fun parse(json: String): List<RatedWay> {

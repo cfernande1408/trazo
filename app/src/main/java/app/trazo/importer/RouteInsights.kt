@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -96,7 +97,9 @@ private sealed interface Rated {
 @Composable
 internal fun DifficultyCard(state: ImportState.Loaded, activity: Activity) {
     val mtb = activity == Activity.BIKE
-    val rated by produceState<Rated>(Rated.Loading, state.gpx, mtb) {
+    var attempt by remember { mutableIntStateOf(0) }
+    val rated by produceState<Rated>(Rated.Loading, state.gpx, mtb, attempt) {
+        value = Rated.Loading
         value = runCatching {
             val ways = Difficulty.parse(Http.overpass(Difficulty.query(state.gpx.segments)))
             Rated.Ready(withContext(Dispatchers.Default) { Difficulty.summarize(state.gpx.segments, ways, mtb) })
@@ -110,7 +113,10 @@ internal fun DifficultyCard(state: ImportState.Loaded, activity: Activity) {
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                     Text("Mirando los caminos en OpenStreetMap…", style = MaterialTheme.typography.bodyMedium)
                 }
-                is Rated.Failed -> Text(r.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                is Rated.Failed -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(r.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { attempt++ }) { Text("Reintentar") }
+                }
                 is Rated.Ready -> {
                     val s = r.s
                     if (s.ratedMeters < 1) {

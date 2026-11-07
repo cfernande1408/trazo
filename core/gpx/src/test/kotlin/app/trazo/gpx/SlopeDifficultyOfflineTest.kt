@@ -80,11 +80,12 @@ class SlopeDifficultyOfflineTest {
     }
 
     @Test
-    fun `consulta de overpass con el track reducido`() {
+    fun `consulta de overpass en recuadros a lo largo del track`() {
         val q = Difficulty.query(climb())
-        assertTrue(q.startsWith("[out:json][timeout:25];way(around:15,40.00000,-3.90000,"))
-        assertTrue(q.endsWith("[~\"^(mtb:scale|sac_scale)$\"~\".\"];out tags geom;"))
-        assertTrue(q.count { it == ',' } < 260)
+        assertTrue(q, q.startsWith("[out:json][timeout:25];(way[~\"^(mtb:scale|sac_scale)$\"~\".\"](39.99973,-3.90035,"))
+        assertTrue(q.endsWith(");out tags geom;"))
+        // 201 puntos → 6 recuadros de 40
+        assertEquals(6, Regex("way\\[").findAll(q).count())
     }
 
     @Test

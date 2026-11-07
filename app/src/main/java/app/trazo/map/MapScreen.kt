@@ -86,7 +86,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.trazo.ride.ridePermissions
 import java.io.File
 import app.trazo.ui.ElevationChart
-import kotlinx.coroutines.flow.catch
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -273,8 +272,8 @@ fun MapScreen(
         var lastAlert = 0L
         var wasOff = false
         // Las posiciones llegan del servicio de grabación, que sigue vivo con la pantalla apagada
+        // (SharedFlow: nunca termina ni lanza, no hace falta catch)
         RideSession.fixes
-            .catch { navError = it.message; navigating = false }
             .collect { loc ->
                 // Posiciones absurdamente imprecisas (p. ej. solo por antena) no aportan nada
                 if (loc.hasAccuracy() && loc.accuracy > MAX_ACCURACY_M) return@collect

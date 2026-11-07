@@ -12,6 +12,7 @@ import app.trazo.gpx.ProfilePoint
 import app.trazo.gpx.RouteGeometry
 import app.trazo.gpx.TrackStats
 import app.trazo.gpx.TrackStatsCalculator
+import app.trazo.net.Http
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +50,7 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
                     loaded(gpx)
                 }.getOrElse { ImportState.Error(it.message ?: "Archivo no válido") }
             }
+            fillElevation()
         }
     }
 
@@ -59,7 +61,21 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
             _state.value = withContext(Dispatchers.Default) {
                 runCatching { loaded(gpx) }.getOrElse { ImportState.Error(it.message ?: "Ruta no válida") }
             }
+            fillElevation()
         }
+    }
+
+    /**
+     * Si el GPX no trae altitudes (rutas creadas en otras apps, algunos
+     * exportes), se piden a Open-Meteo y se rehace el resumen con perfil.
+     */
+    private suspend fun fillElevation() {
+        val current = _state.value as? ImportState.Loaded ?: return
+        if (current.profile.isNotEmpty()) return
+        val withEle = Http.withElevation(current.gpx)
+        if (withEle === current.gpx) return
+        // Solo si sigue abierta la misma ruta
+        if (_state.value === current) _state.value = withContext(Dispatchers.Default) { loadedFrom(withEle) }
     }
 
     private fun loaded(gpx: Gpx): ImportState.Loaded = loadedFrom(gpx)
