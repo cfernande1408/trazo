@@ -70,10 +70,13 @@ fun MarkButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 fun MarkDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     // Se guarda todo por si el sistema cierra la pantalla mientras está abierta la cámara
-    val here = rememberSaveable {
-        RideSession.lastLocation?.let { l ->
-            doubleArrayOf(l.latitude, l.longitude, RideSession.lastAltitude ?: if (l.hasAltitude()) l.altitude else Double.NaN)
-        }
+    // rememberSaveable no admite null directamente: va dentro de un estado
+    val here: DoubleArray? by rememberSaveable {
+        mutableStateOf(
+            RideSession.lastLocation?.let { l ->
+                doubleArrayOf(l.latitude, l.longitude, RideSession.lastAltitude ?: if (l.hasAltitude()) l.altitude else Double.NaN)
+            }
+        )
     }
     var kind by rememberSaveable { mutableStateOf<String?>(null) }
     var note by rememberSaveable { mutableStateOf("") }
