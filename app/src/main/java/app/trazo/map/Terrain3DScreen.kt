@@ -43,6 +43,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import app.trazo.gpx.GeoJson
 import app.trazo.gpx.Relief
+import app.trazo.gpx.layers.BaseMap
+import app.trazo.gpx.layers.LayerPrefs
+import app.trazo.gpx.layers.MapLayers
+import app.trazo.gpx.layers.RasterSpec
 import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.filled.Add
@@ -73,6 +77,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
         val season = AppMode.season
         val style = TrazoMapStyle.styleJson(context, season)
         val palette = season.paletteJson()
+        val layerPlan = layersJson(MapPrefs.state.value)
         val html = context.assets.open("terrain3d.html").bufferedReader().use { it.readText() }
         // Track reducido: el vuelo y la línea no necesitan miles de puntos
         val track = GeoJson.track(state.gpx.segments.map { RouteGeometry.downsample(it, 1500) })
@@ -93,7 +98,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
             }, "Trazo")
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView, url: String?) {
-                    view.evaluateJavascript("init($style, $track, $bounds, $exaggeration, $palette);", null)
+                    view.evaluateJavascript("init($style, $track, $bounds, $exaggeration, $palette, $layerPlan);", null)
                 }
             }
             // Los mensajes de la página van al logcat: adb logcat | grep Trazo3D
@@ -162,5 +167,22 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
                 Text("Recorrido virtual", style = MaterialTheme.typography.titleMedium)
             }
         }
+    }
+}
+
+/** Las capas elegidas, como objeto JSON para la página 3D. */
+private fun layersJson(prefs: LayerPrefs): String {
+    val plan = MapLayers.plan(prefs, AppMode.current)
+    fun q(v: String) = "\"" + GeoJson.escape(v) + "\""
+    fun spec(r: RasterSpec) =
+        "{\"id\":${q(r.id)},\"tiles\":${q(r.tiles)},\"attribution\":${q(r.attribution)},\"maxzoom\":${r.maxZoom},\"opacity\":${r.opacity}}"
+    // GL JS inserta "antes de" una capa: la siguiente a la que debe quedar debajo
+    val before = plan.baseAbove?.let { MapLayers.STYLE_LAYERS.getOrNull(MapLayers.STYLE_LAYERS.indexOf(it) + 1) }
+    return buildString {
+        append("{\"hidden\":[").append(plan.hidden.joinToString(",") { q(it) }).append("],")
+        append("\"base\":").append(plan.base?.let(::spec) ?: "null").append(',')
+        append("\"before\":").append(before?.let(::q) ?: "null").append(',')
+        append("\"overlays\":[").append(plan.overlays.joinToString(",") { spec(it) }).append("],")
+        append("\"trees\":").append(prefs.trees && prefs.base == BaseMap.TRAZO).append('}')
     }
 }

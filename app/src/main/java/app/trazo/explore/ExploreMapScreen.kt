@@ -61,6 +61,10 @@ import app.trazo.importer.metros
 import app.trazo.map.rememberMapView
 import app.trazo.nav.locationUpdates
 import app.trazo.ui.ElevationChart
+import app.trazo.map.LayersButton
+import app.trazo.map.LayersSheet
+import app.trazo.map.MapPrefs
+import app.trazo.map.applyLayers
 import app.trazo.gpx.Activity
 import app.trazo.ui.AppMode
 import app.trazo.ui.badge
@@ -140,6 +144,9 @@ fun ExploreMapScreen(
 
     val mapView = rememberMapView()
     var ready by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
+    val layers by MapPrefs.state.collectAsStateWithLifecycle()
+    var showLayers by remember { mutableStateOf(false) }
+    LaunchedEffect(ready, layers) { ready?.second?.applyLayers(layers, activity) }
 
     LaunchedEffect(mapView) {
         mapView.getMapAsync { map ->
@@ -245,7 +252,8 @@ fun ExploreMapScreen(
                     onRoute = { r -> vm.clearSearch(); showList = false; vm.select(r.id) },
                 )
             } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (activity == Activity.BIKE) {
                         FilterChip(
                             selected = onlyMtb,
@@ -271,7 +279,14 @@ fun ExploreMapScreen(
                         }
                     }
                 }
+                    // Capas a la derecha, como en Google Maps
+                    LayersButton(onClick = { showLayers = true }, modifier = Modifier.padding(start = 8.dp))
+                }
             }
+        }
+
+        if (showLayers) {
+            LayersSheet(layers, activity, onChange = { MapPrefs.set(context, it) }, onDismiss = { showLayers = false })
         }
 
         // Rutas que se ven ahora, de la más cercana al centro a la más lejana

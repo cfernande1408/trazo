@@ -74,6 +74,13 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - El GPX que descargas ahí se importa solo
 - Trazo no hace *scraping*: solo lee lo que tú descargas
 
+## 🗂️ Capas del mapa
+
+- Botón de capas a la derecha en todos los mapas, como en Google Maps
+- **Tipo de mapa**: Trazo (ilustrado), **Topo IGN** (el mapa topográfico oficial de España, con curvas de nivel) y **Satélite** (ortofoto PNOA del IGN, con los caminos y nombres de Trazo encima)
+- **Detalles**: sombreado del relieve, árboles y una capa de rutas MTB o senderos señalizados de Waymarked Trails
+- Lo que eliges vale para todos los mapas, incluida la vista 3D (satélite en 3D), y se recuerda
+
 ## 🧭 Mapa y navegación
 
 - Mapa topográfico propio: teselas vectoriales de OpenFreeMap, sombreado de relieve y árboles dibujados en los bosques

@@ -155,6 +155,18 @@ function plant(polygons, area, stepM, max, broadleafShare) {
 }
 
 const EMPTY = { type: 'FeatureCollection', features: [] };
+
+/** Topo IGN o satélite debajo del relieve, y la capa de rutas señalizadas encima. */
+function applyLayers() {
+  layers.hidden.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none'); });
+  const raster = (spec, before) => {
+    map.addSource(spec.id, { type: 'raster', tiles: [spec.tiles], tileSize: 256, maxzoom: spec.maxzoom, attribution: spec.attribution });
+    map.addLayer({ id: spec.id, type: 'raster', source: spec.id, paint: { 'raster-opacity': spec.opacity } },
+                 before && map.getLayer(before) ? before : undefined);
+  };
+  if (layers.base) raster(layers.base, layers.before);
+  layers.overlays.forEach(o => raster(o, null));
+}
 /** Separación entre árboles del interior del bosque, en píxeles de pantalla. */
 const TREE_SPACING_PX = 72;
 let lastPlant = 0, plantTimer = null;
@@ -198,15 +210,18 @@ function setExaggeration(x) {
 }
 /** Exageración del relieve: la calcula Trazo (Relief.kt) según la ruta y el nivel que elijas. */
 let exaggeration = 2.0;
-function init(style, track, b, exag, palette) {
+/** Capas elegidas en Trazo (MapLayers.kt): qué ocultar y qué teselas raster añadir. */
+let layers = { hidden: [], base: null, before: null, overlays: [], trees: true };
+function init(style, track, b, exag, palette, layerPlan) {
   if (palette) pal = Object.assign(pal, palette);
+  if (layerPlan) layers = Object.assign(layers, layerPlan);
   if (exag > 0) exaggeration = exag;
   // Si el mapa se crea con la vista aún a 0×0, la cámara sale NaN y no se pinta nada.
   const el = document.getElementById('map');
   if (el.clientWidth === 0 || el.clientHeight === 0) {
     if (waitedFrames === 0) console.log('Esperando tamaño de la vista…');
     if (++waitedFrames > 300) { show('La vista 3D no tiene tamaño (' + el.clientWidth + 'x' + el.clientHeight + ').'); return; }
-    requestAnimationFrame(() => init(style, track, b, exag, palette));
+    requestAnimationFrame(() => init(style, track, b, exag, palette, layerPlan));
     return;
   }
   console.log('Vista ' + el.clientWidth + 'x' + el.clientHeight);
@@ -259,6 +274,7 @@ function start(style, track, b) {
                    'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.9, 'fog-ground-blend': 1.0,
                    'atmosphere-blend': 0 });
     } catch (e) {}
+    applyLayers();
     // Casas en 3D con la altura de OpenStreetMap (o 6 m si no la tiene); el edificio plano se oculta
     if (map.getLayer('building')) map.setLayoutProperty('building', 'visibility', 'none');
     map.addLayer({
@@ -271,6 +287,7 @@ function start(style, track, b) {
       },
     }, 'place-label');
 
+    if (layers.trees) {
     // Árboles de pie. La trama plana de pinos del mapa 2D se oculta: en 3D parecía una pegatina en el suelo
     if (map.getLayer('landcover-wood-pines')) map.setLayoutProperty('landcover-wood-pines', 'visibility', 'none');
     const sp = standingPine(), sb = standingBroadleaf();
@@ -299,6 +316,7 @@ function start(style, track, b) {
     map.on('moveend', scheduleTrees);
     map.on('sourcedata', e => { if (e.sourceId === 'omt' && e.isSourceLoaded) scheduleTrees(); });
     map.once('idle', refreshTrees);
+    }
 
     collapseAttribution();
 

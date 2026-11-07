@@ -76,6 +76,7 @@ import app.trazo.importer.title
 import app.trazo.nav.Alerts
 import app.trazo.ride.RideSession
 import app.trazo.ui.AppMode
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.trazo.ride.ridePermissions
 import java.io.File
 import app.trazo.ui.ElevationChart
@@ -144,6 +145,9 @@ fun MapScreen(
 
     val mapView = remember { MapView(context).apply { onCreate(null) } }
     var ready by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
+    val layers by MapPrefs.state.collectAsStateWithLifecycle()
+    var showLayers by remember { mutableStateOf(false) }
+    LaunchedEffect(ready, layers) { ready?.second?.applyLayers(layers, AppMode.current) }
 
     // El MapView necesita que le reenvíen el ciclo de vida.
     DisposableEffect(lifecycle, mapView) {
@@ -279,6 +283,14 @@ fun MapScreen(
             ) {
                 Text("3D", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
+        }
+
+        LayersButton(
+            onClick = { showLayers = true },
+            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp),
+        )
+        if (showLayers) {
+            LayersSheet(layers, AppMode.current, onChange = { MapPrefs.set(context, it) }, onDismiss = { showLayers = false })
         }
 
         Card(

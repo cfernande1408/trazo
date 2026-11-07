@@ -63,6 +63,11 @@ import app.trazo.gpx.plan.BRouter
 import app.trazo.importer.km
 import app.trazo.importer.metros
 import app.trazo.map.TrazoMapStyle
+import app.trazo.map.LayersButton
+import app.trazo.map.LayersSheet
+import app.trazo.map.MapPrefs
+import app.trazo.map.applyLayers
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.trazo.map.rememberMapView
 import app.trazo.nav.locationUpdates
 import app.trazo.net.Http
@@ -136,6 +141,9 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
 
     val mapView = rememberMapView()
     var ready by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
+    val layers by MapPrefs.state.collectAsStateWithLifecycle()
+    var showLayers by remember { mutableStateOf(false) }
+    LaunchedEffect(ready, layers) { ready?.second?.applyLayers(layers, activity) }
 
     LaunchedEffect(mapView) {
         mapView.getMapAsync { map ->
@@ -223,6 +231,14 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
                 }
                 if (loading) CircularProgressIndicator(Modifier.padding(end = 12.dp).size(22.dp), strokeWidth = 2.5.dp)
             }
+        }
+
+        LayersButton(
+            onClick = { showLayers = true },
+            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp),
+        )
+        if (showLayers) {
+            LayersSheet(layers, activity, onChange = { MapPrefs.set(context, it) }, onDismiss = { showLayers = false })
         }
 
         Card(

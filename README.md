@@ -55,6 +55,10 @@ Deshacer, cerrar en circular, guardar. Se quedan en el móvil y funcionan sin co
 a la hora en que pasarás por él y a su altitud real. Avisa de tormenta, hielo, rachas o lluvia
 y dice en qué km empieza.
 
+🗂️ **Capas como en Google Maps.** Botón a la derecha para cambiar a **Topo IGN** (el mapa
+oficial 1:25.000 con curvas de nivel) o **Satélite** (ortofoto PNOA), también en 3D, y para
+encender o apagar el relieve, los árboles y las rutas señalizadas.
+
 🧭 **Navegar.** Tu posición sobre la ruta, vibración al salirte, la próxima subida, empezar
 desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 
@@ -103,6 +107,7 @@ core/gpx/      Kotlin puro: todo lo que se puede probar sin móvil
   gpx/ride/      grabación y estadísticas de salidas
   gpx/plan/      BRouter (crear rutas)
   gpx/weather/   previsión a lo largo de la ruta
+  gpx/layers/    tipos de mapa y capas
 app/           Android
   importer/      Mis rutas
   explore/       Explorar, buscador y navegador de Wikiloc
@@ -128,6 +133,8 @@ tus rutas, salidas y ajustes se quedan en el móvil.
 | Mapa base | [OpenFreeMap](https://openfreemap.org) | © colaboradores de OpenStreetMap |
 | Relieve y 3D | [Terrain Tiles en AWS](https://registry.opendata.aws/terrain-tiles/) | Mapzen y otras fuentes |
 | Rutas de la zona | [Waymarked Trails](https://waymarkedtrails.org) y [Overpass API](https://overpass-api.de) | © colaboradores de OpenStreetMap |
+| Topo y satélite | [IGN · CNIG](https://www.ign.es/wmts) (MTN y PNOA, solo España) | © Instituto Geográfico Nacional, CC BY 4.0 |
+| Rutas señalizadas | [Waymarked Trails](https://waymarkedtrails.org) (teselas) | © colaboradores de OpenStreetMap |
 | Buscar lugares | [Nominatim](https://nominatim.org) | © colaboradores de OpenStreetMap |
 | Crear rutas | [BRouter](https://brouter.de) | © colaboradores de OpenStreetMap |
 | Altitud | [Open-Meteo](https://open-meteo.com) | Copernicus DEM |
