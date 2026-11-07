@@ -36,6 +36,9 @@ y síguelas con avisos de desvío, perfil de desnivel y vista 3D. Sin cuentas y 
 las rutas que ves, a cuántos metros salta el aviso de desvío, las estadísticas y el tiempo
 estimado (método MIDE en senderismo). Lo cambias cuando quieras.
 
+**Guardadas.** Una pestaña con todo lo que tienes en el móvil, como la biblioteca de Spotify:
+tus rutas, tus salidas grabadas y los mapas sin conexión, cada cosa con su chip.
+
 **Buscador.** Escribe *Bola del Mundo* o *PR-M 13*: te lleva al sitio y te enseña las rutas
 de alrededor, o directamente las que se llaman así. Con un botón de **Lista** para ver todas
 las de la zona de la más cercana a la más lejana.
@@ -149,7 +152,7 @@ core/gpx/      Kotlin puro: todo lo que se puede probar sin móvil
   gpx/community/ valoraciones y avisos: reglas, URLs y JSON de Supabase
 supabase/      esquema de la base de la comunidad
 app/           Android
-  importer/      Mis rutas
+  importer/      Inicio (resumen de la ruta) y Guardadas
   explore/       Explorar, buscador y navegador de Wikiloc
   map/           mapa topo, navegación y vista 3D
   plan/          crear ruta y biblioteca de rutas

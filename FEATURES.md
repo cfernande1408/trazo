@@ -6,7 +6,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 ## Biker o senderista
 
 - La primera vez que abres la app eliges **Soy biker** o **Soy senderista**
-- El chip de arriba en *Mis rutas* cambia de una a otra cuando quieras
+- El chip de arriba en *Inicio* cambia de una a otra cuando quieras
 - Tema propio de cada actividad: lima y verde para la bici, tierra y ámbar a pie
 - *Explorar* enseña rutas MTB y ciclistas o senderos GR/PR según la actividad
 - Iconos distintos en el mapa: bici verde (MTB), bici verde azulada (ciclista) y excursionista ámbar
@@ -28,7 +28,19 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - **El icono de la app cambia con la estación**: cielo azul y árboles en flor en primavera, verde en verano, ocres y naranjas en otoño y sierra nevada en invierno (cambia al salir de la app)
 - Consejo de temporada en el resumen de cada ruta (barro y arroyos, calor e incendios, hojas mojadas y anochecer temprano, hielo y nieve)
 
-## Mis rutas
+## Pestañas
+
+- Barra de abajo con **Inicio**, **Explorar**, **Wikiloc**, **Guardadas**, **Comunidad** e **Info**
+- Se desliza en horizontal, así que caben todas aunque tengas la letra grande; se ven cinco y media para que se note que hay más
+
+## Guardadas
+
+- Todo lo que tienes en el móvil, con un chip arriba para cada cosa, como la biblioteca de Spotify
+- **Rutas**: las que guardas desde Wikiloc, Explorar o *Crear ruta*; se abren con un toque y se borran con confirmación
+- **Salidas** (o *Excursiones*): lo que has grabado, de lo más reciente a lo más antiguo
+- **Mapas sin conexión**: las zonas descargadas, con lo que ocupa cada una y para borrarlas
+
+## Inicio
 
 - Importa GPX con *Abrir con…*, *Compartir → Trazo* o desde el selector de archivos
 - Lee `trk`, `rte` y `wpt`, con CDATA y entidades, y quita el «Wikiloc - » del nombre
@@ -39,7 +51,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Pestaña **Tiempo**: previsión a lo largo de la ruta (ver más abajo)
 - Pestaña **Comentarios**: la descripción del autor y un botón a los comentarios en Wikiloc, o para buscar la ruta allí
 - **Guardar en tus rutas**: la ruta se queda en el móvil y funciona sin conexión
-- Lista de *Tus rutas guardadas* para abrirlas o borrarlas
+- Las rutas guardadas están en la pestaña *Guardadas*
 
 ## Sin conexión
 
@@ -48,7 +60,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Barra de progreso; si se corta la red, la descarga sigue sola al volver
 - Sin cobertura, el mapa y la navegación usan lo descargado sin hacer nada
 - **Descargar cualquier zona** desde *Explorar*: lo que ves en el mapa, con aviso si es demasiado grande (más de 300 MB)
-- Lista de *Mapas sin conexión* en *Mis rutas*, con lo que ocupa cada uno y para borrarlos
+- Lista de *Mapas sin conexión* en *Guardadas*, con lo que ocupa cada uno y para borrarlos
 
 ## Pendiente y dificultad
 
@@ -200,7 +212,7 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - En el detalle de la salida, en el mapa y en una lista; tocando la foto se abre en grande
 - Distancia, tiempo total y en movimiento, velocidad media y máxima, desnivel
 - Aviso en la barra de abajo mientras grabas, para volver a la grabación
-- *Mis salidas* / *Mis excursiones* con el historial
+- *Salidas* / *Excursiones* en la pestaña *Guardadas*, con el historial
 - Detalle con el recorrido coloreado por velocidad y su leyenda
 - Exportar a GPX para Strava, Wikiloc u otras apps
 - Usar una salida grabada como ruta

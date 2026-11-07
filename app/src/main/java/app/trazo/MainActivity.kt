@@ -1,5 +1,18 @@
 package app.trazo
 
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.material.icons.filled.Bookmarks
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -133,7 +146,8 @@ class MainActivity : ComponentActivity() {
                         File(rideFile!!),
                         onBack = { rideFile = null },
                         onUseAsRoute = openRoute,
-                        onDeleted = { rideFile = null; showRides = true },
+                        // Si venías de Guardadas, vuelves allí; si no, a la lista de salidas
+                        onDeleted = { rideFile = null; if (tab != TAB_LIBRARY) showRides = true },
                     )
                     showPlanner -> PlannerScreen(
                         onClose = { showPlanner = false },
@@ -180,33 +194,7 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 }
-                            NavigationBar {
-                                NavigationBarItem(
-                                    selected = tab == 0, onClick = { tab = 0 },
-                                    icon = { Icon(Icons.Filled.Home, contentDescription = null) },
-                                    label = { NavLabel("Rutas") },
-                                )
-                                NavigationBarItem(
-                                    selected = tab == 1, onClick = { tab = 1 },
-                                    icon = { Icon(Icons.Filled.Place, contentDescription = null) },
-                                    label = { NavLabel("Explorar") },
-                                )
-                                NavigationBarItem(
-                                    selected = tab == 2, onClick = { tab = 2 },
-                                    icon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                                    label = { NavLabel("Wikiloc") },
-                                )
-                                NavigationBarItem(
-                                    selected = tab == 3, onClick = { tab = 3 },
-                                    icon = { Icon(Icons.Filled.Person, contentDescription = null) },
-                                    label = { NavLabel("Comunidad") },
-                                )
-                                NavigationBarItem(
-                                    selected = tab == 4, onClick = { tab = 4 },
-                                    icon = { Icon(Icons.Filled.Info, contentDescription = null) },
-                                    label = { NavLabel("Info") },
-                                )
-                            }
+                            ScrollingNavBar(TABS, selected = tab, onSelect = { tab = it })
                             }
                         },
                     ) { padding ->
@@ -217,7 +205,6 @@ class MainActivity : ComponentActivity() {
                                     onPickFile = { pickGpx.launch(arrayOf("*/*")) },
                                     onOpenMap = { showMap = true },
                                     onRecord = { showRecord = true },
-                                    onRides = { showRides = true },
                                     activity = activity,
                                     onSwitchActivity = { AppMode.set(context, it) },
                                     season = season,
@@ -246,7 +233,23 @@ class MainActivity : ComponentActivity() {
                                 )
                                 1 -> ExploreMapScreen(onRouteReady = openRoute, activity = activity)
                                 2 -> WikilocBrowser(onGpx = openRoute)
-                                3 -> CommunityScreen()
+                                3 -> app.trazo.importer.LibraryScreen(
+                                    activity = activity,
+                                    routes = library,
+                                    onOpenRoute = { r ->
+                                        scope.launch {
+                                            val gpx = withContext(Dispatchers.IO) { runCatching { RoutesLibrary.open(r.file) }.getOrNull() }
+                                            if (gpx != null) openRoute(gpx)
+                                        }
+                                    },
+                                    onDeleteRoute = { r ->
+                                        RoutesLibrary.delete(r)
+                                        libVersion++
+                                    },
+                                    onOpenRide = openRide,
+                                    onRecord = { showRecord = true },
+                                )
+                                4 -> CommunityScreen()
                                 else -> app.trazo.ui.AboutScreen()
                             }
                         }
@@ -280,14 +283,72 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/** Pestaña de Guardadas (rutas, salidas y mapas). */
+private const val TAB_LIBRARY = 3
+
+private data class NavTab(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
+
+private val TABS = listOf(
+    NavTab("Inicio", Icons.Filled.Home),
+    NavTab("Explorar", Icons.Filled.Place),
+    NavTab("Wikiloc", Icons.Filled.Search),
+    NavTab("Guardadas", Icons.Filled.Bookmarks),
+    NavTab("Comunidad", Icons.Filled.Person),
+    NavTab("Info", Icons.Filled.Info),
+)
+
 /**
- * Etiqueta de la barra de abajo en una sola línea: con cinco pestañas y la letra
- * grande del sistema, "Comunidad" se partía en dos.
+ * Barra de abajo que se desliza en horizontal: caben todas las pestañas
+ * aunque sean más de cinco o la letra del sistema sea grande. Se ven cinco
+ * y media, para que se note que hay más.
  */
 @androidx.compose.runtime.Composable
-private fun NavLabel(text: String) = Text(
-    text,
-    maxLines = 1,
-    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified),
-)
+private fun ScrollingNavBar(tabs: List<NavTab>, selected: Int, onSelect: (Int) -> Unit) {
+    val scroll = androidx.compose.foundation.rememberScrollState()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 3.dp) {
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding()) {
+            val itemWidth = maxWidth / 5.5f
+            // La pestaña elegida (p. ej. al abrir un GPX desde fuera) siempre a la vista
+            androidx.compose.runtime.LaunchedEffect(selected) {
+                val px = with(density) { itemWidth.toPx() }
+                scroll.animateScrollTo(((selected - 2) * px).toInt().coerceAtLeast(0))
+            }
+            Row(Modifier.horizontalScroll(scroll).height(80.dp)) {
+                tabs.forEachIndexed { i, t ->
+                    val sel = i == selected
+                    Column(
+                        Modifier
+                            .widthIn(min = itemWidth)
+                            .fillMaxHeight()
+                            .selectable(selected = sel, onClick = { onSelect(i) }, role = androidx.compose.ui.semantics.Role.Tab)
+                            .padding(horizontal = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Box(
+                            Modifier
+                                .size(width = 56.dp, height = 32.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(if (sel) MaterialTheme.colorScheme.secondaryContainer else androidx.compose.ui.graphics.Color.Transparent),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                t.icon, contentDescription = null,
+                                tint = if (sel) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Text(
+                            t.label,
+                            maxLines = 1,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (sel) androidx.compose.ui.text.font.FontWeight.Bold else null,
+                            color = if (sel) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

@@ -101,7 +101,7 @@ fun ImportScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis rutas", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = { Text("Trazo", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 actions = {
                     // Chip con tu actividad: tocándolo cambias de biker a senderista y viceversa
                     AssistChip(
@@ -109,8 +109,6 @@ fun ImportScreen(
                         label = { Text(activity.who) },
                         leadingIcon = { Icon(activity.icon, contentDescription = null, Modifier.size(18.dp)) },
                     )
-                    // Un icono en vez del texto: con la letra grande no cabían título, chip y botón
-                    IconButton(onClick = onRides) { Icon(Icons.Filled.History, contentDescription = activity.outingsTitle) }
                 },
             )
         },
@@ -149,37 +147,6 @@ private class Library(
     val onDelete: (SavedRoute) -> Unit,
 )
 
-private fun LazyListScope.library(lib: Library) {
-    if (lib.routes.isEmpty()) return
-    item {
-        Text(
-            "Tus rutas guardadas",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-    }
-    items(lib.routes, key = { it.file.absolutePath }) { r ->
-        Card(
-            onClick = { lib.onOpen(r) },
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        ) {
-            Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(r.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        "${km(r.distanceMeters)} · +${metros(r.gainMeters)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                IconButton(onClick = { lib.onDelete(r) }) {
-                    Icon(Icons.Filled.Delete, contentDescription = "Borrar ruta")
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun EmptyState(onPickFile: () -> Unit, onCreateRoute: () -> Unit, lib: Library) {
     LazyColumn(
@@ -188,10 +155,14 @@ private fun EmptyState(onPickFile: () -> Unit, onCreateRoute: () -> Unit, lib: L
     ) {
         item { ImportCard(onPickFile) }
         item { CreateCard(onCreateRoute) }
-        library(lib)
-        item {
-            val maps by OfflineMaps.maps.collectAsStateWithLifecycle()
-            if (maps.isNotEmpty()) OfflineMapsList(maps)
+        // Tus rutas, salidas y mapas están en la pestaña Guardadas
+        if (lib.routes.isNotEmpty()) item {
+            Text(
+                "Tus ${lib.routes.size} rutas guardadas están en la pestaña Guardadas.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
         }
     }
 }
@@ -369,11 +340,6 @@ private fun Loaded(
                     Text("Crear ruta")
                 }
             }
-        }
-        library(lib)
-        item {
-            val maps by OfflineMaps.maps.collectAsStateWithLifecycle()
-            if (maps.isNotEmpty()) OfflineMapsList(maps)
         }
     }
 }

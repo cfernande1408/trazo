@@ -90,16 +90,11 @@ import java.util.Date
 
 private val DATE = SimpleDateFormat("EEEE d 'de' MMMM, HH:mm", app.trazo.importer.ES)
 
-/** Lista de salidas guardadas. */
+/** Lista de salidas guardadas, como pantalla aparte. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RidesScreen(onBack: () -> Unit, onOpen: (File) -> Unit, onRecord: () -> Unit) {
-    val context = LocalContext.current
     BackHandler(onBack = onBack)
-    val rides by produceState<List<SavedRide>?>(null) {
-        value = withContext(Dispatchers.IO) { RideStore.list(context) }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -107,36 +102,45 @@ fun RidesScreen(onBack: () -> Unit, onOpen: (File) -> Unit, onRecord: () -> Unit
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } },
             )
         },
-    ) { padding ->
-        val list = rides
-        when {
-            list == null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            list.isEmpty() -> Column(
-                Modifier.fillMaxSize().padding(padding).padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text("Aún no has grabado ninguna ${AppMode.current.outing}.", style = MaterialTheme.typography.titleMedium)
-                Text("Graba una suelta o empieza a navegar una ruta: se guarda sola al terminar.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Button(onClick = onRecord) { Text(AppMode.current.recordCta) }
-            }
-            else -> LazyColumn(
-                Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                items(list, key = { it.file.name }) { r ->
-                    Card(onClick = { onOpen(r.file) }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(r.activity.icon, contentDescription = r.activity.label, tint = MaterialTheme.colorScheme.primary)
-                                Text(r.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            }
-                            Text(DATE.format(Date(r.startedAtMs)).replaceFirstChar { it.uppercase() }, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(
-                                "${kmStr(r.stats.distanceMeters)} · ${formatDuration(r.stats.movingMs)} · ${kmh(r.stats.avgMovingKmh)} de media",
-                                style = MaterialTheme.typography.titleSmall,
-                            )
+    ) { padding -> RidesList(onOpen, onRecord, Modifier.padding(padding)) }
+}
+
+/** Las salidas grabadas, de la más reciente a la más antigua (también en la pestaña Guardadas). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RidesList(onOpen: (File) -> Unit, onRecord: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val rides by produceState<List<SavedRide>?>(null) {
+        value = withContext(Dispatchers.IO) { RideStore.list(context) }
+    }
+    val list = rides
+    when {
+        list == null -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        list.isEmpty() -> Column(
+            modifier.fillMaxSize().padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("Aún no has grabado ninguna ${AppMode.current.outing}.", style = MaterialTheme.typography.titleMedium)
+            Text("Graba una suelta o empieza a navegar una ruta: se guarda sola al terminar.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Button(onClick = onRecord) { Text(AppMode.current.recordCta) }
+        }
+        else -> LazyColumn(
+            modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            items(list, key = { it.file.name }) { r ->
+                Card(onClick = { onOpen(r.file) }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(r.activity.icon, contentDescription = r.activity.label, tint = MaterialTheme.colorScheme.primary)
+                            Text(r.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
+                        Text(DATE.format(Date(r.startedAtMs)).replaceFirstChar { it.uppercase() }, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "${kmStr(r.stats.distanceMeters)} · ${formatDuration(r.stats.movingMs)} · ${kmh(r.stats.avgMovingKmh)} de media",
+                            style = MaterialTheme.typography.titleSmall,
+                        )
                     }
                 }
             }
