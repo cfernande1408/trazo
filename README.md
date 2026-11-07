@@ -18,75 +18,67 @@ y sin claves de API.
 ![OpenStreetMap](https://img.shields.io/badge/datos-OpenStreetMap-7EBC6F?logo=openstreetmap&logoColor=white)
 ![Estado](https://img.shields.io/badge/estado-en%20desarrollo-E0A100)
 
-[Qué hace](#qué-hace) · [Todas las funciones](FEATURES.md) · [Capturas](#capturas) · [Instalar](#instalar) · [Cómo está hecho](#cómo-está-hecho) · [Datos y servicios](#datos-y-servicios) · [Hoja de ruta](#hoja-de-ruta)
+[Qué hace](#qué-hace) · [Todas las funciones](FEATURES.md) · [Instalar](#instalar) · [Cómo está hecho](#cómo-está-hecho) · [Datos y servicios](#datos-y-servicios) · [Hoja de ruta](#hoja-de-ruta)
 
 </div>
 
 > [!NOTE]
 > Trazo es un proyecto personal en desarrollo (v0.1). Puede tener fallos: si encuentras uno, abre un *issue*.
 
-## Capturas
-
-| Explorar | Buscar | Ruta | Navegar |
-| :---: | :---: | :---: | :---: |
-| <img src="docs/screenshots/explorar.png" width="200"> | <img src="docs/screenshots/buscar.png" width="200"> | <img src="docs/screenshots/ruta.png" width="200"> | <img src="docs/screenshots/mapa.png" width="200"> |
-| **Vista 3D** | **Crear ruta** | **Grabar** | **Senderismo** |
-| <img src="docs/screenshots/3d.png" width="200"> | <img src="docs/screenshots/crear.png" width="200"> | <img src="docs/screenshots/salida.png" width="200"> | <img src="docs/screenshots/senderismo.png" width="200"> |
-
 ## Qué hace
 
-🚵 **Biker o senderista.** Lo eliges al abrir la app por primera vez y se adapta todo: el tema,
+**Biker o senderista.** Lo eliges al abrir la app por primera vez y se adapta todo: el tema,
 las rutas que ves, a cuántos metros salta el aviso de desvío, las estadísticas y el tiempo
 estimado (método MIDE en senderismo). Lo cambias cuando quieras.
 
-🔎 **Buscador.** Escribe *Bola del Mundo* o *PR-M 13*: te lleva al sitio y te enseña las rutas
+**Buscador.** Escribe *Bola del Mundo* o *PR-M 13*: te lleva al sitio y te enseña las rutas
 de alrededor, o directamente las que se llaman así. Con un botón de **Lista** para ver todas
 las de la zona de la más cercana a la más lejana.
 
-🗺️ **Explorar.** Un mapa de tu zona con un icono por cada ruta MTB, ciclista o sendero de
+**Explorar.** Un mapa de tu zona con un icono por cada ruta MTB, ciclista o sendero de
 OpenStreetMap. Tócalo y se dibuja el recorrido, con distancia, desnivel y perfil.
 
-📥 **Tus GPX de Wikiloc.** Descárgalos en el navegador integrado o ábrelos con *Compartir → Trazo*.
+**Tus GPX de Wikiloc.** Descárgalos en el navegador integrado o ábrelos con *Compartir → Trazo*.
 Resumen con mapa topo, perfil arrastrable, puntos del autor y enlace a los comentarios en Wikiloc.
 
-✏️ **Crear rutas.** Toca puntos en el mapa y la ruta se ajusta sola a pistas o senderos.
+**Crear rutas.** Toca puntos en el mapa y la ruta se ajusta sola a pistas o senderos.
 Deshacer, cerrar en circular, guardar. Se quedan en el móvil y funcionan sin conexión.
 
-🌦️ **El tiempo en la ruta.** Elige día y hora de salida y mira qué tiempo hará en cada tramo
+**El tiempo en la ruta.** Elige día y hora de salida y mira qué tiempo hará en cada tramo
 a la hora en que pasarás por él y a su altitud real. Avisa de tormenta, hielo, rachas o lluvia
 y dice en qué km empieza.
 
-🗂️ **Capas como en Google Maps.** Botón a la derecha para cambiar a **Topo IGN** (el mapa
+**Capas como en Google Maps.** Botón a la derecha para cambiar a **Topo IGN** (el mapa
 oficial 1:25.000 con curvas de nivel) o **Satélite** (ortofoto PNOA), también en 3D, y para
 encender o apagar el relieve, los árboles y las rutas señalizadas.
 
-📶 **Sin conexión.** Descarga el mapa de la zona de una ruta, con relieve y topo IGN, y
+**Sin conexión.** Descarga el mapa de la zona de una ruta, con relieve y topo IGN, y
 navega sin cobertura en plena sierra.
 
-📈 **Pendiente y dificultad.** La ruta coloreada por pendiente, la rampa más dura y la
+**Pendiente y dificultad.** La ruta coloreada por pendiente, la rampa más dura y la
 dificultad técnica de OpenStreetMap (escala MTB S0–S6 o SAC T1–T6) de los caminos por los
 que pasa.
 
-🧭 **Navegar.** Tu posición sobre la ruta, vibración al salirte, la próxima subida, empezar
+**Navegar.** Tu posición sobre la ruta, vibración al salirte, la próxima subida, empezar
 desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 
-🏁 **Como un GPS profesional.** Lo que Wikiloc y Komoot no tienen:
+**Como un GPS profesional.** Lo que Wikiloc y Komoot no tienen:
 - **Subidas en directo**: «Subida 2 de 4 · 9 %», lo que queda y el perfil de la subida con tu posición.
 - **Avisos por voz** en los giros, al empezar cada subida, al pasar por una fuente y si te sales.
 - **Luz restante**: cuánta luz te sobra o te falta para terminar a tu ritmo real, con aviso si vas justo.
 - **Agua y refugios por delante**: fuentes y refugios de OSM a lo largo de la ruta, con su km.
 
-🏔️ **Vista 3D.** Relieve con exageración automática, casas en volumen, bosques de árboles de pie
+**Vista 3D.** Relieve con exageración automática, casas en volumen, bosques de árboles de pie
 y un recorrido virtual que vuela la ruta.
 
-⏺️ **Grabar salidas.** Sigue grabando con la pantalla apagada. Velocidad media y máxima, tiempo en
+**Grabar salidas.** Sigue grabando con la pantalla apagada. Velocidad media y máxima, tiempo en
 movimiento, el recorrido coloreado por velocidad y exportación a GPX.
 
-🍂 **Según la estación.** El mapa, los árboles y el acento del tema cambian con el año: flores en
+**Según la estación.** El mapa, los árboles y el acento del tema cambian con el año: flores en
 primavera, hojas naranjas en otoño, pinos nevados en invierno. Y un consejo de temporada antes de
 salir, como el de las hojas mojadas y el anochecer temprano en otoño.
 
-🌞 **Modo sol.** Tema claro de alto contraste para leer la pantalla a pleno sol, y oscuro para el resto.
+**Modo sol.** Tema claro de alto contraste para leer la pantalla a pleno sol, y oscuro para el resto.
 
 La lista completa, una línea por función, está en **[FEATURES.md](FEATURES.md)**.
 
