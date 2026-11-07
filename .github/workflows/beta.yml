@@ -66,6 +66,14 @@ jobs:
           ./gradlew :core:gpx:test :app:assembleBeta
           cp app/build/outputs/apk/beta/app-beta.apk trazo-beta.apk
 
+      # La pre-release se borra y se crea de nuevo: si solo se actualiza, GitHub sigue
+      # mostrando la fecha de la primera y parece que no ha cambiado
+      - name: Borrar la beta anterior
+        if: steps.key.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete beta --yes || true
+
       # La etiqueta "beta" se mueve al commit nuevo y la pre-release se rehace con el APK
       - name: Mover la etiqueta beta
         if: steps.key.outputs.ok == 'true'
@@ -77,7 +85,7 @@ jobs:
         if: steps.key.outputs.ok == 'true'
         with:
           tag_name: beta
-          name: Trazo beta
+          name: Trazo beta ${{ env.TRAZO_VERSION_NAME }}
           prerelease: true
           make_latest: false
           files: trazo-beta.apk
@@ -85,4 +93,4 @@ jobs:
             Lo último de `main`, sin probar a fondo. Se instala como **Trazo beta**, aparte de la
             versión estable, y se actualiza encima de la beta anterior.
 
-            Commit: ${{ github.sha }}
+            Versión ${{ env.TRAZO_VERSION_NAME }}, commit ${{ github.sha }}: ${{ github.event.head_commit.message }}
