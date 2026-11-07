@@ -1,5 +1,9 @@
 package app.trazo.importer
 
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import app.trazo.gpx.weather.WeatherDetail
+import app.trazo.gpx.weather.DetailRow
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -46,7 +50,14 @@ import kotlin.math.roundToInt
 
 private sealed interface Forecast {
     data object Loading : Forecast
-    data class Ready(val points: List<WeatherAt>, val warnings: List<String>) : Forecast
+    data class Ready(
+        val points: List<WeatherAt>,
+        val warnings: List<String>,
+        /** Cada 15 min, donde estarás. */
+        val rows: List<DetailRow> = emptyList(),
+        /** Qué llevarte puesto. */
+        val wear: List<String> = emptyList(),
+    ) : Forecast
     data class Failed(val message: String) : Forecast
 }
 
@@ -62,9 +73,13 @@ private fun startMs(dayOffset: Int, hour: Int): Long =
 
 private suspend fun loadForecast(state: ImportState.Loaded, activity: Activity, startMs: Long): Forecast = runCatching {
     val samples = withContext(Dispatchers.Default) { RouteWeather.samples(state.gpx.segments, activity) }
-    val points = RouteWeather.parse(Http.get(RouteWeather.url(samples)), samples, startMs)
+    val json = Http.get(RouteWeather.url(samples))
+    val points = RouteWeather.parse(json, samples, startMs)
     if (points.isEmpty()) Forecast.Failed("No hay previsión para ese día todavía (solo ${RouteWeather.FORECAST_DAYS} días).")
-    else Forecast.Ready(points, RouteWeather.warnings(points))
+    else {
+        val rows = withContext(Dispatchers.Default) { WeatherDetail.rows(json, samples, startMs) }
+        Forecast.Ready(points, RouteWeather.warnings(points), rows, WeatherDetail.whatToWear(rows, activity))
+    }
 }.getOrElse { Forecast.Failed(Http.friendly(it)) }
 
 /**
@@ -140,6 +155,8 @@ internal fun WeatherTab(state: ImportState.Loaded, activity: Activity) {
     var dayOffset by rememberSaveable { mutableIntStateOf(defDay) }
     var hour by rememberSaveable { mutableIntStateOf(defHour) }
     var sliding by rememberSaveable { mutableStateOf(hour.toFloat()) }
+    /** Resumen (unos puntos de la ruta) o detalle (cada 15 min y qué ponerse). */
+    var detail by rememberSaveable { mutableStateOf(false) }
 
     val start = startMs(dayOffset, hour)
     val forecast by produceState<Forecast>(Forecast.Loading, state.gpx, start, activity) {
@@ -192,7 +209,12 @@ internal fun WeatherTab(state: ImportState.Loaded, activity: Activity) {
                         Text("Sin avisos: buen día para salir.", Modifier.fillMaxWidth().padding(14.dp))
                     }
                 }
-                f.points.forEach { WeatherRow(it, zone) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = !detail, onClick = { detail = false }, label = { Text("Resumen") })
+                    FilterChip(selected = detail, onClick = { detail = true }, label = { Text("Detalle cada 15 min") })
+                }
+                if (!detail) f.points.forEach { WeatherRow(it, zone) }
+                else WeatherDetailView(f.rows, f.wear, zone)
                 Text(
                     "Previsión de Open-Meteo a la altitud de cada punto. Las horas de paso son estimadas " +
                         (if (activity == Activity.HIKE) "con el método MIDE." else "para bici de montaña."),
@@ -230,6 +252,83 @@ private fun WeatherRow(w: WeatherAt, zone: ZoneId) {
                 )
             }
             Text("${w.tempC.roundToInt()}°", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+/**
+ * El detalle: qué llevarte puesto y una fila cada 15 minutos con dónde estarás
+ * y el tiempo que hará ahí (sensación térmica, viento, lluvia).
+ */
+@Composable
+private fun WeatherDetailView(rows: List<DetailRow>, wear: List<String>, zone: ZoneId) {
+    if (wear.isNotEmpty()) {
+        Card(colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        )) {
+            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Qué llevarte puesto", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                wear.forEach { line ->
+                    Row {
+                        Text("•", modifier = Modifier.width(14.dp))
+                        Text(line, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+    }
+    if (rows.isEmpty()) return
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+            DetailLine(listOf("Hora", "", "Temp. (sens.)", "Viento", "Lluvia"), header = true)
+            rows.forEach { r ->
+                val (text, emoji) = RouteWeather.describe(r.code)
+                // De noche, la luna en vez del sol
+                val icon = if (!r.isDay && r.code <= 2) "🌙" else emoji
+                DetailLine(
+                    listOf(
+                        HOUR_FMT.format(Instant.ofEpochMilli(r.timeMs).atZone(zone)) + "\nkm %.0f".format(ES, r.distanceMeters / 1000),
+                        icon,
+                        "${r.tempC.roundToInt()}° (${r.feelsC.roundToInt()}°)",
+                        "${r.windKmh.roundToInt()}" + if (r.gustKmh >= r.windKmh + 10) "/${r.gustKmh.roundToInt()}" else "",
+                        if (r.precipMm >= 0.1) "%.1f mm".format(ES, r.precipMm) else "${r.precipProbability ?: 0} %",
+                    ),
+                    description = "$text, ${r.tempC.roundToInt()} grados, sensación ${r.feelsC.roundToInt()}",
+                )
+            }
+            Text(
+                "Viento en km/h (con rachas si son fuertes). Lluvia: mm en esa hora o, si no llueve, la probabilidad. " +
+                    "Entre horas y entre puntos de la ruta, los valores se interpolan.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailLine(cells: List<String>, header: Boolean = false, description: String? = null) {
+    val weights = listOf(1.1f, 0.6f, 1.3f, 1f, 1f)
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            .then(if (description != null) Modifier.semantics(mergeDescendants = true) { contentDescription = description } else Modifier),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        cells.forEachIndexed { i, c ->
+            Text(
+                c,
+                modifier = Modifier.weight(weights[i]),
+                style = when {
+                    header -> MaterialTheme.typography.labelSmall
+                    i == 1 -> MaterialTheme.typography.titleMedium
+                    i == 0 -> MaterialTheme.typography.labelMedium
+                    else -> MaterialTheme.typography.bodyMedium
+                },
+                fontWeight = if (i == 2 && !header) FontWeight.Bold else null,
+                color = if (header) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
 }

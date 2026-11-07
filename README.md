@@ -55,7 +55,8 @@ Mueve o borra puntos, inserta uno en medio tocando la ruta, deshacer, circular o
 
 **El tiempo en la ruta.** Elige día y hora de salida y mira qué tiempo hará en cada tramo
 a la hora en que pasarás por él y a su altitud real. Avisa de tormenta, hielo, rachas o lluvia
-y dice en qué km empieza.
+y dice en qué km empieza. En *Detalle*, una línea cada 15 minutos con dónde estarás, la sensación térmica, el viento
+y la lluvia, y qué llevarte puesto por capas.
 
 **Capas como en Google Maps.** Botón a la derecha para cambiar a **Topo IGN** (el mapa
 oficial 1:25.000 con curvas de nivel) o **Satélite** (ortofoto PNOA), también en 3D, y para
@@ -216,5 +217,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Por dónde va la ruta: asfalto, pista, sendero y escaleras
 - [x] Recalcular al salirte de la ruta
 - [x] Filtrar rutas circulares o lineales en *Explorar*
+- [x] Tiempo cada 15 minutos y qué llevarte puesto
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones

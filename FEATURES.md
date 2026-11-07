@@ -83,6 +83,10 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Temperatura a la altitud real de cada punto, no la del pueblo de abajo
 - Cielo, probabilidad de lluvia, viento y rachas
 - Avisos con el km donde empiezan: tormenta, nieve, bajo cero (hielo), rachas fuertes, lluvia probable y calor
+- **Detalle cada 15 minutos**: dónde estarás (km), el cielo (con luna de noche), temperatura y sensación térmica, viento y rachas, y lluvia en mm o su probabilidad
+- Entre horas y entre dos puntos de la ruta los valores se interpolan, así que cada fila es el tiempo en ese sitio a esa hora
+- **Qué llevarte puesto**, por capas: arriba, abajo, guantes y gorro según la sensación térmica más fría; chubasquero en la mochila o puesto según la lluvia y desde qué km; cortavientos, gafas y crema según el viento y el UV; agua con calor; luces o frontal si anochece por el camino
+- En bici cuenta unos grados menos por el aire de la marcha
 
 ## Buscador
 

@@ -81,7 +81,8 @@ object RouteWeather {
         fun list(f: (RouteSample) -> Double) = samples.joinToString(",") { String.format(Locale.ROOT, "%.4f", f(it)) }
         val ele = if (samples.all { it.ele != null }) "&elevation=" + samples.joinToString(",") { String.format(Locale.ROOT, "%.0f", it.ele) } else ""
         return "https://api.open-meteo.com/v1/forecast?latitude=${list { it.lat }}&longitude=${list { it.lon }}$ele" +
-            "&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m" +
+            "&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code," +
+            "wind_speed_10m,wind_gusts_10m,cloud_cover,uv_index,is_day" +
             "&timeformat=unixtime&forecast_days=$FORECAST_DAYS"
     }
 
