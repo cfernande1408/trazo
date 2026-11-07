@@ -25,6 +25,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Árboles del mapa por estación: pinos con frondosas verdes, en flor en primavera, naranjas en otoño y pinos nevados en invierno
 - Los mismos árboles en la vista 3D
 - Color de acento del tema por estación: flor, cielo, hojas de otoño o hielo
+- **El icono de la app cambia con la estación**: cielo azul y árboles en flor en primavera, verde en verano, ocres y naranjas en otoño y sierra nevada en invierno (cambia al salir de la app)
 - Consejo de temporada en el resumen de cada ruta (barro y arroyos, calor e incendios, hojas mojadas y anochecer temprano, hielo y nieve)
 
 ## Mis rutas

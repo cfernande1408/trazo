@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Primer plano del icono (spring): árboles y el trazo de la ruta. Generado por scripts/icons.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#9BD36A" android:pathData="M30,84L34.5,75L32.5,75L36.5,67L40.5,75L38.5,75L43,84Z" />
+    <path android:fillColor="#9BD36A" android:pathData="M70,80L74,72L72,72L75.5,65L79,72L77,72L81,80Z" />
+    <path android:fillColor="#F4A7C0" android:pathData="M36,72m-1.6,0a1.6,1.6 0,1 1,3.2,0a1.6,1.6 0,1 1,-3.2,0" />
+    <path android:fillColor="#F4A7C0" android:pathData="M40,79m-1.6,0a1.6,1.6 0,1 1,3.2,0a1.6,1.6 0,1 1,-3.2,0" />
+    <path android:fillColor="#F4A7C0" android:pathData="M74,70m-1.6,0a1.6,1.6 0,1 1,3.2,0a1.6,1.6 0,1 1,-3.2,0" />
+    <path android:fillColor="#F4A7C0" android:pathData="M78,76m-1.6,0a1.6,1.6 0,1 1,3.2,0a1.6,1.6 0,1 1,-3.2,0" />
+    <path android:fillColor="#F4A7C0" android:pathData="M33,80m-1.6,0a1.6,1.6 0,1 1,3.2,0a1.6,1.6 0,1 1,-3.2,0" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="7.5" android:strokeLineCap="round" android:pathData="M30,92C46,86 44,74 54,72S62,59 64,52" />
+    <path android:strokeColor="#C2410C" android:strokeWidth="4.2" android:strokeLineCap="round" android:pathData="M30,92C46,86 44,74 54,72S62,59 64,52" />
+    <path android:fillColor="#C2410C" android:strokeColor="#FFFFFF" android:strokeWidth="2.2" android:pathData="M64,52m-5.5,0a5.5,5.5 0,1 1,11.0,0a5.5,5.5 0,1 1,-11.0,0" />
+
+</vector>

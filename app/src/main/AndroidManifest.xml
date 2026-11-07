@@ -33,10 +33,7 @@
             android:exported="true"
             android:launchMode="singleTop">
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            <!-- El icono del escritorio lo ponen los alias de abajo, uno por estación -->
 
             <!-- "Abrir con…" desde el gestor de archivos o el navegador -->
             <intent-filter>
@@ -63,6 +60,59 @@
                 <data android:mimeType="application/xml" />
             </intent-filter>
         </activity>
+
+        <!-- Icono según la estación (SeasonIcon.kt activa uno y apaga los demás) -->
+        <activity-alias
+            android:name=".LauncherSpring"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_spring"
+            android:roundIcon="@mipmap/ic_launcher_spring">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherSummer"
+            android:targetActivity=".MainActivity"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_summer"
+            android:roundIcon="@mipmap/ic_launcher_summer">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherAutumn"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_autumn"
+            android:roundIcon="@mipmap/ic_launcher_autumn">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherWinter"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_winter"
+            android:roundIcon="@mipmap/ic_launcher_winter">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <service
             android:name=".ride.RideService"

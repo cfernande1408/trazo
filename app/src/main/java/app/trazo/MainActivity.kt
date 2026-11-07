@@ -56,6 +56,7 @@ import app.trazo.plan.PlannerScreen
 import app.trazo.plan.RoutesLibrary
 import app.trazo.plan.SavedRoute
 import app.trazo.ui.AppMode
+import app.trazo.ui.SeasonIcon
 import app.trazo.ui.OnboardingScreen
 import app.trazo.ui.outing
 import androidx.compose.runtime.produceState
@@ -246,6 +247,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Al salir, el icono del escritorio pasa a la estación que toca (o la elegida a mano)
+        runCatching { SeasonIcon.apply(this, AppMode.season) }
     }
 
     override fun onNewIntent(intent: Intent) {

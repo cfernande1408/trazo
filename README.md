@@ -91,7 +91,7 @@ y un recorrido virtual que vuela la ruta.
 movimiento, el recorrido coloreado por velocidad y exportación a GPX.
 
 **Según la estación.** El mapa, los árboles y el acento del tema cambian con el año: flores en
-primavera, hojas naranjas en otoño, pinos nevados en invierno. Y un consejo de temporada antes de
+primavera, hojas naranjas en otoño, pinos nevados en invierno. Hasta el icono de la app cambia. Y un consejo de temporada antes de
 salir, como el de las hojas mojadas y el anochecer temprano en otoño.
 
 **Modo sol.** Tema claro de alto contraste para leer la pantalla a pleno sol, y oscuro para el resto.
@@ -194,6 +194,7 @@ app/           Android
 ./gradlew :core:gpx:test        # tests del núcleo
 ./gradlew :app:assembleDebug    # APK de debug
 ./scripts/screenshot.sh ruta    # captura del móvil para el README
+python3 scripts/icons.py . /tmp # regenera los iconos de las cuatro estaciones
 ```
 
 ## Datos y servicios
