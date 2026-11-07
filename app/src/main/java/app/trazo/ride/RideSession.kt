@@ -7,6 +7,7 @@ import android.os.SystemClock
 import app.trazo.sensors.BleSensors
 import androidx.core.content.ContextCompat
 import app.trazo.gpx.Activity
+import app.trazo.gpx.Waypoint
 import app.trazo.gpx.ride.BaroAltimeter
 import app.trazo.gpx.ride.RideRecorder
 import app.trazo.ui.AppMode
@@ -34,6 +35,8 @@ data class RideState(
     val activity: Activity = Activity.BIKE,
     /** true si la altitud y el desnivel salen del barómetro del móvil. */
     val barometer: Boolean = false,
+    /** Puntos marcados durante la salida (fuente, mirador, peligro…), con su nota y su foto. */
+    val marks: List<Waypoint> = emptyList(),
 )
 
 /**
@@ -76,6 +79,15 @@ object RideSession {
         _state.value = _state.value.copy(paused = false)
     }
 
+    /** Altitud del último punto grabado (con barómetro si lo hay), para marcar puntos. */
+    val lastAltitude: Double? get() = recorder.points.lastOrNull()?.lastOrNull()?.ele
+
+    /** Añade un punto marcado a la salida en curso. */
+    fun mark(point: Waypoint) {
+        if (!_state.value.active) return
+        _state.value = _state.value.copy(marks = _state.value.marks + point)
+    }
+
     /** Para y guarda. Devuelve el archivo de la salida, o null si no había nada que guardar. */
     fun stop(context: Context): File? {
         if (!_state.value.active) return null
@@ -83,8 +95,13 @@ object RideSession {
         val points = recorder.points
         val activity = _state.value.activity
         val name = _state.value.routeName ?: if (activity == Activity.HIKE) "Excursión" else "Salida"
+        val marks = _state.value.marks
         _state.value = RideState()
-        return if (points.sumOf { it.size } >= 2) RideStore.save(context, name, points, activity) else null
+        if (points.sumOf { it.size } < 2) {
+            marks.forEach { RideStore.deletePhoto(context, it) }
+            return null
+        }
+        return RideStore.save(context, name, points, activity, marks)
     }
 
     /** Lo llama el servicio con cada lectura del sensor de presión, en hPa. */

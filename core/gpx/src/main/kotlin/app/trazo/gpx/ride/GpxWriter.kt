@@ -1,5 +1,6 @@
 package app.trazo.gpx.ride
 
+import app.trazo.gpx.Waypoint
 import java.time.Instant
 import java.util.Locale
 
@@ -11,6 +12,8 @@ object GpxWriter {
         segments: List<List<TimedPoint>>,
         description: String? = null,
         type: String = "mountain_biking",
+        /** Puntos marcados durante la salida, con su nota y su foto. */
+        waypoints: List<Waypoint> = emptyList(),
     ): String = buildString {
         append("""<?xml version="1.0" encoding="UTF-8"?>""").append('\n')
         append("""<gpx version="1.1" creator="Trazo" xmlns="http://www.topografix.com/GPX/1/1" """)
@@ -20,6 +23,15 @@ object GpxWriter {
             append("    <time>").append(Instant.ofEpochMilli(it.timeMs)).append("</time>\n")
         }
         append("  </metadata>\n")
+        // En GPX 1.1 los <wpt> van antes del <trk>, y dentro, en este orden
+        for (w in waypoints) {
+            append("  <wpt lat=\"").append(f(w.lat, 7)).append("\" lon=\"").append(f(w.lon, 7)).append("\">")
+            w.ele?.let { append("<ele>").append(f(it, 1)).append("</ele>") }
+            w.name?.let { append("<name>").append(escape(it)).append("</name>") }
+            w.desc?.let { append("<desc>").append(escape(it)).append("</desc>") }
+            w.link?.let { append("<link href=\"").append(escape(it)).append("\"></link>") }
+            append("</wpt>\n")
+        }
         append("  <trk>\n    <name>").append(escape(name)).append("</name>\n")
         description?.let { append("    <desc>").append(escape(it)).append("</desc>\n") }
         append("    <type>").append(type).append("</type>\n")

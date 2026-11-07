@@ -208,6 +208,7 @@ fun MapScreen(
     val hazardsNow = rememberUpdatedState(hazards)
     var openHazard by remember { mutableStateOf<Hazard?>(null) }
     var reporting by remember { mutableStateOf(false) }
+    var marking by rememberSaveable { mutableStateOf(false) }
 
     // Pantalla de datos configurable y compañero virtual
     var fields by remember { mutableStateOf(DataField.decode(prefs.getString("nav_fields", null))) }
@@ -511,8 +512,11 @@ fun MapScreen(
             LayersButton(onClick = { showLayers = true })
             SensorsButton(onClick = { showSensors = true })
             ReportButton(onClick = { reporting = true })
+            // Navegando se graba la salida: se pueden marcar puntos como al grabar
+            if (navigating) app.trazo.ride.MarkButton(onClick = { marking = true })
             SosButton(onClick = { showSos = true })
         }
+        if (marking) app.trazo.ride.MarkDialog(onDismiss = { marking = false })
         if (reporting) ReportDialog(onDismiss = { reporting = false }, onSent = { reporting = false; hazardsReload++ })
         openHazard?.let { h -> HazardDialog(h, onDismiss = { openHazard = null }, onVoted = { openHazard = null; hazardsReload++ }) }
         if (showSensors) SensorsSheet(onDismiss = { showSensors = false })

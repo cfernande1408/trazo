@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,8 +53,13 @@ import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory.circleColor
+import org.maplibre.android.style.layers.PropertyFactory.circleRadius
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
 import org.maplibre.android.style.layers.PropertyFactory.lineCap
 import org.maplibre.android.style.layers.PropertyFactory.lineColor
 import org.maplibre.android.style.layers.PropertyFactory.lineJoin
@@ -62,6 +68,7 @@ import org.maplibre.android.style.sources.GeoJsonSource
 import java.io.File
 
 private const val LIVE = "live"
+private const val MARKS = "marks"
 
 /**
  * Grabar una salida sin ruta. El mapa te sigue y dibuja lo que llevas; la
@@ -100,6 +107,8 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
                     .withSource(GeoJsonSource(LIVE, GeoJson.track(emptyList())))
                     .withLayer(LineLayer("$LIVE-casing", LIVE).withProperties(lineColor("#FFFFFF"), lineWidth(8f), lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND)))
                     .withLayer(LineLayer("$LIVE-line", LIVE).withProperties(lineColor("#4A6800"), lineWidth(4.5f), lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND)))
+                    .withSource(GeoJsonSource(MARKS, GeoJson.points(emptyList())))
+                    .withLayer(CircleLayer(MARKS, MARKS).withProperties(circleRadius(6f), circleColor("#1F6FB2"), circleStrokeColor("#FFFFFF"), circleStrokeWidth(2f)))
             ) { style -> ready = map to style }
         }
     }
@@ -119,6 +128,10 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
         val (_, style) = ready ?: return@LaunchedEffect
         style.getSourceAs<GeoJsonSource>(LIVE)?.setGeoJson(GeoJson.track(state.points.map { seg -> seg.map { it.geo() } }))
     }
+    LaunchedEffect(ready, state.marks.size) {
+        val (_, style) = ready ?: return@LaunchedEffect
+        style.getSourceAs<GeoJsonSource>(MARKS)?.setGeoJson(GeoJson.points(state.marks.map { it.lat to it.lon }))
+    }
 
     Box(Modifier.fillMaxSize()) {
         AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
@@ -127,13 +140,16 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
         }
         var showSos by remember { mutableStateOf(false) }
         var showSensors by remember { mutableStateOf(false) }
+        var marking by rememberSaveable { mutableStateOf(false) }
         Column(
             Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             app.trazo.safety.SosButton(onClick = { showSos = true })
             app.trazo.sensors.SensorsButton(onClick = { showSensors = true })
+            if (state.active) MarkButton(onClick = { marking = true })
         }
+        if (marking) MarkDialog(onDismiss = { marking = false })
         if (showSos) app.trazo.safety.SosSheet(onDismiss = { showSos = false })
         if (showSensors) app.trazo.sensors.SensorsSheet(onDismiss = { showSensors = false })
         Card(

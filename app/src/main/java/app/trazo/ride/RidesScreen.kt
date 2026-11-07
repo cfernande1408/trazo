@@ -3,7 +3,20 @@ package app.trazo.ride
 import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import app.trazo.gpx.Waypoint
+import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.PropertyFactory.circleColor
+import org.maplibre.android.style.layers.PropertyFactory.circleRadius
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -174,6 +187,10 @@ fun RideDetailScreen(file: File, onBack: () -> Unit, onUseAsRoute: (Gpx) -> Unit
                     }
                 }
             }
+            if (r.marks.isNotEmpty()) {
+                item { Text("Puntos marcados", style = MaterialTheme.typography.titleMedium) }
+                items(r.marks) { MarkRow(it) }
+            }
             item {
                 Button(onClick = { context.shareGpx(r.file) }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                     Text("Exportar GPX (Strava, Wikiloc…)", style = MaterialTheme.typography.titleMedium)
@@ -196,7 +213,7 @@ fun RideDetailScreen(file: File, onBack: () -> Unit, onUseAsRoute: (Gpx) -> Unit
             title = { Text("¿Borrar esta salida?") },
             text = { Text("No se puede deshacer.") },
             confirmButton = {
-                TextButton(onClick = { ride?.let(RideStore::delete); confirmDelete = false; onDeleted() }) { Text("Borrar") }
+                TextButton(onClick = { ride?.let { RideStore.delete(context, it) }; confirmDelete = false; onDeleted() }) { Text("Borrar") }
             },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancelar") } },
         )
@@ -224,6 +241,12 @@ private fun SpeedMap(ride: SavedRide, modifier: Modifier) {
                                     *ride.activity.speedStops.map { (kmh, c) -> Expression.stop(kmh, Expression.color(c.toInt())) }.toTypedArray(),
                                 )
                             ),
+                        )
+                    )
+                    .withSource(GeoJsonSource("marks", GeoJson.points(ride.marks.map { it.lat to it.lon })))
+                    .withLayer(
+                        CircleLayer("marks", "marks").withProperties(
+                            circleRadius(6f), circleColor("#1F6FB2"), circleStrokeColor("#FFFFFF"), circleStrokeWidth(2f),
                         )
                     )
             ) {
@@ -258,6 +281,40 @@ private fun SpeedLegend(activity: app.trazo.gpx.Activity) {
                 Text(t, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+    }
+}
+
+/** Un punto marcado al grabar: su foto (se abre en grande al tocarla), tipo, nota y altitud. */
+@Composable
+private fun MarkRow(mark: Waypoint) {
+    val context = LocalContext.current
+    val photo = remember(mark) { RideStore.photo(context, mark) }
+    val bitmap = remember(photo) { photo?.let { thumbnail(it, 256) } }
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+        Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (photo != null && bitmap != null) {
+                Image(
+                    bitmap.asImageBitmap(), contentDescription = "Foto de ${mark.name ?: "el punto"}",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(72.dp).clip(RoundedCornerShape(12.dp)).clickable { context.viewPhoto(photo) },
+                )
+            }
+            Column(Modifier.weight(1f).padding(start = if (bitmap != null) 12.dp else 0.dp)) {
+                Text(mark.name ?: "Punto", style = MaterialTheme.typography.titleSmall)
+                mark.desc?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                mark.ele?.let {
+                    Text("${it.toInt()} m", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+/** Abre la foto en la galería o el visor del móvil. */
+private fun Context.viewPhoto(file: File) {
+    val uri = FileProvider.getUriForFile(this, "$packageName.files", file)
+    runCatching {
+        startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, "image/*").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
     }
 }
 

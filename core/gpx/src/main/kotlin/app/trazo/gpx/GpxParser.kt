@@ -36,7 +36,7 @@ object GpxParser {
                     when (e.name) {
                         "link" -> if (startParent in ROUTE_LEVEL) {
                             e.attrs["href"]?.takeIf { it.startsWith("http") }?.let(links::add)
-                        }
+                        } else point?.takeIf { it.tag == "wpt" && startParent == it.tag }?.let { it.link = e.attrs["href"] }
                         "trk" -> { trackName = null; segments = mutableListOf() }
                         "trkseg" -> segment = mutableListOf()
                         "rte" -> { trackName = null; segment = mutableListOf() }
@@ -107,9 +107,10 @@ object GpxParser {
         var hr: Int? = null
         var cad: Int? = null
         var power: Int? = null
+        var link: String? = null
 
         fun toGeoPoint() = GeoPoint(lat, lon, ele, time, hr, cad, power)
-        fun toWaypoint() = Waypoint(lat, lon, ele, name, desc)
+        fun toWaypoint() = Waypoint(lat, lon, ele, name, desc, link)
 
         companion object {
             fun from(e: XmlEvent.Start): PointBuilder {

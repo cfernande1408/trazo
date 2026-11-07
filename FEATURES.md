@@ -185,6 +185,10 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 
 - Graba con o sin ruta, con la pantalla apagada (servicio en primer plano con notificación)
 - Pausa y reanudación
+- **Marcar puntos** mientras grabas o navegas, con el botón de la chincheta: tipo (fuente, mirador, peligro, desvío, refugio, foto u otro), una nota y una foto
+- La posición se coge al pulsar, así que puedes seguir mientras escribes; salen en el mapa al momento
+- Se guardan en el GPX como puntos (`wpt`), así que Wikiloc y las demás apps los leen; las fotos se quedan en el móvil
+- En el detalle de la salida, en el mapa y en una lista; tocando la foto se abre en grande
 - Distancia, tiempo total y en movimiento, velocidad media y máxima, desnivel
 - Aviso en la barra de abajo mientras grabas, para volver a la grabación
 - *Mis salidas* / *Mis excursiones* con el historial

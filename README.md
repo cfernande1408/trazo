@@ -90,7 +90,8 @@ SMS. Y detección de caídas: si te caes y no respondes en 60 s, avisa a tu cont
 y un recorrido virtual que vuela la ruta.
 
 **Grabar salidas.** Sigue grabando con la pantalla apagada. Velocidad media y máxima, tiempo en
-movimiento, el recorrido coloreado por velocidad y exportación a GPX.
+movimiento, el recorrido coloreado por velocidad y exportación a GPX. Puedes marcar puntos por el
+camino (fuente, mirador, peligro…) con una nota y una foto, y quedan en el GPX.
 
 **Según la estación.** El mapa, los árboles y el acento del tema cambian con el año: flores en
 primavera, hojas naranjas en otoño, pinos nevados en invierno. Hasta el icono de la app cambia. Y un consejo de temporada antes de
@@ -190,5 +191,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Dificultad de OSM (`mtb:scale`, `sac_scale`) y pendiente por tramos
 - [x] Descargar cualquier zona desde *Explorar*
 - [x] Desnivel con el barómetro del móvil
+- [x] Marcar puntos con nota y foto mientras grabas
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones

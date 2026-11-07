@@ -19,7 +19,16 @@ data class Waypoint(
     val ele: Double? = null,
     val name: String? = null,
     val desc: String? = null,
-)
+    /** Su `<link>`: en los puntos marcados al grabar, la foto (ruta relativa al GPX). */
+    val link: String? = null,
+) {
+    /** La foto que se hizo al marcarlo, si es un archivo junto al GPX. */
+    val localPhoto: String?
+        get() = link?.takeIf {
+            !it.contains("://") && !it.startsWith("/") && !it.contains("..") &&
+                it.substringAfterLast('.').lowercase() in setOf("jpg", "jpeg", "png", "webp")
+        }
+}
 
 /** Un `<trk>` (con sus segmentos) o un `<rte>` convertido a un único segmento. */
 data class Track(
