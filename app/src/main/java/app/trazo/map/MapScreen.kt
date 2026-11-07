@@ -76,6 +76,22 @@ import app.trazo.importer.title
 import app.trazo.nav.Alerts
 import app.trazo.ride.RideSession
 import app.trazo.ui.AppMode
+import androidx.compose.runtime.produceState
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.layers.CircleLayer
+import app.trazo.nav.Voice
+import app.trazo.nav.RoutePois
+import app.trazo.gpx.osm.PoiOnRoute
+import app.trazo.gpx.osm.PoiKind
+import app.trazo.gpx.nav.VoiceGuide
+import app.trazo.gpx.nav.Turns
+import app.trazo.gpx.nav.ClimbProgress
+import app.trazo.gpx.nav.ClimbLive
+import app.trazo.gpx.nav.ClimbDetector
+import app.trazo.gpx.Daylight
 import androidx.compose.material3.Surface
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.Property
@@ -123,6 +139,20 @@ fun MapScreen(
     val navProfile = remember(navSegments) { RouteGeometry.downsample(ElevationProfile.of(navSegments), 300) }
     var navState by remember { mutableStateOf<NavState?>(null) }
     var navError by remember { mutableStateOf<String?>(null) }
+    var extras by remember { mutableStateOf(NavExtras()) }
+
+    // Lo que se calcula una vez por ruta para la navegación: giros, subidas y pendientes
+    val fullProfile = remember(navSegments) { ElevationProfile.of(navSegments) }
+    val grades = remember(fullProfile) { Slope.grades(fullProfile) }
+    val climbs = remember(fullProfile) { ClimbDetector.detect(fullProfile) }
+    val turns = remember(navSegments) { Turns.detect(navSegments) }
+    val pois by produceState(emptyList<PoiOnRoute>(), navSegments) {
+        value = runCatching { RoutePois.load(navSegments) }.getOrDefault(emptyList())
+    }
+    val prefs = remember { context.getSharedPreferences("trazo", android.content.Context.MODE_PRIVATE) }
+    var voiceOn by remember { mutableStateOf(prefs.getBoolean("voice", true)) }
+    val voice = remember { Voice(context) }
+    DisposableEffect(Unit) { onDispose { voice.release() } }
 
     // Navegar = grabar la salida: el servicio mantiene el GPS y los avisos con la pantalla apagada
     val startNav = {
@@ -153,6 +183,38 @@ fun MapScreen(
     val layers by MapPrefs.state.collectAsStateWithLifecycle()
     var showLayers by remember { mutableStateOf(false) }
     LaunchedEffect(ready, layers) { ready?.second?.applyLayers(layers, AppMode.current) }
+
+    // Fuentes y refugios en el mapa
+    LaunchedEffect(ready, pois) {
+        val (_, style) = ready ?: return@LaunchedEffect
+        val json = pois.joinToString(prefix = """{"type":"FeatureCollection","features":[""", postfix = "]}") { p ->
+            """{"type":"Feature","properties":{"k":"${p.poi.kind.name}","name":"${GeoJson.escape(p.poi.name ?: p.poi.kind.label)}"},""" +
+                """"geometry":{"type":"Point","coordinates":[${p.poi.lon},${p.poi.lat}]}}"""
+        }
+        val src = style.getSourceAs<GeoJsonSource>(POIS)
+        if (src != null) { src.setGeoJson(json); return@LaunchedEffect }
+        style.addSource(GeoJsonSource(POIS, json))
+        val stops = PoiKind.entries.map { Expression.stop(it.name, Expression.color(android.graphics.Color.parseColor(it.color))) }
+        style.addLayer(
+            CircleLayer(POIS, POIS).withProperties(
+                PropertyFactory.circleRadius(7f),
+                PropertyFactory.circleColor(Expression.match(Expression.get("k"), Expression.color(android.graphics.Color.GRAY), *stops.toTypedArray())),
+                PropertyFactory.circleStrokeColor("#FFFFFF"),
+                PropertyFactory.circleStrokeWidth(2.5f),
+            )
+        )
+        style.addLayer(
+            SymbolLayer("$POIS-name", POIS).withProperties(
+                PropertyFactory.textField(Expression.get("name")),
+                PropertyFactory.textFont(arrayOf("Noto Sans Regular")),
+                PropertyFactory.textSize(11f),
+                PropertyFactory.textOffset(arrayOf(0f, 1.3f)),
+                PropertyFactory.textColor("#1A1C16"),
+                PropertyFactory.textHaloColor("#FFFFFF"),
+                PropertyFactory.textHaloWidth(1.5f),
+            ).apply { minZoom = 13f }
+        )
+    }
 
     // Ruta coloreada por pendiente, encima de la línea normal
     val slopeLines = remember(state) { Slope.lines(state.gpx.segments, Slope.grades(ElevationProfile.of(state.gpx.segments))) }
@@ -258,7 +320,8 @@ fun MapScreen(
     val alerts = remember { Alerts(context) }
     DisposableEffect(Unit) { onDispose { alerts.release() } }
 
-    LaunchedEffect(navigating, hasLocation, navSegments) {
+    // Con las fuentes ya cargadas se rehace la guía de voz (llegan unos segundos después)
+    LaunchedEffect(navigating, hasLocation, navSegments, pois) {
         if (!navigating || !hasLocation) return@LaunchedEffect
         navError = null
         navState = null
@@ -271,6 +334,11 @@ fun MapScreen(
         )
         var lastAlert = 0L
         var wasOff = false
+        val guide = VoiceGuide(turns, climbs, pois, activity)
+        // Ritmo real frente al estimado, para calcular cuánto te queda de verdad
+        var startT: Long? = null
+        var startAlongNav = 0.0
+        var startRemainingGain = 0.0
         // Las posiciones llegan del servicio de grabación, que sigue vivo con la pantalla apagada
         // (SharedFlow: nunca termina ni lanza, no hace falta catch)
         RideSession.fixes
@@ -281,6 +349,27 @@ fun MapScreen(
                 val accuracy = if (loc.hasAccuracy()) loc.accuracy.toDouble() else 0.0
                 val s = navigator.update(loc.latitude, loc.longitude, t, accuracy)
                 navState = s
+                if (startT == null) { startT = t; startAlongNav = s.alongMeters; startRemainingGain = s.remainingGainMeters }
+                // Cuánto falta: lo estimado para lo que queda, corregido por cómo vas hasta ahora
+                val doneM = s.alongMeters - startAlongNav
+                val expectedDone = activity.estimateMs(doneM, (startRemainingGain - s.remainingGainMeters).coerceAtLeast(0.0), 0.0)
+                val pace = if (doneM > 1_500 && expectedDone > 0) ((t - startT!!).toDouble() / expectedDone).coerceIn(0.5, 2.5) else 1.0
+                val eleNow = ElevationProfile.eleAt(fullProfile, s.alongMeters)
+                val eleEnd = fullProfile.lastOrNull()?.ele
+                val loss = s.remainingGainMeters + ((eleNow ?: 0.0) - (eleEnd ?: 0.0)).coerceAtLeast(-s.remainingGainMeters)
+                val remainingMs = (activity.estimateMs(s.remainingMeters, s.remainingGainMeters, loss) * pace).toLong()
+                val nowMs = System.currentTimeMillis()
+                val sunset = Daylight.sunsetMs(loc.latitude, loc.longitude, Math.floorDiv(nowMs, 86_400_000L))
+                // Ya de noche no tiene sentido avisar de la luz que queda
+                val margin = sunset?.takeIf { it > nowMs }?.let { Daylight.marginMinutes(nowMs, it, remainingMs) }
+                extras = NavExtras(
+                    climb = ClimbLive.progress(climbs, fullProfile, grades, s.alongMeters),
+                    nextPoi = pois.firstOrNull { it.alongMeters >= s.alongMeters - 20 }?.let { it to it.alongMeters - s.alongMeters },
+                    lightMarginMinutes = margin,
+                    finishAtMs = nowMs + remainingMs,
+                )
+                val phrases = guide.update(s, margin)
+                if (voiceOn) phrases.forEach(voice::say)
                 when {
                     s.offRouteStarted -> { alerts.offRoute(); lastAlert = t }
                     s.offRoute && t - lastAlert >= REPEAT_ALERT_MS -> { alerts.offRoute(); lastAlert = t }
@@ -294,7 +383,17 @@ fun MapScreen(
         AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
 
         if (navigating) {
-            NavBanner(navState, Modifier.statusBarsPadding().padding(16.dp).fillMaxWidth())
+            Column(Modifier.statusBarsPadding().padding(16.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                NavBanner(
+                    navState, extras, Modifier.fillMaxWidth(),
+                    voiceOn = voiceOn,
+                    onToggleVoice = {
+                        voiceOn = !voiceOn
+                        prefs.edit().putBoolean("voice", voiceOn).apply()
+                    },
+                )
+                NavChips(extras)
+            }
         } else {
             FilledTonalIconButton(
                 onClick = onBack,
@@ -442,21 +541,37 @@ private fun StartSheet(
 }
 
 /** Tarjeta de arriba al navegar: desvío, subida en curso o próxima subida. */
+/** Lo que acompaña a la navegación: subida en curso, próximo punto de agua y luz. */
+private data class NavExtras(
+    val climb: ClimbProgress? = null,
+    /** Punto y metros hasta él. */
+    val nextPoi: Pair<PoiOnRoute, Double>? = null,
+    val lightMarginMinutes: Long? = null,
+    val finishAtMs: Long? = null,
+)
+
 @Composable
-private fun NavBanner(s: NavState?, modifier: Modifier = Modifier) {
+private fun NavBanner(
+    s: NavState?,
+    extras: NavExtras,
+    modifier: Modifier = Modifier,
+    voiceOn: Boolean,
+    onToggleVoice: () -> Unit,
+) {
     val scheme = MaterialTheme.colorScheme
     val (container, content) = when {
         s?.offRoute == true -> Color(0xFFBA1A1A) to Color.White
         s == null -> scheme.surfaceContainer to scheme.onSurface
         else -> scheme.primaryContainer to scheme.onPrimaryContainer
     }
+    val climb = extras.climb.takeIf { s?.offRoute != true }
     val (title, subtitle) = when {
         s == null -> "Buscando GPS…" to "Sal a cielo abierto si tarda"
         s.offRoute -> "Fuera de ruta" to "A ${corta(s.distanceToTrackMeters)} del track"
-        s.nextClimb != null && s.metersToNextClimb == 0.0 -> {
-            val c = s.nextClimb!!
-            "Subiendo" to "Quedan ${corta(c.endMeters - s.alongMeters)} · ${String.format(ES, "%.0f", c.avgGradePercent)} % de media"
-        }
+        // Subida en directo, como el ClimbPro de los Garmin
+        climb != null ->
+            "Subida ${climb.number} de ${climb.total} · ${String.format(ES, "%.0f", climb.gradePercent)} %" to
+                "Quedan ${corta(climb.remainingMeters)} y +${metros(climb.remainingGainMeters)}"
         s.nextClimb != null -> {
             val c = s.nextClimb!!
             "Próxima subida en ${corta(s.metersToNextClimb ?: 0.0)}" to
@@ -469,15 +584,69 @@ private fun NavBanner(s: NavState?, modifier: Modifier = Modifier) {
         shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (s?.offRoute == true) Icon(Icons.Filled.Warning, contentDescription = null, modifier = Modifier.size(40.dp))
-            Column {
-                Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-                Text(subtitle, style = MaterialTheme.typography.titleMedium)
+        Column(Modifier.padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (s?.offRoute == true) Icon(Icons.Filled.Warning, contentDescription = null, modifier = Modifier.size(40.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                    Text(subtitle, style = MaterialTheme.typography.titleMedium)
+                }
+                IconButton(onClick = onToggleVoice) {
+                    Icon(
+                        if (voiceOn) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                        contentDescription = if (voiceOn) "Silenciar avisos de voz" else "Activar avisos de voz",
+                    )
+                }
+            }
+            if (climb != null && climb.profile.size >= 2) {
+                // El gráfico empieza en 0: perfil y posición relativos al pie de la subida
+                val start = climb.climb.startMeters
+                ElevationChart(
+                    climb.profile.map { app.trazo.gpx.ProfilePoint(it.distanceMeters - start, it.ele) },
+                    Modifier.padding(top = 10.dp, end = 12.dp).fillMaxWidth().height(56.dp),
+                    positionMeters = climb.doneMeters,
+                )
             }
         }
     }
 }
+
+/** Próxima fuente o refugio y cuánta luz queda, en pastillas bajo la tarjeta. */
+@Composable
+private fun NavChips(extras: NavExtras) {
+    val poi = extras.nextPoi
+    val light = extras.lightMarginMinutes
+    if (poi == null && light == null) return
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        poi?.let { (p, ahead) ->
+            Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                Text(
+                    "${p.poi.kind.emoji} ${p.poi.kind.label} en ${corta(ahead.coerceAtLeast(0.0))}",
+                    Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        }
+        light?.let { m ->
+            val late = m < 0
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = if (late) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = if (late) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface,
+            ) {
+                Text(
+                    if (late) "🌙 Anochece ${durationText(-m)} antes de terminar" else "☀️ Te sobran ${durationText(m)} de luz",
+                    Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        }
+    }
+}
+
+/** 45 min / 1 h 20 min */
+private fun durationText(minutes: Long) =
+    if (minutes < 60) "$minutes min" else "${minutes / 60} h" + if (minutes % 60 > 0) " ${minutes % 60} min" else ""
 
 /** 450 m / 1,8 km */
 private fun corta(m: Double) = if (m < 1000) String.format(ES, "%.0f m", m) else km(m)
@@ -520,3 +689,5 @@ private fun SlopeLegend(modifier: Modifier = Modifier) {
         }
     }
 }
+
+private const val POIS = "pois"

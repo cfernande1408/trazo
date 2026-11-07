@@ -40,6 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.trazo.gpx.Activity
 import app.trazo.gpx.ElevationProfile
+import app.trazo.gpx.Daylight
+import app.trazo.gpx.osm.PoiOnRoute
+import app.trazo.nav.RoutePois
 import app.trazo.gpx.Slope
 import app.trazo.gpx.offline.OfflineArea
 import app.trazo.gpx.osm.Difficulty
@@ -262,4 +265,65 @@ internal fun OfflineMapsList(maps: List<SavedMap>) {
             }
         }
     }
+}
+
+/** Fuentes, manantiales y refugios a lo largo de la ruta, con su km. */
+@Composable
+internal fun PoisSection(state: ImportState.Loaded) {
+    val pois by produceState<List<PoiOnRoute>?>(null, state.gpx) {
+        value = runCatching { RoutePois.load(state.gpx.segments) }.getOrDefault(emptyList())
+    }
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Agua y refugios en la ruta", style = MaterialTheme.typography.titleMedium)
+            val list = pois
+            when {
+                list == null -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Text("Buscando fuentes y refugios en OpenStreetMap…", style = MaterialTheme.typography.bodyMedium)
+                }
+                list.isEmpty() -> Text(
+                    "No hay fuentes ni refugios marcados a menos de 150 m de la ruta. Lleva agua de sobra.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                else -> list.forEach { p ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(p.poi.kind.emoji, style = MaterialTheme.typography.titleMedium, modifier = Modifier.width(32.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(p.poi.name ?: p.poi.kind.label, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                p.poi.kind.label + if (p.offsetMeters > 30) " · a ${p.offsetMeters.roundToInt()} m de la ruta" else "",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Text("km " + "%.1f".format(ES, p.alongMeters / 1000), style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** A qué hora anochece en el inicio y a qué hora terminarías si sales ya. */
+@Composable
+internal fun LightLine(state: ImportState.Loaded, activity: Activity) {
+    val start = state.gpx.segments.firstOrNull()?.firstOrNull() ?: return
+    val now = System.currentTimeMillis()
+    val day = Math.floorDiv(now, 86_400_000L)
+    val sunset = Daylight.sunsetMs(start.lat, start.lon, day) ?: return
+    val s = state.stats
+    val finish = now + activity.estimateMs(s.distanceMeters, s.elevationGainMeters, s.elevationLossMeters)
+    val fmt = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+    fun hhmm(ms: Long) = fmt.format(java.time.Instant.ofEpochMilli(ms).atZone(java.time.ZoneId.systemDefault()))
+    val late = now < sunset && finish > sunset
+    Text(
+        when {
+            now >= sunset -> "🌙 Hoy ya ha anochecido (a las ${hhmm(sunset)})"
+            late -> "🌙 Anochece a las ${hhmm(sunset)}: si sales ahora terminarías de noche, hacia las ${hhmm(finish)}"
+            else -> "🌅 Anochece a las ${hhmm(sunset)} · si sales ahora terminas hacia las ${hhmm(finish)}"
+        },
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (late) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }

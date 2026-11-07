@@ -298,6 +298,7 @@ private fun Loaded(
             )
         }
         item { WeatherPeek(state, activity, onOpen = { tab = 2 }) }
+        item { LightLine(state, activity) }
         item { SeasonTip(season) }
         item { OfflineCard(state) }
         item {
@@ -336,10 +337,13 @@ private fun Loaded(
                 item { Hint("El GPX no trae altitudes, así que no hay perfil.") }
             }
             }
-            1 -> if (state.gpx.waypoints.isEmpty()) {
-                item { Hint("El autor no marcó puntos en esta ruta.") }
-            } else {
-                items(state.gpx.waypoints) { WaypointRow(it) }
+            1 -> {
+                item { PoisSection(state) }
+                if (state.gpx.waypoints.isEmpty()) {
+                    item { Hint("El autor no marcó puntos en esta ruta.") }
+                } else {
+                    items(state.gpx.waypoints) { WaypointRow(it) }
+                }
             }
             2 -> item { WeatherTab(state, activity) }
             else -> item { CommentsTab(state) }

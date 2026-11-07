@@ -70,6 +70,12 @@ que pasa.
 🧭 **Navegar.** Tu posición sobre la ruta, vibración al salirte, la próxima subida, empezar
 desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 
+🏁 **Como un GPS profesional.** Lo que Wikiloc y Komoot no tienen:
+- **Subidas en directo**: «Subida 2 de 4 · 9 %», lo que queda y el perfil de la subida con tu posición.
+- **Avisos por voz** en los giros, al empezar cada subida, al pasar por una fuente y si te sales.
+- **Luz restante**: cuánta luz te sobra o te falta para terminar a tu ritmo real, con aviso si vas justo.
+- **Agua y refugios por delante**: fuentes y refugios de OSM a lo largo de la ruta, con su km.
+
 🏔️ **Vista 3D.** Relieve con exageración automática, casas en volumen, bosques de árboles de pie
 y un recorrido virtual que vuela la ruta.
 
@@ -170,6 +176,7 @@ tus rutas, salidas y ajustes se quedan en el móvil.
 | Buscar lugares | [Nominatim](https://nominatim.org) | © colaboradores de OpenStreetMap |
 | Crear rutas | [BRouter](https://brouter.de) | © colaboradores de OpenStreetMap |
 | Altitud | [Open-Meteo](https://open-meteo.com) | Copernicus DEM |
+| Fuentes y refugios | [Overpass API](https://overpass-api.de) | © colaboradores de OpenStreetMap |
 | Previsión del tiempo | [Open-Meteo](https://open-meteo.com) | Modelos de ECMWF, DWD, Météo-France y otros |
 | Vista 3D | [MapLibre GL JS](https://maplibre.org) | — |
 
@@ -181,7 +188,13 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 ## Hoja de ruta
 
 - [ ] Arrastrar los puntos de una ruta creada
-- [ ] Avisos por voz en los cruces
+- [x] Avisos por voz en los giros
+- [x] Subidas en directo, luz restante y agua y refugios por delante
+- [ ] Volver al coche por el camino más corto (TracBack)
+- [ ] Mi posición para el 112 (UTM y grados, por SMS)
+- [ ] Detección de caídas con aviso a un contacto
+- [ ] Sensores Bluetooth: pulso, cadencia y potencia
+- [ ] Compañero virtual contra tu salida anterior
 - [x] Mapas sin conexión de la zona de una ruta
 - [x] Dificultad de OSM (`mtb:scale`, `sac_scale`) y pendiente por tramos
 - [ ] Descargar cualquier zona desde *Explorar*

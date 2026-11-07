@@ -108,6 +108,19 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Aviso con vibración larga y pitido al salirte de la ruta (se repite si sigues fuera) y vibración corta al volver
 - Tarjeta con la subida en curso, la próxima subida y lo que queda
 - La navegación sigue con la pantalla apagada y se graba como salida
+- La pantalla no se apaga sola mientras navegas
+
+## 🏁 Como un GPS profesional
+
+- **Subidas en directo** (como el ClimbPro de Garmin): «Subida 2 de 4 · 9 %», lo que queda de distancia y desnivel y el perfil de esa subida con tu posición
+- **Avisos por voz** en español: «En 150 metros, gira a la derecha», «Empieza una subida de 1,2 kilómetros al 8 por ciento», «Fuente en 200 metros», «Te has salido de la ruta»
+- Los giros salen del propio track (cambios de rumbo de más de 45°); las zetas de sendero se avisan una sola vez como «zona de curvas cerradas»
+- A pie se avisa más cerca (60 m y 15 m) que en bici (150 m y 40 m)
+- Botón para silenciar la voz, que se recuerda
+- **Luz restante**: «Te sobran 45 min de luz» o «Anochece 20 min antes de terminar» (en rojo), con la puesta de sol de donde estás y lo que te queda a tu ritmo real; aviso por voz si vas justo
+- En el resumen de la ruta: a qué hora anochece y a qué hora terminarías si sales ya
+- **Agua y refugios por delante**: fuentes, manantiales y refugios de OpenStreetMap a menos de 150 m de la ruta, en el mapa, en la pestaña *Puntos* con su km y en navegación («💧 Fuente en 1,2 km»)
+- Las fuentes marcadas como no potables no salen
 
 ## 🏔️ Vista 3D
 
