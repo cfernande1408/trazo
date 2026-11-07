@@ -53,6 +53,17 @@ object RoutesLibrary {
                 }.getOrNull()
             }
 
+    /** La ruta guardada con esa huella (la de su mapa sin conexión), si está. */
+    fun findByKey(context: Context, key: String): Gpx? =
+        dir(context).listFiles { f -> f.extension == "gpx" }.orEmpty().firstNotNullOfOrNull { f ->
+            runCatching { open(f) }.getOrNull()?.takeIf { app.trazo.gpx.offline.OfflineArea.routeKey(it.segments) == key }
+        }
+
+    /** Guarda la ruta si aún no está (por su huella). */
+    fun saveIfMissing(context: Context, gpx: Gpx) {
+        if (findByKey(context, app.trazo.gpx.offline.OfflineArea.routeKey(gpx.segments)) == null) save(context, gpx)
+    }
+
     fun delete(route: SavedRoute) {
         route.file.delete()
     }

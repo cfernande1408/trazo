@@ -39,7 +39,9 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - **Rutas**: las que guardas desde Wikiloc, Explorar o *Crear ruta*; se abren con un toque (con su resumen, mapa y navegación) y se borran con confirmación
 - Botón **Importar GPX** para traer los que tengas en el móvil, uno o varios a la vez, directos a tus rutas
 - **Salidas** (o *Excursiones*): lo que has grabado, de lo más reciente a lo más antiguo
-- **Mapas**: las zonas descargadas, con lo que ocupa cada una y para borrarlas; tocando una se ve su zona en *Explorar*
+- **Mapas**: las zonas descargadas, con lo que ocupa cada una y para borrarlas
+- Tocar el mapa de una ruta abre esa ruta; el de una zona descargada desde *Explorar*, esa zona en el mapa
+- Al descargar el mapa de una ruta, la ruta se guarda también en *Rutas*
 
 ## Inicio
 

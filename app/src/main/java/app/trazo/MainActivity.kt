@@ -152,7 +152,8 @@ class MainActivity : ComponentActivity() {
                 var showRecord by rememberSaveable { mutableStateOf(false) }
                 var showRides by rememberSaveable { mutableStateOf(false) }
                 var showPlanner by rememberSaveable { mutableStateOf(false) }
-                val library by produceState(emptyList<SavedRoute>(), libVersion) {
+                // También al entrar en Guardadas: descargar el mapa de una ruta la guarda por detrás
+                val library by produceState(emptyList<SavedRoute>(), libVersion, tab == TAB_LIBRARY) {
                     value = withContext(Dispatchers.IO) { RoutesLibrary.list(context) }
                 }
                 val scope = rememberCoroutineScope()
@@ -286,9 +287,17 @@ class MainActivity : ComponentActivity() {
                                     onRecord = { showRecord = true },
                                     onImport = { importToLibrary.launch(arrayOf("*/*")) },
                                     onOpenMap = { m ->
-                                        (m.region.definition as? org.maplibre.android.offline.OfflineTilePyramidRegionDefinition)?.bounds?.let {
-                                            exploreFocus = it
-                                            tab = 1
+                                        scope.launch {
+                                            // El mapa de una ruta abre esa ruta; el de una zona, la zona en Explorar
+                                            val gpx = withContext(Dispatchers.IO) { runCatching { RoutesLibrary.findByKey(context, m.meta.routeKey) }.getOrNull() }
+                                            if (gpx != null) openRoute(gpx)
+                                            else (m.region.definition as? org.maplibre.android.offline.OfflineTilePyramidRegionDefinition)?.bounds?.let {
+                                                if (!m.meta.routeKey.startsWith("zona-")) {
+                                                    Toast.makeText(context, "La ruta de este mapa no está guardada: te enseño su zona", Toast.LENGTH_LONG).show()
+                                                }
+                                                exploreFocus = it
+                                                tab = 1
+                                            }
                                         }
                                     },
                                 )

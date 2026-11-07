@@ -1,5 +1,6 @@
 package app.trazo.importer
 
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -235,6 +236,7 @@ private fun surfaceColor(hex: String) = Color(android.graphics.Color.parseColor(
 @Composable
 internal fun OfflineCard(state: ImportState.Loaded) {
     val context = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     val maps by OfflineMaps.maps.collectAsStateWithLifecycle()
     val downloads by OfflineMaps.downloads.collectAsStateWithLifecycle()
     val key = remember(state.gpx) { OfflineArea.routeKey(state.gpx.segments) }
@@ -305,6 +307,8 @@ internal fun OfflineCard(state: ImportState.Loaded) {
                 TextButton(onClick = {
                     asking = false
                     OfflineMaps.download(context, state.title(), state.gpx.segments, topo)
+                    // Con su mapa descargado, la ruta también se guarda: así se abre desde Guardadas
+                    scope.launch(Dispatchers.IO) { runCatching { app.trazo.plan.RoutesLibrary.saveIfMissing(context, state.gpx) } }
                 }) { Text("Descargar") }
             },
             dismissButton = { TextButton(onClick = { asking = false }) { Text("Cancelar") } },
