@@ -106,8 +106,8 @@ Hay tres versiones, que se instalan como apps distintas y pueden convivir, cada 
 | Versión | De dónde | Cuándo cambia | Nombre en el móvil |
 | --- | --- | --- | --- |
 | Estable | [Releases](https://github.com/cfernande1408/trazo/releases/latest) | al publicar una versión (`v0.3.0`…) | Trazo |
-| Beta | [Releases → beta](https://github.com/cfernande1408/trazo/releases/tag/beta) | en cada cambio en `main` | Trazo beta (marca azul) |
-| Debug | compilándola tú | cuando la instalas con el cable | Trazo debug (marca amarilla) |
+| Beta | [Releases → beta](https://github.com/cfernande1408/trazo/releases/tag/beta) | en cada cambio en `main` | Trazo beta |
+| Debug | compilándola tú | cuando la instalas con el cable | Trazo debug |
 
 La estable es la de salir al monte; la beta, para probar lo nuevo sin arriesgar tus rutas. Descarga
 el APK y ábrelo en el móvil (hay que permitir instalar apps de esa fuente).

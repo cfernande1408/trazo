@@ -3,8 +3,9 @@
 import os, sys
 root, out = sys.argv[1], sys.argv[2]
 R = root + '/app/src/main/res'
-D = root + '/app/src/debug/res'
 
+# Debug, beta y estable llevan el mismo icono: se distinguen por el nombre
+# (Trazo debug, Trazo beta, Trazo).
 # Cielo arriba/abajo, sierra, nieve, monte de delante, árboles
 SEASONS = {
     'spring': dict(top='#BFE6FF', bottom='#DDF3C4', ridge='#5FA03A', snow='#E6FFFFFF', hill='#3E7A23', tree='#9BD36A', shade='#5E9E36', bloom='#F4A7C0'),
@@ -57,10 +58,7 @@ def bg(s):
 </vector>
 '''
 
-# Marca de cada canal en el icono: debug amarilla, beta azul; la estable, sin marca
-BADGES = {'debug': ('#FFD54F', '#3A2E00'), 'beta': ('#42A5F5', '#0D2A4A')}
-
-def fg(s, debug=False):
+def fg(s):
     c = SEASONS[s]
     trees = '\n'.join(f'    <path android:fillColor="{c["tree"]}" android:pathData="{p}" />' for p in PINES)
     blooms = '\n'.join(f'    <path android:fillColor="{c["bloom"]}" android:pathData="{circle(x, y, 1.6)}" />' for x, y in BLOOMS) if c['bloom'] else ''
@@ -69,14 +67,8 @@ def fg(s, debug=False):
         f'    <path android:fillColor="{c["tree"]}" android:pathData="{f}" />\n'
         f'    <path android:fillColor="{c["shade"]}" android:pathData="{h}" />'
         for f, h, t in FRONT)
-    channel = debug if isinstance(debug, str) else ('debug' if debug else None)
-    badge = ''
-    if channel:
-        fill, stroke = BADGES[channel]
-        badge = f'''    <!-- Versión {channel}: marca arriba a la izquierda -->
-    <path android:fillColor="{fill}" android:strokeColor="{stroke}" android:strokeWidth="2" android:pathData="{circle(36, 36, 6)}" />'''
     return f'''<?xml version="1.0" encoding="utf-8"?>
-<!-- Primer plano del icono ({s}{', ' + (debug if isinstance(debug, str) else 'debug') if debug else ''}): árboles y el trazo de la ruta. Generado por scripts/icons.py -->
+<!-- Primer plano del icono ({s}): árboles y el trazo de la ruta. Generado por scripts/icons.py -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
@@ -86,7 +78,6 @@ def fg(s, debug=False):
     <path android:fillColor="#C2410C" android:strokeColor="#FFFFFF" android:strokeWidth="2.2" android:pathData="{circle(*END, 5.5)}" />
 {front}
 {blooms}
-{badge}
 </vector>
 '''
 
@@ -119,8 +110,6 @@ def w(path, text):
 for s in SEASONS:
     w(f'{R}/drawable/ic_launcher_bg_{s}.xml', bg(s))
     w(f'{R}/drawable/ic_launcher_fg_{s}.xml', fg(s))
-    w(f'{D}/drawable/ic_launcher_fg_{s}.xml', fg(s, debug=True))
-    w(f'{root}/app/src/beta/res/drawable/ic_launcher_fg_{s}.xml', fg(s, debug='beta'))
     w(f'{R}/mipmap-anydpi-v26/ic_launcher_{s}.xml', adaptive(s))
 w(f'{R}/drawable/ic_launcher_monochrome.xml', MONO)
 # El icono "de la app" (ajustes, notificaciones) es el de verano
