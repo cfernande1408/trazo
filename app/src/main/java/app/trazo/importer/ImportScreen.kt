@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import android.net.Uri
 import app.trazo.ui.openUrl
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -100,7 +101,7 @@ fun ImportScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis rutas") },
+                title = { Text("Mis rutas", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 actions = {
                     // Chip con tu actividad: tocándolo cambias de biker a senderista y viceversa
                     AssistChip(
@@ -108,7 +109,8 @@ fun ImportScreen(
                         label = { Text(activity.who) },
                         leadingIcon = { Icon(activity.icon, contentDescription = null, Modifier.size(18.dp)) },
                     )
-                    TextButton(onClick = onRides) { Text(activity.outingsTitle) }
+                    // Un icono en vez del texto: con la letra grande no cabían título, chip y botón
+                    IconButton(onClick = onRides) { Icon(Icons.Filled.History, contentDescription = activity.outingsTitle) }
                 },
             )
         },

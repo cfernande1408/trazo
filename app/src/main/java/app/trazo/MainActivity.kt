@@ -184,27 +184,27 @@ class MainActivity : ComponentActivity() {
                                 NavigationBarItem(
                                     selected = tab == 0, onClick = { tab = 0 },
                                     icon = { Icon(Icons.Filled.Home, contentDescription = null) },
-                                    label = { Text("Mis rutas") },
+                                    label = { NavLabel("Rutas") },
                                 )
                                 NavigationBarItem(
                                     selected = tab == 1, onClick = { tab = 1 },
                                     icon = { Icon(Icons.Filled.Place, contentDescription = null) },
-                                    label = { Text("Explorar") },
+                                    label = { NavLabel("Explorar") },
                                 )
                                 NavigationBarItem(
                                     selected = tab == 2, onClick = { tab = 2 },
                                     icon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                                    label = { Text("Wikiloc") },
+                                    label = { NavLabel("Wikiloc") },
                                 )
                                 NavigationBarItem(
                                     selected = tab == 3, onClick = { tab = 3 },
                                     icon = { Icon(Icons.Filled.Person, contentDescription = null) },
-                                    label = { Text("Comunidad") },
+                                    label = { NavLabel("Comunidad") },
                                 )
                                 NavigationBarItem(
                                     selected = tab == 4, onClick = { tab = 4 },
                                     icon = { Icon(Icons.Filled.Info, contentDescription = null) },
-                                    label = { Text("Info") },
+                                    label = { NavLabel("Info") },
                                 )
                             }
                             }
@@ -279,3 +279,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+/**
+ * Etiqueta de la barra de abajo en una sola línea: con cinco pestañas y la letra
+ * grande del sistema, "Comunidad" se partía en dos.
+ */
+@androidx.compose.runtime.Composable
+private fun NavLabel(text: String) = Text(
+    text,
+    maxLines = 1,
+    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified),
+)
