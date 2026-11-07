@@ -43,6 +43,8 @@ jobs:
           TRAZO_KEY_PASSWORD: ${{ secrets.TRAZO_KEY_PASSWORD }}
           TRAZO_VERSION_NAME: ${{ github.ref_name }}
           TRAZO_VERSION_CODE: ${{ github.run_number }}
+          TRAZO_SUPABASE_URL: ${{ secrets.TRAZO_SUPABASE_URL }}
+          TRAZO_SUPABASE_ANON_KEY: ${{ secrets.TRAZO_SUPABASE_ANON_KEY }}
         run: |
           ./gradlew :app:assembleRelease
           cp app/build/outputs/apk/release/app-release.apk "trazo-${GITHUB_REF_NAME}.apk"

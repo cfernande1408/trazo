@@ -123,6 +123,16 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - **Agua y refugios por delante**: fuentes, manantiales y refugios de OpenStreetMap a menos de 150 m de la ruta, en el mapa, en la pestaña *Puntos* con su km y en navegación («Fuente en 1,2 km»)
 - Las fuentes marcadas como no potables no salen
 
+## Comunidad
+
+- **Avisos en el mapa** de otros usuarios: hielo, nieve, barro, árbol caído, camino cortado, arroyo crecido, ganado o perros, batida de caza
+- Se avisa con un botón en el mapa, en Explorar o en la pestaña Comunidad, en tu posición y con un detalle opcional
+- Cada aviso caduca solo según el tipo (hielo 2 días, árbol caído 3 semanas…) y otros pueden decir «sigue ahí» (dura más) o «ya no está» (se oculta)
+- Los avisos salen en el mapa de la ruta y en Explorar; tocándolos se ven y se votan
+- Pestaña **Comunidad** con los avisos a unos 15 km de ti, del más cercano al más lejano
+- **Valoraciones de rutas**: estrellas y comentarios de los usuarios de Trazo en la pestaña Comentarios; se juntan por ruta de Wikiloc, de OSM o por trazado
+- Sin registro: un usuario anónimo por móvil; solo se publica lo que escribes y dónde está el aviso
+
 ## Entrenamiento
 
 - **Sensores Bluetooth** estándar de cualquier marca: banda de pulso, sensor de cadencia y potenciómetro (con su cadencia)
@@ -185,6 +195,6 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 
 ## Privacidad
 
-- Sin cuentas, sin anuncios y sin claves de API
-- Sin servidor propio: rutas, salidas y ajustes se quedan en el móvil
+- Sin cuentas ni anuncios; la comunidad usa un usuario anónimo por móvil
+- Rutas, salidas y ajustes se quedan en el móvil; solo sale lo que publicas en la comunidad
 - Sin Google Play Services

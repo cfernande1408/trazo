@@ -62,6 +62,16 @@ import app.trazo.map.rememberMapView
 import app.trazo.nav.locationUpdates
 import app.trazo.ui.ElevationChart
 import app.trazo.map.LayersButton
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import app.trazo.gpx.community.Hazard
+import app.trazo.community.showHazards
+import app.trazo.community.hazardAt
+import app.trazo.community.Supabase
+import app.trazo.community.ReportDialog
+import app.trazo.community.ReportButton
+import app.trazo.community.HazardDialog
+import app.trazo.community.CommunityRepo
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.AlertDialog
@@ -136,6 +146,18 @@ fun ExploreMapScreen(
     var query by rememberSaveable { mutableStateOf("") }
     var showList by rememberSaveable { mutableStateOf(false) }
     var askZone by remember { mutableStateOf(false) }
+    // Avisos de la comunidad en lo que ves (se piden al parar el mapa)
+    var hazardsReload by remember { mutableIntStateOf(0) }
+    var hazards by remember { mutableStateOf(emptyList<Hazard>()) }
+    val hazardsNow = rememberUpdatedState(hazards)
+    var openHazard by remember { mutableStateOf<Hazard?>(null) }
+    var reporting by remember { mutableStateOf(false) }
+    LaunchedEffect(view, hazardsReload) {
+        val v = view ?: return@LaunchedEffect
+        if (!Supabase.configured) return@LaunchedEffect
+        kotlinx.coroutines.delay(600)
+        hazards = runCatching { CommunityRepo.hazards(context, v.expand(0.2)) }.getOrDefault(hazards)
+    }
     val downloads by OfflineMaps.downloads.collectAsStateWithLifecycle()
 
     BackHandler(enabled = selected != null) { vm.clearSelection() }
@@ -174,6 +196,10 @@ fun ExploreMapScreen(
                 }
                 map.addOnCameraIdleListener { report() }
                 map.addOnMapClickListener { ll ->
+                    map.hazardAt(ll, hazardsNow.value, context.resources.displayMetrics.density)?.let {
+                        openHazard = it
+                        return@addOnMapClickListener true
+                    }
                     val p = map.projection.toScreenLocation(ll)
                     val r = 24 * context.resources.displayMetrics.density
                     val hit = map.queryRenderedFeatures(RectF(p.x - r, p.y - r, p.x + r, p.y + r), ExploreMapStyle.ROUTES)
@@ -197,6 +223,8 @@ fun ExploreMapScreen(
             map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(here.latitude, here.longitude), 11.0), 800)
         }
     }
+
+    LaunchedEffect(ready, hazards) { ready?.second?.showHazards(hazards) }
 
     LaunchedEffect(ready, routes, onlyMtb) {
         val (_, style) = ready ?: return@LaunchedEffect
@@ -288,7 +316,10 @@ fun ExploreMapScreen(
                     }
                 }
                     // Capas a la derecha, como en Google Maps
-                    LayersButton(onClick = { showLayers = true }, modifier = Modifier.padding(start = 8.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(start = 8.dp)) {
+                        LayersButton(onClick = { showLayers = true })
+                        ReportButton(onClick = { reporting = true })
+                    }
                 }
             }
         }
@@ -296,6 +327,8 @@ fun ExploreMapScreen(
         if (showLayers) {
             LayersSheet(layers, activity, onChange = { MapPrefs.set(context, it) }, onDismiss = { showLayers = false })
         }
+        if (reporting) ReportDialog(onDismiss = { reporting = false }, onSent = { reporting = false; hazardsReload++ })
+        openHazard?.let { h -> HazardDialog(h, onDismiss = { openHazard = null }, onVoted = { openHazard = null; hazardsReload++ }) }
         val zone = view
         if (askZone && zone != null) {
             ZoneDialog(zone, onDismiss = { askZone = false }) { topo ->

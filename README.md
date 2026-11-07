@@ -7,8 +7,7 @@
 **Rutas de montaña, en bici o a pie, con un mapa que da gusto mirar.**
 
 Importa tus GPX de Wikiloc, encuentra las rutas de OpenStreetMap de tu zona, crea las tuyas
-y síguelas con avisos de desvío, perfil de desnivel y vista 3D. Sin cuentas, sin anuncios
-y sin claves de API.
+y síguelas con avisos de desvío, perfil de desnivel y vista 3D. Sin cuentas y sin anuncios.
 
 [![CI](https://github.com/cfernande1408/trazo/actions/workflows/ci.yml/badge.svg)](https://github.com/cfernande1408/trazo/actions/workflows/ci.yml)
 ![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
@@ -74,6 +73,9 @@ desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 - **Luz restante**: cuánta luz te sobra o te falta para terminar a tu ritmo real, con aviso si vas justo.
 - **Agua y refugios por delante**: fuentes y refugios de OSM a lo largo de la ruta, con su km.
 
+**Comunidad.** Avisos en el mapa de otros usuarios (hielo, árbol caído, camino cortado…)
+que caducan solos y se votan, y valoraciones con estrellas y comentarios de cada ruta.
+
 **Entrenamiento.** Sensores Bluetooth de pulso, cadencia y potencia, grabados en el GPX
 para Strava. Seis cifras de navegación a tu gusto y un compañero virtual que te dice cuánto vas
 por delante o por detrás de la última vez que hiciste la ruta.
@@ -132,6 +134,26 @@ base64 -w0 trazo.jks          # → secreto TRAZO_KEYSTORE_BASE64
 y los secretos `TRAZO_KEYSTORE_PASSWORD`, `TRAZO_KEY_ALIAS` (`trazo`) y `TRAZO_KEY_PASSWORD`.
 Guarda `trazo.jks` fuera del repo: sin ella no se pueden publicar actualizaciones.
 
+## Comunidad
+
+Las valoraciones y los avisos van a un proyecto de [Supabase](https://supabase.com) (el plan
+gratuito sobra). Sin configurarlo, la app funciona igual y la comunidad sale desactivada.
+
+1. Crea un proyecto en Supabase.
+2. En *Authentication → Sign In / Providers*, activa *Allow anonymous sign-ins*.
+3. En *SQL Editor*, pega y ejecuta [`supabase/schema.sql`](supabase/schema.sql): crea las tablas
+   y las políticas de seguridad (cada uno solo puede tocar lo suyo).
+4. En *Project Settings → API* copia la URL y la clave `anon` a `local.properties`:
+
+```properties
+trazo.supabase.url=https://xxxx.supabase.co
+trazo.supabase.anonKey=eyJ...
+```
+
+Para las releases, pon lo mismo en los secretos del repo `TRAZO_SUPABASE_URL` y
+`TRAZO_SUPABASE_ANON_KEY`. La clave `anon` es pública por diseño: lo que protege los datos son
+las políticas de la base.
+
 ## Cómo está hecho
 
 | | |
@@ -154,6 +176,8 @@ core/gpx/      Kotlin puro: todo lo que se puede probar sin móvil
   gpx/offline/   zona y tamaño de los mapas sin conexión
   gpx/safety/    UTM, mensaje de SOS y detección de caídas
   gpx/sensors/   lectura de sensores Bluetooth (pulso, cadencia, potencia)
+  gpx/community/ valoraciones y avisos: reglas, URLs y JSON de Supabase
+supabase/      esquema de la base de la comunidad
 app/           Android
   importer/      Mis rutas
   explore/       Explorar, buscador y navegador de Wikiloc
@@ -171,8 +195,8 @@ app/           Android
 
 ## Datos y servicios
 
-Todo son servicios abiertos y gratuitos. Trazo no tiene servidor propio ni recoge datos:
-tus rutas, salidas y ajustes se quedan en el móvil.
+Todo son servicios abiertos y gratuitos. Trazo no recoge datos: tus rutas, salidas y ajustes se
+quedan en el móvil. Lo único que sale es lo que publicas en la comunidad.
 
 | Para qué | Servicio | Datos |
 | --- | --- | --- |
@@ -185,6 +209,7 @@ tus rutas, salidas y ajustes se quedan en el móvil.
 | Crear rutas | [BRouter](https://brouter.de) | © colaboradores de OpenStreetMap |
 | Altitud | [Open-Meteo](https://open-meteo.com) | Copernicus DEM |
 | Fuentes y refugios | [Overpass API](https://overpass-api.de) | © colaboradores de OpenStreetMap |
+| Comunidad | [Supabase](https://supabase.com) (proyecto propio) | Lo que publican los usuarios |
 | Previsión del tiempo | [Open-Meteo](https://open-meteo.com) | Modelos de ECMWF, DWD, Météo-France y otros |
 | Vista 3D | [MapLibre GL JS](https://maplibre.org) | — |
 
@@ -207,4 +232,5 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Mapas sin conexión de la zona de una ruta
 - [x] Dificultad de OSM (`mtb:scale`, `sac_scale`) y pendiente por tramos
 - [x] Descargar cualquier zona desde *Explorar*
-- [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…)
+- [x] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…)
+- [ ] Fotos en los avisos y en las valoraciones

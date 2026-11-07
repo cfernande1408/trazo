@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -15,6 +17,15 @@ android {
         // En las releases los pone GitHub Actions a partir de la etiqueta (v0.2.0) y el nº de ejecución
         versionCode = System.getenv("TRAZO_VERSION_CODE")?.toIntOrNull() ?: 1
         versionName = System.getenv("TRAZO_VERSION_NAME")?.removePrefix("v") ?: "0.1.0"
+
+        // Comunidad (Supabase): de las variables de entorno (GitHub Actions) o de local.properties.
+        // La clave "anon" es pública por diseño: la seguridad la ponen las políticas RLS de la base.
+        val local = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        }
+        fun setting(env: String, prop: String) = System.getenv(env) ?: local.getProperty(prop) ?: ""
+        buildConfigField("String", "SUPABASE_URL", "\"${setting("TRAZO_SUPABASE_URL", "trazo.supabase.url")}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${setting("TRAZO_SUPABASE_ANON_KEY", "trazo.supabase.anonKey")}\"")
     }
 
     // Firma de release desde variables de entorno (secretos de GitHub o tu terminal).
@@ -49,6 +60,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

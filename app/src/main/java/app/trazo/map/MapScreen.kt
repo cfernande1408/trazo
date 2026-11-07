@@ -76,6 +76,17 @@ import app.trazo.importer.title
 import app.trazo.nav.Alerts
 import app.trazo.ride.RideSession
 import app.trazo.ui.AppMode
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import app.trazo.gpx.osm.Bbox
+import app.trazo.gpx.community.Hazard
+import app.trazo.community.showHazards
+import app.trazo.community.hazardAt
+import app.trazo.community.Supabase
+import app.trazo.community.ReportDialog
+import app.trazo.community.ReportButton
+import app.trazo.community.HazardDialog
+import app.trazo.community.CommunityRepo
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import androidx.compose.material3.RadioButton
@@ -186,6 +197,18 @@ fun MapScreen(
     val voice = remember { Voice(context) }
     DisposableEffect(Unit) { onDispose { voice.release() } }
 
+    // Avisos de la comunidad en la zona de la ruta
+    var hazardsReload by remember { mutableIntStateOf(0) }
+    val hazards by produceState(emptyList<Hazard>(), routeSegments, hazardsReload) {
+        val b = RouteGeometry.bounds(routeSegments) ?: return@produceState
+        if (!Supabase.configured) return@produceState
+        value = runCatching { CommunityRepo.hazards(context, Bbox(b.minLat - 0.02, b.minLon - 0.02, b.maxLat + 0.02, b.maxLon + 0.02)) }
+            .getOrDefault(emptyList())
+    }
+    val hazardsNow = rememberUpdatedState(hazards)
+    var openHazard by remember { mutableStateOf<Hazard?>(null) }
+    var reporting by remember { mutableStateOf(false) }
+
     // Pantalla de datos configurable y compañero virtual
     var fields by remember { mutableStateOf(DataField.decode(prefs.getString("nav_fields", null))) }
     var picking by remember { mutableStateOf<Int?>(null) }
@@ -248,6 +271,8 @@ fun MapScreen(
         )
         if (style.getLayer("track-line") != null) style.addLayerAbove(line, "track-line") else style.addLayer(line)
     }
+
+    LaunchedEffect(ready, hazards) { ready?.second?.showHazards(hazards) }
 
     // Fuentes y refugios en el mapa
     LaunchedEffect(ready, pois) {
@@ -336,6 +361,9 @@ fun MapScreen(
             }
             map.setStyle(TrazoMapStyle.builder(context, state)) { style ->
                 mapView.post { fitRoute(map, state, context.resources.displayMetrics.density) }
+                map.addOnMapClickListener { ll ->
+                    map.hazardAt(ll, hazardsNow.value, context.resources.displayMetrics.density)?.let { openHazard = it } != null
+                }
                 ready = map to style
             }
         }
@@ -480,8 +508,11 @@ fun MapScreen(
         ) {
             LayersButton(onClick = { showLayers = true })
             SensorsButton(onClick = { showSensors = true })
+            ReportButton(onClick = { reporting = true })
             SosButton(onClick = { showSos = true })
         }
+        if (reporting) ReportDialog(onDismiss = { reporting = false }, onSent = { reporting = false; hazardsReload++ })
+        openHazard?.let { h -> HazardDialog(h, onDismiss = { openHazard = null }, onVoted = { openHazard = null; hazardsReload++ }) }
         if (showSensors) SensorsSheet(onDismiss = { showSensors = false })
         picking?.let { slot ->
             FieldPicker(

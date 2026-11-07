@@ -346,7 +346,10 @@ private fun Loaded(
                 }
             }
             2 -> item { WeatherTab(state, activity) }
-            else -> item { CommentsTab(state) }
+            else -> {
+                item { app.trazo.community.ReviewsSection(state.gpx, activity) }
+                item { CommentsTab(state) }
+            }
         }
         item {
             val saved = lib.routes.any { it.name == state.title() && kotlin.math.abs(it.distanceMeters - s.distanceMeters) < 1.0 }
