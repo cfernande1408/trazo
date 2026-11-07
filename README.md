@@ -73,6 +73,7 @@ desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 - **Luz restante**: cuánta luz te sobra o te falta para terminar a tu ritmo real, con aviso si vas justo.
 - **Agua y refugios por delante**: fuentes y refugios de OSM a lo largo de la ruta, con su km.
 - **Altímetro barométrico**: si el móvil tiene barómetro, el desnivel sale de la presión y no de los saltos del GPS.
+- **Recalcula solo** si te sales: el camino más corto de vuelta a la ruta, por delante, y luego sigue la ruta.
 
 **Comunidad (en preparación).** Avisos en el mapa de otros usuarios (hielo, árbol caído, camino
 cortado…) que caducan solos y se votan, y valoraciones con estrellas y comentarios de cada ruta.
@@ -197,5 +198,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Desnivel con el barómetro del móvil
 - [x] Marcar puntos con nota y foto mientras grabas
 - [x] Por dónde va la ruta: asfalto, pista, sendero y escaleras
+- [x] Recalcular al salirte de la ruta
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones

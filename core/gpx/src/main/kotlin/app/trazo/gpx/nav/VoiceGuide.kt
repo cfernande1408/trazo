@@ -56,8 +56,10 @@ class VoiceGuide(
 
     private fun capitalize(s: String) = s.replaceFirstChar { it.titlecase(Locale.ROOT) }
 
-    /** "200 metros", "1,5 kilómetros": redondeado para que suene natural. */
-    private fun meters(m: Double): String =
-        if (m < 1000) "${((m / 10).roundToInt() * 10).coerceAtLeast(10)} metros"
-        else String.format(Locale.forLanguageTag("es-ES"), "%.1f kilómetros", m / 1000).replace(",0 ", " ")
+    private fun meters(m: Double): String = spokenMeters(m)
 }
+
+/** "200 metros", "1,5 kilómetros": redondeado para que suene natural. */
+internal fun spokenMeters(m: Double): String =
+    if (m < 1000) "${((m / 10).roundToInt() * 10).coerceAtLeast(10)} metros"
+    else String.format(Locale.forLanguageTag("es-ES"), "%.1f kilómetros", m / 1000).replace(",0 ", " ")

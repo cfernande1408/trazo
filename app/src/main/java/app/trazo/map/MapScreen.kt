@@ -112,6 +112,8 @@ import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.GpxParser
 import app.trazo.gpx.plan.BRouter
 import app.trazo.gpx.nav.Retrace
+import app.trazo.gpx.nav.Rejoin
+import app.trazo.gpx.nav.Rerouted
 import androidx.compose.runtime.produceState
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -129,6 +131,7 @@ import app.trazo.gpx.nav.ClimbLive
 import app.trazo.gpx.nav.ClimbDetector
 import app.trazo.gpx.Daylight
 import androidx.compose.material3.Surface
+import androidx.compose.material3.CircularProgressIndicator
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.LineLayer
@@ -154,6 +157,10 @@ import org.maplibre.android.maps.Style
  */
 private const val MAX_ACCURACY_M = 1_000f
 private const val REPEAT_ALERT_MS = 20_000L
+/** Tras este tiempo fuera de la ruta se recalcula cómo volver a ella. */
+private const val REROUTE_AFTER_MS = 20_000L
+/** Si no se pudo (sin cobertura), se vuelve a probar pasado este tiempo. */
+private const val REROUTE_RETRY_MS = 60_000L
 
 @Composable
 fun MapScreen(
@@ -173,10 +180,14 @@ fun MapScreen(
     val startOptions = remember(state.gpx) { RouteStart.options(state.gpx) }
     /** Vuelta al inicio (por donde has venido o por el camino más corto); null si sigues la ruta. */
     var returnSegs by remember { mutableStateOf<List<List<GeoPoint>>?>(null) }
+    /** Ruta recalculada al salirte (camino de vuelta + resto de la ruta); null si vas por la ruta. */
+    var rejoin by remember { mutableStateOf<Rerouted?>(null) }
+    var rerouting by remember { mutableStateOf(false) }
+    var rerouteNote by remember { mutableStateOf<String?>(null) }
     var showReturn by remember { mutableStateOf(false) }
     var showSos by remember { mutableStateOf(false) }
     val routeSegments = remember(state.gpx, startAlong) { RouteStart.from(state.gpx.segments, startAlong) }
-    val navSegments = returnSegs ?: routeSegments
+    val navSegments = returnSegs ?: rejoin?.segments ?: routeSegments
     val navProfile = remember(navSegments) { RouteGeometry.downsample(ElevationProfile.of(navSegments), 300) }
     var navState by remember { mutableStateOf<NavState?>(null) }
     var navError by remember { mutableStateOf<String?>(null) }
@@ -225,15 +236,21 @@ fun MapScreen(
                 .firstOrNull { it.usable }
         }
     }
-    val partnerGap = navState?.let { st -> partner?.gapMs(st.alongMeters, System.currentTimeMillis() - ride.startedAtMs) }
+    val partnerGap = navState?.let { st ->
+        partner?.gapMs(rejoin?.routeAlong(st.alongMeters) ?: st.alongMeters, System.currentTimeMillis() - ride.startedAtMs)
+    }
 
     // Navegar = grabar la salida: el servicio mantiene el GPS y los avisos con la pantalla apagada
     val startNav = {
         RideSession.start(context, routeName = state.title())
+        rejoin = null
+        rerouteNote = null
         navigating = true
     }
     val stopNav = {
         navigating = false
+        rejoin = null
+        rerouteNote = null
         RideSession.stop(context)?.let(onRideSaved)
         Unit
     }
@@ -258,9 +275,10 @@ fun MapScreen(
     LaunchedEffect(ready, layers) { ready?.second?.applyLayers(layers, AppMode.current) }
 
     // Camino de vuelta en azul discontinuo, encima de la ruta
-    LaunchedEffect(ready, returnSegs) {
+    LaunchedEffect(ready, returnSegs, rejoin) {
         val (_, style) = ready ?: return@LaunchedEffect
-        val json = GeoJson.track(returnSegs.orEmpty())
+        // El camino para volver al inicio o, si se ha recalculado, el de vuelta a la ruta
+        val json = GeoJson.track(returnSegs ?: rejoin?.path?.let { listOf(it) }.orEmpty())
         val src = style.getSourceAs<GeoJsonSource>(RETURN)
         if (src != null) { src.setGeoJson(json); return@LaunchedEffect }
         style.addSource(GeoJsonSource(RETURN, json))
@@ -428,6 +446,8 @@ fun MapScreen(
         )
         var lastAlert = 0L
         var wasOff = false
+        var offSince: Long? = null
+        var lastRerouteTry = Long.MIN_VALUE / 2
         val guide = VoiceGuide(turns, climbs, pois, activity)
         // Ritmo real frente al estimado, para calcular cuánto te queda de verdad
         var startT: Long? = null
@@ -470,6 +490,38 @@ fun MapScreen(
                     wasOff && !s.offRoute -> alerts.backOnRoute()
                 }
                 wasOff = s.offRoute
+
+                // Recalcular: tras un rato fuera, el camino más corto de vuelta a la ruta por delante
+                if (s.offRoute) { if (offSince == null) offSince = t } else { offSince = null; rerouteNote = null }
+                val since = offSince
+                if (since != null && t - since >= REROUTE_AFTER_MS && t - lastRerouteTry >= REROUTE_RETRY_MS &&
+                    returnSegs == null && !rerouting
+                ) {
+                    lastRerouteTry = t
+                    val here = GeoPoint(loc.latitude, loc.longitude)
+                    val target = Rejoin.target(navSegments, s.alongMeters, here)
+                    if (target != null && target.straightMeters in 30.0..3_000.0) {
+                        rerouting = true
+                        val segsNow = navSegments
+                        val previous = rejoin
+                        val leftAt = s.alongMeters
+                        scope.launch {
+                            runCatching {
+                                val (code, body) = Http.getWithStatus(BRouter.url(listOf(here, target.point), activity))
+                                check(code in 200..299) { BRouter.friendlyError(body) }
+                                GpxParser.parse(body).segments.flatten().also { check(it.size >= 2) { "No hay camino" } }
+                            }.onSuccess { path ->
+                                val r = Rejoin.reroute(path, segsNow, target, leftAt, previous)
+                                rejoin = r
+                                rerouteNote = null
+                                if (voiceOn) voice.say(Rejoin.phrase(r))
+                            }.onFailure {
+                                rerouteNote = "No se pudo recalcular: ${Http.friendly(it)}. Vuelve hacia la ruta o usa «Volver al inicio»."
+                            }
+                            rerouting = false
+                        }
+                    }
+                }
             }
     }
 
@@ -487,6 +539,13 @@ fun MapScreen(
                     },
                 )
                 NavChips(extras)
+                RerouteStatus(
+                    rerouting = rerouting,
+                    // Lo que queda del camino de vuelta: cuando llegas a la ruta, el aviso se va
+                    toRouteMeters = rejoin?.takeIf { returnSegs == null }?.let { it.pathMeters - (navState?.alongMeters ?: 0.0) },
+                    note = rerouteNote,
+                    onDismiss = { rejoin = null; rerouteNote = null },
+                )
             }
         } else {
             FilledTonalIconButton(
@@ -537,8 +596,9 @@ fun MapScreen(
                 onDismiss = { showReturn = false },
                 onRetrace = {
                     showReturn = false
-                    val along = navState?.alongMeters ?: 0.0
-                    Retrace.backToStart(routeSegments, along).takeIf { it.isNotEmpty() }?.let { returnSegs = it }
+                    // Con la ruta recalculada, sus metros se pasan a los de la original
+                    val along = navState?.alongMeters?.let { rejoin?.routeAlong(it) ?: it } ?: 0.0
+                    Retrace.backToStart(routeSegments, along).takeIf { it.isNotEmpty() }?.let { returnSegs = it; rejoin = null }
                 },
                 onShortest = {
                     showReturn = false
@@ -552,7 +612,7 @@ fun MapScreen(
                                 val (code, body) = Http.getWithStatus(BRouter.url(pts, AppMode.current))
                                 check(code in 200..299) { BRouter.friendlyError(body) }
                                 GpxParser.parse(body).segments
-                            }.onSuccess { returnSegs = it }
+                            }.onSuccess { returnSegs = it; rejoin = null }
                                 .onFailure { returnError = it.message ?: "No se pudo calcular. Prueba «por donde he venido»." }
                         }
                     }
@@ -936,4 +996,30 @@ private fun FieldPicker(current: DataField, onDismiss: () -> Unit, onPick: (Data
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Cerrar") } },
     )
+}
+
+/** Debajo del aviso de navegación: si se está recalculando, si ya se ha hecho o si no se pudo. */
+@Composable
+private fun RerouteStatus(rerouting: Boolean, toRouteMeters: Double?, note: String?, onDismiss: () -> Unit) {
+    val text = when {
+        rerouting -> "Calculando cómo volver a la ruta…"
+        note != null -> note
+        toRouteMeters != null && toRouteMeters > 15 -> "Ruta recalculada: vuelves a ella en ${corta(toRouteMeters)} (en azul)"
+        else -> return
+    }
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = if (note != null) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(Modifier.padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (rerouting) CircularProgressIndicator(Modifier.size(16.dp).padding(end = 0.dp), strokeWidth = 2.dp)
+            Text(
+                text,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f).padding(start = if (rerouting) 10.dp else 0.dp, top = 8.dp, bottom = 8.dp),
+            )
+            if (!rerouting) TextButton(onClick = onDismiss) { Text(if (note != null) "Vale" else "Quitar") }
+        }
+    }
 }

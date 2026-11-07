@@ -110,6 +110,10 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - *Cómo llegar* al inicio con Google Maps
 - Posición con el GPS de Android (sin Google Play Services); la de la red (wifi y antenas) solo se usa hasta que coge el GPS o si se pierde más de 10 s, y su altitud nunca
 - Aviso con vibración larga y pitido al salirte de la ruta (se repite si sigues fuera) y vibración corta al volver
+- **Recalcula solo**: tras 20 s fuera de la ruta, busca el punto de la ruta por delante que te queda más cerca y calcula con BRouter el camino más corto hasta él
+- El camino de vuelta sale en azul discontinuo y se navega con sus giros; al llegar, sigues con el resto de la ruta sin hacer nada
+- Lo dice por voz («Ruta recalculada. Vuelves a la ruta en 350 metros») y se puede quitar si prefieres ir a tu aire
+- Sin cobertura lo avisa y lo vuelve a probar cada minuto; *Volver al inicio* sigue funcionando sin conexión
 - Tarjeta con la subida en curso, la próxima subida y lo que queda
 - La navegación sigue con la pantalla apagada y se graba como salida
 - La pantalla no se apaga sola mientras navegas
