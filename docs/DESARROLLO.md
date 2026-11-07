@@ -26,8 +26,9 @@ python3 scripts/icons.py . /tmp # regenera los iconos de las cuatro estaciones
 ## Trazo web
 
 Está en `web/`: TypeScript, Vite y MapLibre GL JS. Usa el mismo estilo de mapa que la app
-(`app/src/main/assets/trazo_topo.json`) y los cálculos del núcleo pasados a `web/src/geo.ts`: si
-cambian en `core/gpx`, hay que cambiarlos también ahí. Necesitas Node 20 o superior.
+(`app/src/main/assets/trazo_topo.json`) y los cálculos del núcleo pasados a TypeScript: `web/src/geo.ts`
+(desnivel, pendiente, tiempo) y `web/src/osm.ts` (Waymarked Trails, Overpass, unión de tramos, forma
+circular o lineal, Nominatim). Si cambian en `core/gpx`, hay que cambiarlos también ahí. Necesitas Node 20 o superior.
 
 ```bash
 cd web

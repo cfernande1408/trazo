@@ -16,6 +16,10 @@
         <span>Trazo</span>
         <small>web</small>
       </a>
+      <form class="search" id="search" role="search">
+        <input type="search" id="q" placeholder="Buscar lugar o ruta (p. ej. PR-M 13)" aria-label="Buscar lugar o ruta" autocomplete="off" />
+        <div class="results card" id="results" hidden></div>
+      </form>
       <div class="top-actions">
         <div class="segmented" role="radiogroup" aria-label="Actividad">
           <button type="button" role="radio" data-activity="bike">Bici</button>
@@ -29,18 +33,26 @@
     <main class="layout">
       <aside class="panel" id="panel">
         <section class="empty" id="empty">
-          <h1>Revisa tus rutas antes de salir</h1>
-          <p>
-            Abre o suelta aquí los GPX que descargues de Wikiloc o de donde quieras: verás el recorrido sobre el mapa
-            topo, el perfil, dónde están las rampas y cuánto tardarás. Nada sale de tu ordenador.
+          <h1>Explorar</h1>
+          <p class="muted">
+            Mueve el mapa y salen las rutas señalizadas de OpenStreetMap. Toca una para ver su recorrido, perfil,
+            pendiente y cuánto tardarás, o abre los GPX que tengas (de Wikiloc o de donde sea).
           </p>
-          <button type="button" class="btn primary big" id="open2">Abrir GPX</button>
+          <div class="filters" id="filters"></div>
+          <button type="button" class="status" id="status" hidden></button>
+          <div class="list" id="list"></div>
+          <div class="card gpx-card">
+            <b>¿Tienes un GPX?</b>
+            <span class="muted small">Ábrelo o suéltalo aquí. Nada sale de tu ordenador.</span>
+            <button type="button" class="btn primary" id="open2">Abrir GPX</button>
+          </div>
           <p class="muted small">Para seguir la ruta en el monte, pásala al móvil y ábrela con la app Trazo.</p>
         </section>
 
         <section id="routes" class="routes" hidden></section>
 
         <section id="summary" class="summary" hidden>
+          <button type="button" class="back" id="back">← Explorar</button>
           <div class="title-row">
             <h2 id="name"></h2>
           </div>
@@ -52,6 +64,7 @@
           <div class="actions">
             <button type="button" class="btn primary" id="download">Descargar GPX para el móvil</button>
             <a class="btn" id="source" target="_blank" rel="noopener" hidden>Ver en Wikiloc</a>
+            <a class="btn" id="osm" target="_blank" rel="noopener" hidden>Ver en OpenStreetMap</a>
           </div>
           <p class="muted small" id="note"></p>
         </section>
