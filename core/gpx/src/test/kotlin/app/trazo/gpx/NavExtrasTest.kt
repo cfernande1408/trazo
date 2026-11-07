@@ -102,6 +102,11 @@ class NavExtrasTest {
         assertEquals(listOf("Fuente del Cura", null, "Refugio Zabala"), on.map { it.poi.name })
         assertEquals(100.0, on[0].alongMeters, 15.0)
         assertTrue(Pois.query(ell()).contains("node[\"amenity\"=\"drinking_water\"]("))
+        // Diez fuentes seguidas cada 40 m: se queda una cada 300 m
+        val many = (0..9).map { Poi(PoiKind.WATER, "F$it", 40.0 + it * 40 / 110_574.0, -3.9) }
+        val straight = listOf((0..100).map { GeoPoint(40.0 + it * 10 / 110_574.0, -3.9) })
+        val thinned = Pois.alongRoute(many, straight)
+        assertEquals(listOf("F0", "F8"), thinned.map { it.poi.name })
     }
 
     private fun state(along: Double, off: Boolean = false, started: Boolean = false) =

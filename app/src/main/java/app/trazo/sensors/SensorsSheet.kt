@@ -21,8 +21,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -66,18 +70,50 @@ fun SensorsSheet(onDismiss: () -> Unit) {
     }
     DisposableEffect(Unit) { onDispose { BleSensors.stopScan(context) } }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(
-            Modifier.fillMaxWidth().padding(horizontal = 24.dp).navigationBarsPadding().padding(bottom = 16.dp),
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).navigationBarsPadding().padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Sensores", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Sensores", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.tertiaryContainer) {
+                    Text(
+                        "En pruebas",
+                        Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    )
+                }
+            }
             Text(
-                "Bandas de pulso, sensores de cadencia y potenciómetros Bluetooth de cualquier marca. " +
-                    "Se conectan solos al grabar o navegar y se guardan en el GPX.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                "Para ver pulso, cadencia o potencia mientras grabas, con una banda de pulso, un sensor de cadencia " +
+                    "o un potenciómetro Bluetooth de cualquier marca. Si no tienes ninguno, no hace falta.",
+                style = MaterialTheme.typography.bodyMedium,
             )
+            // Cómo se usa, paso a paso
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Cómo se usa", style = MaterialTheme.typography.titleSmall)
+                    listOf(
+                        "Despierta el sensor: ponte la banda de pulso (humedécela un poco) o gira la biela.",
+                        "Pulsa «Buscar» y, cuando salga, «Añadir». No hace falta emparejarlo en los ajustes del móvil.",
+                        "Listo: se conecta solo cada vez que empiezas una ruta o una grabación.",
+                        "En la tarjeta de navegación, toca una cifra y elige Pulso, Cadencia o Potencia para verla.",
+                    ).forEachIndexed { i, step ->
+                        Row {
+                            Text("${i + 1}.", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 8.dp))
+                            Text(step, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                    Text(
+                        "Si no aparece, cierra otras apps que lo estén usando (Garmin Connect, Zwift, Strava): " +
+                            "muchos sensores solo admiten una conexión a la vez.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
 
             val fresh = BleSensors.fresh()
             if (fresh != null) {
@@ -117,7 +153,7 @@ fun SensorsSheet(onDismiss: () -> Unit) {
             val newOnes = found.filter { it.address !in saved }
             if (newOnes.isEmpty()) {
                 Text(
-                    if (scanning) "Buscando… despierta el sensor (ponte la banda o gira la biela)." else "Pulsa «Buscar» con el sensor encendido.",
+                    if (scanning) "Buscando durante 12 s… despierta el sensor si no sale." else "Pulsa «Buscar» con el sensor despierto.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

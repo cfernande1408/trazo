@@ -63,7 +63,13 @@ object Pois {
      * Coloca cada punto en la ruta (km donde te pilla más cerca) y descarta
      * los que quedan a más de [maxOffsetMeters]. Ordenados por km.
      */
-    fun alongRoute(pois: List<Poi>, segments: List<List<GeoPoint>>, maxOffsetMeters: Double = 150.0): List<PoiOnRoute> {
+    fun alongRoute(
+        pois: List<Poi>,
+        segments: List<List<GeoPoint>>,
+        maxOffsetMeters: Double = 150.0,
+        /** Del mismo tipo, uno cada tantos metros: en ciudad hay fuentes en cada esquina. */
+        minSpacingMeters: Double = 300.0,
+    ): List<PoiOnRoute> {
         val pts = segments.flatMap { RouteGeometry.downsample(it, 3000) }
         if (pts.isEmpty()) return emptyList()
         val along = DoubleArray(pts.size)
@@ -77,6 +83,19 @@ object Pois {
                 if (d < best) { best = d; at = along[i - 1] }
             }
             if (best <= maxOffsetMeters) PoiOnRoute(p, at, best) else null
-        }.sortedBy { it.alongMeters }
+        }.sortedBy { it.alongMeters }.let { thin(it, minSpacingMeters) }
+    }
+
+    /** Se queda con el primero de cada tipo y descarta los que caen a menos de [spacing] del anterior. */
+    private fun thin(sorted: List<PoiOnRoute>, spacing: Double): List<PoiOnRoute> {
+        val last = mutableMapOf<PoiKind, Double>()
+        return sorted.filter { p ->
+            // Los refugios siempre cuentan: son pocos y valen mucho
+            if (p.poi.kind == PoiKind.SHELTER || p.poi.kind == PoiKind.HUT) return@filter true
+            val prev = last[p.poi.kind]
+            if (prev != null && p.alongMeters - prev < spacing) return@filter false
+            last[p.poi.kind] = p.alongMeters
+            true
+        }
     }
 }

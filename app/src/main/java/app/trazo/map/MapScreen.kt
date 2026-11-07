@@ -287,7 +287,7 @@ fun MapScreen(
         val stops = PoiKind.entries.map { Expression.stop(it.name, Expression.color(android.graphics.Color.parseColor(it.color))) }
         style.addLayer(
             CircleLayer(POIS, POIS).withProperties(
-                PropertyFactory.circleRadius(7f),
+                PropertyFactory.circleRadius(5.5f),
                 PropertyFactory.circleColor(Expression.match(Expression.get("k"), Expression.color(android.graphics.Color.GRAY), *stops.toTypedArray())),
                 PropertyFactory.circleStrokeColor("#FFFFFF"),
                 PropertyFactory.circleStrokeWidth(2.5f),
@@ -302,7 +302,7 @@ fun MapScreen(
                 PropertyFactory.textColor("#1A1C16"),
                 PropertyFactory.textHaloColor("#FFFFFF"),
                 PropertyFactory.textHaloWidth(1.5f),
-            ).apply { minZoom = 13f }
+            ).apply { minZoom = 15f }
         )
     }
 
@@ -503,7 +503,9 @@ fun MapScreen(
         }
 
         Column(
-            Modifier.align(Alignment.CenterEnd).padding(end = 16.dp),
+            // Bajo el botón de 3D (o bajo la tarjeta de navegación), lejos de la tarjeta de abajo
+            if (navigating) Modifier.align(Alignment.CenterEnd).padding(end = 16.dp, bottom = 260.dp)
+            else Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 92.dp, end = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             LayersButton(onClick = { showLayers = true })

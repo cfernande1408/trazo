@@ -76,7 +76,7 @@ desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 **Comunidad.** Avisos en el mapa de otros usuarios (hielo, árbol caído, camino cortado…)
 que caducan solos y se votan, y valoraciones con estrellas y comentarios de cada ruta.
 
-**Entrenamiento.** Sensores Bluetooth de pulso, cadencia y potencia, grabados en el GPX
+**Entrenamiento.** Sensores Bluetooth de pulso, cadencia y potencia (en pruebas), grabados en el GPX
 para Strava. Seis cifras de navegación a tu gusto y un compañero virtual que te dice cuánto vas
 por delante o por detrás de la última vez que hiciste la ruta.
 

@@ -136,7 +136,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 
 ## Entrenamiento
 
-- **Sensores Bluetooth** estándar de cualquier marca: banda de pulso, sensor de cadencia y potenciómetro (con su cadencia)
+- **Sensores Bluetooth** (en pruebas) estándar de cualquier marca: banda de pulso, sensor de cadencia y potenciómetro (con su cadencia)
 - Se buscan y emparejan desde el botón de sensores del mapa o al grabar, y se conectan solos al empezar
 - Pulso, cadencia y potencia se graban en el GPX como las extensiones de Garmin, así que Strava los lee
 - En cada salida: pulso medio y máximo, cadencia media (sin los ratos sin pedalear) y potencia media
