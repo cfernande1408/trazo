@@ -83,10 +83,10 @@ fun CommunityScreen() {
             if (!Supabase.configured) {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                     Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Falta configurar la comunidad", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Comunidad en preparación", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(
                             "Las valoraciones y los avisos se guardan en un proyecto de Supabase. " +
-                                "Los pasos están en el README, en «Comunidad»: crear el proyecto, pegar supabase/schema.sql " +
+                                "Los pasos están en docs/DESARROLLO.md, en «Activar la comunidad»: crear el proyecto, pegar supabase/schema.sql " +
                                 "y poner la URL y la clave pública en local.properties.",
                         )
                     }

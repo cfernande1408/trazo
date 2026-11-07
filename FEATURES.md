@@ -124,7 +124,9 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - **Agua y refugios por delante**: fuentes, manantiales y refugios de OpenStreetMap a menos de 150 m de la ruta, en el mapa, en la pestaña *Puntos* con su km y en navegación («Fuente en 1,2 km»)
 - Las fuentes marcadas como no potables no salen
 
-## Comunidad
+## Comunidad (en preparación)
+
+El código está listo, pero aún no hay servidor: en la app sale como «Falta configurar la comunidad».
 
 - **Avisos en el mapa** de otros usuarios: hielo, nieve, barro, árbol caído, camino cortado, arroyo crecido, ganado o perros, batida de caza
 - Se avisa con un botón en el mapa, en Explorar o en la pestaña Comunidad, en tu posición y con un detalle opcional

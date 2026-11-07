@@ -73,8 +73,9 @@ desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 - **Luz restante**: cuánta luz te sobra o te falta para terminar a tu ritmo real, con aviso si vas justo.
 - **Agua y refugios por delante**: fuentes y refugios de OSM a lo largo de la ruta, con su km.
 
-**Comunidad.** Avisos en el mapa de otros usuarios (hielo, árbol caído, camino cortado…)
-que caducan solos y se votan, y valoraciones con estrellas y comentarios de cada ruta.
+**Comunidad (en preparación).** Avisos en el mapa de otros usuarios (hielo, árbol caído, camino
+cortado…) que caducan solos y se votan, y valoraciones con estrellas y comentarios de cada ruta.
+El código está hecho; falta poner en marcha el servidor.
 
 **Entrenamiento.** Sensores Bluetooth de pulso, cadencia y potencia (en pruebas), grabados en el GPX
 para Strava. Seis cifras de navegación a tu gusto y un compañero virtual que te dice cuánto vas
@@ -111,56 +112,9 @@ Hay tres versiones, que se instalan como apps distintas y pueden convivir, cada 
 La estable es la de salir al monte; la beta, para probar lo nuevo sin arriesgar tus rutas. Descarga
 el APK y ábrelo en el móvil (hay que permitir instalar apps de esa fuente).
 
-Para compilarla tú necesitas JDK 17+ y el SDK de Android (compileSdk 35):
+Funciona en Android 8.0 (API 26) o superior y no necesita Google Play Services.
 
-```bash
-git clone https://github.com/cfernande1408/trazo.git
-cd trazo
-echo "sdk.dir=$HOME/Android/Sdk" > local.properties   # si no lo crea Android Studio
-./gradlew :app:installDebug                            # con el móvil conectado por USB
-```
-
-Funciona en Android 8.0 (API 26) o superior. No necesita Google Play Services.
-
-## Publicar una versión
-
-Cada push a `main` pasa los tests y compila en GitHub Actions, y actualiza la beta. Las versiones
-estables se publican con una etiqueta:
-
-```bash
-git tag v0.2.0 && git push origin v0.2.0
-```
-
-La primera vez hay que crear la clave de firma y guardarla en los secretos del repo
-(*Settings → Secrets and variables → Actions*):
-
-```bash
-keytool -genkeypair -v -keystore trazo.jks -alias trazo -keyalg RSA -keysize 4096 -validity 10000
-base64 -w0 trazo.jks          # → secreto TRAZO_KEYSTORE_BASE64
-```
-
-y los secretos `TRAZO_KEYSTORE_PASSWORD`, `TRAZO_KEY_ALIAS` (`trazo`) y `TRAZO_KEY_PASSWORD`.
-Guarda `trazo.jks` fuera del repo: sin ella no se pueden publicar actualizaciones.
-
-## Comunidad
-
-Las valoraciones y los avisos van a un proyecto de [Supabase](https://supabase.com) (el plan
-gratuito sobra). Sin configurarlo, la app funciona igual y la comunidad sale desactivada.
-
-1. Crea un proyecto en Supabase.
-2. En *Authentication → Sign In / Providers*, activa *Allow anonymous sign-ins*.
-3. En *SQL Editor*, pega y ejecuta [`supabase/schema.sql`](supabase/schema.sql): crea las tablas
-   y las políticas de seguridad (cada uno solo puede tocar lo suyo).
-4. En *Project Settings → API* copia la URL y la clave `anon` a `local.properties`:
-
-```properties
-trazo.supabase.url=https://xxxx.supabase.co
-trazo.supabase.anonKey=eyJ...
-```
-
-Para las releases, pon lo mismo en los secretos del repo `TRAZO_SUPABASE_URL` y
-`TRAZO_SUPABASE_ANON_KEY`. La clave `anon` es pública por diseño: lo que protege los datos son
-las políticas de la base.
+Para compilarla, publicar versiones o activar la comunidad, mira [docs/DESARROLLO.md](docs/DESARROLLO.md).
 
 ## Cómo está hecho
 
@@ -195,17 +149,10 @@ app/           Android
   ui/            tema, modo biker/senderista, gráficos
 ```
 
-```bash
-./gradlew :core:gpx:test        # tests del núcleo
-./gradlew :app:assembleDebug    # APK de debug
-./scripts/screenshot.sh ruta    # captura del móvil para el README
-python3 scripts/icons.py . /tmp # regenera los iconos de las cuatro estaciones
-```
-
 ## Datos y servicios
 
 Todo son servicios abiertos y gratuitos. Trazo no recoge datos: tus rutas, salidas y ajustes se
-quedan en el móvil. Lo único que sale es lo que publicas en la comunidad.
+quedan en el móvil. Cuando la comunidad esté activa, lo único que saldrá será lo que publiques en ella.
 
 | Para qué | Servicio | Datos |
 | --- | --- | --- |
@@ -241,5 +188,5 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Mapas sin conexión de la zona de una ruta
 - [x] Dificultad de OSM (`mtb:scale`, `sac_scale`) y pendiente por tramos
 - [x] Descargar cualquier zona desde *Explorar*
-- [x] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…)
+- [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones
