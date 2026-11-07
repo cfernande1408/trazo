@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import app.trazo.gpx.Activity
 import app.trazo.gpx.Waypoint
 import app.trazo.gpx.ride.BaroAltimeter
+import app.trazo.gpx.ride.ProviderFilter
 import app.trazo.gpx.ride.RideRecorder
 import app.trazo.ui.AppMode
 import app.trazo.gpx.ride.RideStats
@@ -55,6 +56,7 @@ object RideSession {
 
     private var recorder = RideRecorder()
     private var baro = BaroAltimeter()
+    private val providers = ProviderFilter()
 
     /** Última posición del GPS, para el SOS y la detección de caídas. */
     @Volatile
@@ -109,6 +111,8 @@ object RideSession {
 
     /** Lo llama el servicio con cada posición del GPS. */
     internal fun onLocation(loc: Location) {
+        // Con GPS, las posiciones de la red (que saltan y no traen altitud buena) se ignoran
+        if (!providers.accept(loc.provider, SystemClock.elapsedRealtime())) return
         lastLocation = loc
         _fixes.tryEmit(loc)
         val s = _state.value
@@ -116,7 +120,7 @@ object RideSession {
         val sensors = BleSensors.fresh()
         // Con barómetro, la altitud sale de la presión y el GPS solo fija el nivel
         val ele = baro.altitude(
-            if (loc.hasAltitude()) loc.altitude else null,
+            if (loc.hasAltitude() && providers.trustAltitude(loc.provider)) loc.altitude else null,
             if (loc.hasVerticalAccuracy()) loc.verticalAccuracyMeters else null,
             SystemClock.elapsedRealtime(),
         )

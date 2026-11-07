@@ -89,6 +89,7 @@ class RideService : Service() {
     private fun startLocation() {
         val lm = getSystemService(LocationManager::class.java)
         // GPS para grabar con precisión; la red solo hasta que el GPS coja señal
+        // (RideSession descarta las de la red mientras haya GPS)
         listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
             .filter { it in lm.allProviders && runCatching { lm.isProviderEnabled(it) }.getOrDefault(false) }
             .forEach { lm.requestLocationUpdates(it, 1_000L, 0f, listener, Looper.getMainLooper()) }

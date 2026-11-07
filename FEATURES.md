@@ -106,7 +106,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Al recorrer el perfil con el dedo, un punto marca en el mapa dónde estás
 - *¿Desde dónde empiezas?*: desde el inicio, desde el punto de la ruta más cercano o desde un punto del autor (el parking)
 - *Cómo llegar* al inicio con Google Maps
-- Posición con el GPS de Android (sin Google Play Services), usando varios proveedores y su precisión
+- Posición con el GPS de Android (sin Google Play Services); la de la red (wifi y antenas) solo se usa hasta que coge el GPS o si se pierde más de 10 s, y su altitud nunca
 - Aviso con vibración larga y pitido al salirte de la ruta (se repite si sigues fuera) y vibración corta al volver
 - Tarjeta con la subida en curso, la próxima subida y lo que queda
 - La navegación sigue con la pantalla apagada y se graba como salida
