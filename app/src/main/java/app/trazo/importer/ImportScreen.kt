@@ -291,6 +291,7 @@ private fun Loaded(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        item { WeatherPeek(state, activity, onOpen = { tab = 2 }) }
         item { SeasonTip(season) }
         item {
             Button(onClick = onOpenMap, modifier = Modifier.fillMaxWidth().height(56.dp)) {

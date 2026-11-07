@@ -42,6 +42,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 
 ## 🌦️ El tiempo en la ruta
 
+- Resumen en una línea arriba del todo en cada ruta (peor tiempo, temperaturas y primer aviso); al tocarlo se abre la pestaña Tiempo
 - Eliges el día (hasta 7 días vista) y la hora de salida
 - La previsión sale en varios puntos de la ruta, uno cada ~5 km
 - En cada punto, el tiempo a la hora estimada a la que pasarás por él (según bici o a pie y el desnivel)
@@ -89,6 +90,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 ## 🏔️ Vista 3D
 
 - Relieve en 3D con la exageración ajustada a cada ruta (más en rutas suaves, menos en sierra)
+- Botones + y − para exagerar más o menos el relieve; se recuerda para la próxima vez
 - Cielo y niebla en el horizonte
 - Casas en volumen con su altura de OpenStreetMap
 - Bosques con árboles de pie en el borde y por dentro, sin tapar el relieve

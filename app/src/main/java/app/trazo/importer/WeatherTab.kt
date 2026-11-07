@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -21,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -48,6 +50,82 @@ private sealed interface Forecast {
     data class Failed(val message: String) : Forecast
 }
 
+/** Salida por defecto: dentro de una hora si aún es pronto; si no, mañana a las 9. Devuelve (día, hora). */
+private fun defaultStart(): Pair<Int, Int> {
+    val now = java.time.LocalDateTime.now()
+    return if (now.hour < 15) 0 to (now.hour + 1).coerceIn(6, 20) else 1 to 9
+}
+
+private fun startMs(dayOffset: Int, hour: Int): Long =
+    LocalDate.now().plusDays(dayOffset.toLong()).atTime(LocalTime.of(hour, 0))
+        .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+private suspend fun loadForecast(state: ImportState.Loaded, activity: Activity, startMs: Long): Forecast = runCatching {
+    val samples = withContext(Dispatchers.Default) { RouteWeather.samples(state.gpx.segments, activity) }
+    val points = RouteWeather.parse(Http.get(RouteWeather.url(samples)), samples, startMs)
+    if (points.isEmpty()) Forecast.Failed("No hay previsión para ese día todavía (solo ${RouteWeather.FORECAST_DAYS} días).")
+    else Forecast.Ready(points, RouteWeather.warnings(points))
+}.getOrElse { Forecast.Failed(Http.friendly(it)) }
+
+/**
+ * Resumen del tiempo en una línea, arriba del todo en el resumen de la
+ * ruta, para la salida por defecto. Al tocarlo se abre la pestaña Tiempo.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun WeatherPeek(state: ImportState.Loaded, activity: Activity, onOpen: () -> Unit) {
+    val (day, hour) = remember { defaultStart() }
+    val forecast by produceState<Forecast>(Forecast.Loading, state.gpx, activity) {
+        value = loadForecast(state, activity, startMs(day, hour))
+    }
+    val f = forecast
+    val warn = (f as? Forecast.Ready)?.warnings.orEmpty()
+    Card(
+        onClick = onOpen,
+        colors = CardDefaults.cardColors(
+            containerColor = if (warn.isNotEmpty()) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
+        ),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            val whenLabel = (if (day == 0) "Hoy" else "Mañana") + " a las %02d:00".format(hour)
+            when (f) {
+                Forecast.Loading -> {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Text("  Mirando el tiempo en la ruta…", style = MaterialTheme.typography.bodyMedium)
+                }
+                is Forecast.Failed -> Text("🌡️  Tiempo en la ruta: toca para elegir día", style = MaterialTheme.typography.bodyMedium)
+                is Forecast.Ready -> {
+                    val worst = f.points.maxBy { severity(it.code) }
+                    Text(RouteWeather.describe(worst.code).second, style = MaterialTheme.typography.titleLarge)
+                    Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                        Text(
+                            "$whenLabel · ${f.points.minOf { it.tempC }.roundToInt()}–${f.points.maxOf { it.tempC }.roundToInt()} °C",
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        Text(
+                            if (warn.isEmpty()) "Sin avisos en la ruta" else warn.first() + if (warn.size > 1) " (+${warn.size - 1})" else "",
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                        )
+                    }
+                    Text("Ver ›", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+    }
+}
+
+/** Para elegir el icono del resumen: el peor tiempo de la ruta. */
+private fun severity(code: Int): Int = when (code) {
+    in 95..99 -> 6
+    in 71..77, 85, 86 -> 5
+    in 61..67, in 80..82 -> 4
+    in 51..57 -> 3
+    45, 48 -> 2
+    3 -> 1
+    else -> 0
+}
+
 /**
  * Pestaña Tiempo: eliges día y hora de salida y sale la previsión en
  * varios puntos de la ruta, a la hora en que pasarás por cada uno.
@@ -55,24 +133,16 @@ private sealed interface Forecast {
 @Composable
 internal fun WeatherTab(state: ImportState.Loaded, activity: Activity) {
     val zone = ZoneId.systemDefault()
-    val now = java.time.LocalDateTime.now()
-    // Por defecto: dentro de una hora si aún es pronto; si no, mañana a las 9
-    var dayOffset by rememberSaveable { mutableIntStateOf(if (now.hour < 15) 0 else 1) }
-    var hour by rememberSaveable { mutableIntStateOf(if (now.hour < 15) (now.hour + 1).coerceIn(6, 20) else 9) }
+    val (defDay, defHour) = remember { defaultStart() }
+    var dayOffset by rememberSaveable { mutableIntStateOf(defDay) }
+    var hour by rememberSaveable { mutableIntStateOf(defHour) }
     var sliding by rememberSaveable { mutableStateOf(hour.toFloat()) }
 
-    val startMs = LocalDate.now().plusDays(dayOffset.toLong()).atTime(LocalTime.of(hour, 0))
-        .atZone(zone).toInstant().toEpochMilli()
-
-    val forecast by produceState<Forecast>(Forecast.Loading, state.gpx, startMs, activity) {
+    val start = startMs(dayOffset, hour)
+    val forecast by produceState<Forecast>(Forecast.Loading, state.gpx, start, activity) {
         value = Forecast.Loading
         delay(250) // por si sigues moviendo la hora
-        value = runCatching {
-            val samples = withContext(Dispatchers.Default) { RouteWeather.samples(state.gpx.segments, activity) }
-            val points = RouteWeather.parse(Http.get(RouteWeather.url(samples)), samples, startMs)
-            if (points.isEmpty()) Forecast.Failed("No hay previsión para ese día todavía (solo ${RouteWeather.FORECAST_DAYS} días).")
-            else Forecast.Ready(points, RouteWeather.warnings(points))
-        }.getOrElse { Forecast.Failed(Http.friendly(it)) }
+        value = loadForecast(state, activity, start)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
