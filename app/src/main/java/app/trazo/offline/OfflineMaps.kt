@@ -2,6 +2,7 @@ package app.trazo.offline
 
 import android.content.Context
 import android.util.Log
+import app.trazo.gpx.Bounds
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.offline.OfflineArea
 import app.trazo.gpx.offline.OfflineMeta
@@ -94,7 +95,11 @@ object OfflineMaps {
 
     fun download(context: Context, name: String, segments: List<List<GeoPoint>>, withTopo: Boolean) {
         val b = OfflineArea.around(segments) ?: return
-        val key = OfflineArea.routeKey(segments)
+        downloadArea(context, name, OfflineArea.routeKey(segments), b, withTopo)
+    }
+
+    /** Cualquier zona (la que ves en Explorar), con su propia huella [key]. */
+    fun downloadArea(context: Context, name: String, key: String, b: Bounds, withTopo: Boolean) {
         if (_downloads.value[key]?.error == null && key in _downloads.value) return
         _downloads.value = _downloads.value + (key to Download(0f))
         val definition = OfflineTilePyramidRegionDefinition(

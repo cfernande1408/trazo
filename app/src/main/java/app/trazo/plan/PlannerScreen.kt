@@ -60,6 +60,9 @@ import app.trazo.gpx.RouteGeometry
 import app.trazo.gpx.TrackStatsCalculator
 import app.trazo.gpx.Track
 import app.trazo.gpx.plan.BRouter
+import androidx.compose.material.icons.filled.SyncAlt
+import androidx.compose.runtime.rememberUpdatedState
+import app.trazo.gpx.plan.PlanEdit
 import app.trazo.importer.km
 import app.trazo.importer.metros
 import app.trazo.map.TrazoMapStyle
@@ -113,6 +116,7 @@ private val MADRID = LatLng(40.4168, -3.7038)
 private const val ROUTE = "plan-route"
 private const val GUIDE = "plan-guide"
 private const val POINTS = "plan-points"
+private const val SELECTED = "plan-selected"
 
 /**
  * Crear ruta: tocas el mapa para poner puntos y BRouter traza la ruta por
@@ -128,6 +132,10 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var askName by remember { mutableStateOf(false) }
+    /** Punto tocado (para moverlo o borrarlo) y si el siguiente toque lo mueve. */
+    var selected by remember { mutableStateOf<Int?>(null) }
+    var moving by remember { mutableStateOf(false) }
+    val density = context.resources.displayMetrics.density
 
     BackHandler(onBack = onClose)
 
@@ -145,14 +153,34 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
     var showLayers by remember { mutableStateOf(false) }
     LaunchedEffect(ready, layers) { ready?.second?.applyLayers(layers, activity) }
 
+    // Toque en el mapa: mover el punto elegido, elegir un punto, insertar en la ruta o añadir al final
+    val onTap = rememberUpdatedState({ map: MapLibreMap, ll: LatLng ->
+        val tap = GeoPoint(ll.latitude, ll.longitude)
+        val tol = 28 * density * map.projection.getMetersPerPixelAtLatitude(ll.latitude)
+        val sel = selected
+        val r = route
+        when {
+            sel != null && moving -> { if (sel < points.size) points[sel] = tap; selected = null; moving = false }
+            sel != null -> selected = null
+            else -> {
+                val hit = PlanEdit.nearestIndex(points, tap, tol)
+                when {
+                    hit != null -> selected = hit
+                    r != null && PlanEdit.distanceToRoute(r.segments, tap) <= tol ->
+                        points.add(PlanEdit.insertIndex(points, r.segments, tap), tap)
+                    else -> points += tap
+                }
+            }
+        }
+        Unit
+    })
+
+
     LaunchedEffect(mapView) {
         mapView.getMapAsync { map ->
             map.cameraPosition = CameraPosition.Builder().target(MADRID).zoom(11.0).build()
             map.setStyle(plannerStyle(context)) { style ->
-                map.addOnMapClickListener { ll ->
-                    points += GeoPoint(ll.latitude, ll.longitude)
-                    true
-                }
+                map.addOnMapClickListener { ll -> onTap.value(map, ll); true }
                 ready = map to style
             }
         }
@@ -197,10 +225,13 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
     }
 
     // Pinta puntos numerados, la ruta calculada y, mientras no la hay, una guía en línea recta
-    LaunchedEffect(ready, snapshot, route) {
+    LaunchedEffect(ready, snapshot, route, selected) {
         val (_, style) = ready ?: return@LaunchedEffect
         style.getSourceAs<GeoJsonSource>(POINTS)?.setGeoJson(
             GeoJson.markers(snapshot.mapIndexed { i, p -> MapMarker(i + 1L, p.lat, p.lon, "${i + 1}", false) })
+        )
+        style.getSourceAs<GeoJsonSource>(SELECTED)?.setGeoJson(
+            GeoJson.points(listOfNotNull(selected?.let { snapshot.getOrNull(it) }?.let { it.lat to it.lon }))
         )
         style.getSourceAs<GeoJsonSource>(ROUTE)?.setGeoJson(GeoJson.track(route?.segments.orEmpty()))
         style.getSourceAs<GeoJsonSource>(GUIDE)?.setGeoJson(
@@ -224,7 +255,12 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("Crear ruta", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(
-                        if (points.isEmpty()) "Toca el mapa para poner la salida" else "Toca para añadir puntos · ${activity.label}",
+                        when {
+                            moving -> "Toca dónde quieres poner el punto ${(selected ?: 0) + 1}"
+                            points.isEmpty() -> "Toca el mapa para poner la salida"
+                            points.size < 3 -> "Toca para añadir puntos · ${activity.label}"
+                            else -> "Toca un punto para moverlo o borrarlo, o la ruta para añadir uno en medio"
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -239,6 +275,25 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
         )
         if (showLayers) {
             LayersSheet(layers, activity, onChange = { MapPrefs.set(context, it) }, onDismiss = { showLayers = false })
+        }
+
+        val sel = selected
+        if (sel != null && !moving) {
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 92.dp),
+            ) {
+                Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("  Punto ${sel + 1}", style = MaterialTheme.typography.titleSmall)
+                    TextButton(onClick = { moving = true }) { Text("Mover") }
+                    TextButton(onClick = {
+                        if (sel < points.size) points.removeAt(sel)
+                        selected = null
+                    }) { Text("Borrar") }
+                    TextButton(onClick = { selected = null }) { Text("Cancelar") }
+                }
+            }
         }
 
         Card(
@@ -280,7 +335,13 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
                     ) {
                         Icon(Icons.Filled.Loop, contentDescription = "Cerrar circular")
                     }
-                    FilledTonalIconButton(onClick = { points.clear() }, enabled = points.isNotEmpty()) {
+                    FilledTonalIconButton(
+                        onClick = { val ob = PlanEdit.outAndBack(points.toList()); points.clear(); points.addAll(ob) },
+                        enabled = points.size >= 2 && points.first() != points.last(),
+                    ) {
+                        Icon(Icons.Filled.SyncAlt, contentDescription = "Ida y vuelta")
+                    }
+                    FilledTonalIconButton(onClick = { points.clear(); selected = null; moving = false }, enabled = points.isNotEmpty()) {
                         Icon(Icons.Filled.Delete, contentDescription = "Borrar todo")
                     }
                     Box(Modifier.weight(1f))
@@ -342,6 +403,12 @@ private fun plannerStyle(context: Context): Style.Builder =
             LineLayer(ROUTE, ROUTE).withProperties(
                 lineColor("#C2410C"), lineWidth(5f),
                 lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND),
+            )
+        )
+        .withSource(GeoJsonSource(SELECTED, GeoJson.points(emptyList())))
+        .withLayer(
+            CircleLayer(SELECTED, SELECTED).withProperties(
+                circleRadius(16f), circleColor("#C2410C"), circleStrokeColor("#FFFFFF"), circleStrokeWidth(3f),
             )
         )
         .withSource(GeoJsonSource(POINTS, GeoJson.markers(emptyList())))

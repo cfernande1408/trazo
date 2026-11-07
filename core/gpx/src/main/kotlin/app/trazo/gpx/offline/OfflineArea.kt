@@ -61,6 +61,13 @@ object OfflineArea {
         return (base + topo) * 1024
     }
 
+    /** Más que esto no se descarga de una vez: la base offline se haría enorme. */
+    const val MAX_AREA_BYTES = 300L * 1024 * 1024
+
+    /** Huella de una zona del mapa (redondeada a ~100 m, para que la misma vista dé la misma). */
+    fun areaKey(b: Bounds): String =
+        "zona-" + listOf(b.minLat, b.minLon, b.maxLat, b.maxLon).joinToString("-") { Math.round(it * 1_000).toString() }
+
     /** Huella de la ruta para saber si ya está descargada (mismo inicio, final, puntos y distancia). */
     fun routeKey(segments: List<List<GeoPoint>>): String {
         val pts = segments.flatten()

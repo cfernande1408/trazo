@@ -46,6 +46,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Incluye mapa, relieve y, si quieres, el topo IGN; dice cuánto ocupará antes de empezar
 - Barra de progreso; si se corta la red, la descarga sigue sola al volver
 - Sin cobertura, el mapa y la navegación usan lo descargado sin hacer nada
+- **Descargar cualquier zona** desde *Explorar*: lo que ves en el mapa, con aviso si es demasiado grande (más de 300 MB)
 - Lista de *Mapas sin conexión* en *Mis rutas*, con lo que ocupa cada uno y para borrarlos
 
 ## Pendiente y dificultad
@@ -149,7 +150,9 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Perfil `mtb` en bici y `hiking-mountain` a pie
 - Puntos numerados y una guía recta mientras se calcula
 - Distancia, desnivel, tiempo estimado y perfil mientras la dibujas
-- Deshacer, cerrar en circular y borrar todo
+- Deshacer, cerrar en circular, **ida y vuelta** por el mismo camino y borrar todo
+- Tocar un punto para **moverlo** (y luego tocar dónde va) o **borrarlo**
+- Tocar la ruta calculada para **insertar un punto en medio** de ese tramo
 - Guardar con nombre en *Tus rutas* y abrirla como cualquier otra
 - Avisos claros si un punto está lejos de cualquier camino o la ruta es demasiado larga
 

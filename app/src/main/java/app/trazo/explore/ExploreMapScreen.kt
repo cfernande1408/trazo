@@ -62,6 +62,12 @@ import app.trazo.map.rememberMapView
 import app.trazo.nav.locationUpdates
 import app.trazo.ui.ElevationChart
 import app.trazo.map.LayersButton
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.CloudDownload
+import app.trazo.gpx.offline.OfflineArea
+import app.trazo.offline.OfflineMaps
 import app.trazo.map.LayersSheet
 import app.trazo.map.MapPrefs
 import app.trazo.map.applyLayers
@@ -129,6 +135,8 @@ fun ExploreMapScreen(
     val view by vm.view.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
     var showList by rememberSaveable { mutableStateOf(false) }
+    var askZone by remember { mutableStateOf(false) }
+    val downloads by OfflineMaps.downloads.collectAsStateWithLifecycle()
 
     BackHandler(enabled = selected != null) { vm.clearSelection() }
     BackHandler(enabled = search != null && selected == null) { vm.clearSearch() }
@@ -288,6 +296,29 @@ fun ExploreMapScreen(
         if (showLayers) {
             LayersSheet(layers, activity, onChange = { MapPrefs.set(context, it) }, onDismiss = { showLayers = false })
         }
+        val zone = view
+        if (askZone && zone != null) {
+            ZoneDialog(zone, onDismiss = { askZone = false }) { topo ->
+                askZone = false
+                val name = "Zona del mapa · " + java.time.LocalDate.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.forLanguageTag("es-ES")))
+                OfflineMaps.downloadArea(context, name, OfflineArea.areaKey(zone.toBounds()), zone.toBounds(), topo)
+            }
+        }
+        // Progreso de las descargas de zonas, encima de la tarjeta de abajo
+        downloads.filterKeys { it.startsWith("zona-") }.values.firstOrNull()?.let { d ->
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier = Modifier.align(Alignment.Center),
+            ) {
+                Text(
+                    d.error ?: "Descargando zona… ${(d.progress * 100).toInt()} %",
+                    Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        }
 
         // Rutas que se ven ahora, de la más cercana al centro a la más lejana
         val visible = remember(routes, view, onlyMtb) {
@@ -320,6 +351,10 @@ fun ExploreMapScreen(
                         modifier = Modifier.weight(1f).padding(vertical = 12.dp),
                         style = MaterialTheme.typography.titleMedium,
                     )
+                    // Descargar lo que se ve para usarlo sin conexión
+                    IconButton(onClick = { askZone = true }, enabled = view != null) {
+                        Icon(Icons.Filled.CloudDownload, contentDescription = "Descargar esta zona")
+                    }
                     if (visible.isNotEmpty()) {
                         FilledTonalButton(onClick = { showList = true }) {
                             Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, Modifier.size(18.dp))
@@ -525,3 +560,36 @@ private fun Context.hasLocationPermission() =
     listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION).any {
         ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
     }
+
+private fun Bbox.toBounds() = app.trazo.gpx.Bounds(south, north, west, east)
+
+/** Descargar la zona que se ve: cuánto ocupa y si cabe. */
+@Composable
+private fun ZoneDialog(zone: Bbox, onDismiss: () -> Unit, onDownload: (Boolean) -> Unit) {
+    var topo by remember { mutableStateOf(true) }
+    val bytes = OfflineArea.estimateBytes(zone.toBounds(), topo)
+    val tooBig = bytes > OfflineArea.MAX_AREA_BYTES
+    val mb = bytes / 1024 / 1024
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Filled.CloudDownload, contentDescription = null) },
+        title = { Text("Descargar esta zona") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Mapa y relieve de lo que ves ahora, para usarlo sin conexión en cualquier ruta que pase por aquí.")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = topo, onCheckedChange = { topo = it })
+                    Text("Incluir topo IGN (solo España)")
+                }
+                Text(
+                    if (tooBig) "Es demasiado grande (unos $mb MB). Acerca el mapa."
+                    else "Ocupará unos ${mb.coerceAtLeast(1)} MB. Mejor con wifi.",
+                    color = if (tooBig) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = { onDownload(topo) }, enabled = !tooBig) { Text("Descargar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+    )
+}

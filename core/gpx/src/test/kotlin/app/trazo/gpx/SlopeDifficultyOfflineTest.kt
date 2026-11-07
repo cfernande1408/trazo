@@ -111,6 +111,15 @@ class SlopeDifficultyOfflineTest {
     }
 
     @Test
+    fun `zona de explorar y su limite`() {
+        val sierra = Bounds(40.70, 40.90, -4.10, -3.80) // Guadarrama, ~22 × 25 km
+        assertEquals(OfflineArea.areaKey(sierra), OfflineArea.areaKey(Bounds(40.7002, 40.9001, -4.1003, -3.8001)))
+        assertTrue(OfflineArea.estimateBytes(sierra, withTopo = true) < OfflineArea.MAX_AREA_BYTES)
+        val spain = Bounds(36.0, 43.8, -9.3, 3.3)
+        assertTrue(OfflineArea.estimateBytes(spain, withTopo = false) > OfflineArea.MAX_AREA_BYTES)
+    }
+
+    @Test
     fun `metadatos y huella de la ruta`() {
         val m = OfflineMeta("Peñalara \"circular\"", OfflineArea.routeKey(climb()), true, 1_800_000_000_000)
         assertEquals(m, OfflineMeta.decode(m.encode()))

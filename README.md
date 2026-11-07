@@ -48,7 +48,7 @@ OpenStreetMap. Tócalo y se dibuja el recorrido, con distancia, desnivel y perfi
 Resumen con mapa topo, perfil arrastrable, puntos del autor y enlace a los comentarios en Wikiloc.
 
 **Crear rutas.** Toca puntos en el mapa y la ruta se ajusta sola a pistas o senderos.
-Deshacer, cerrar en circular, guardar. Se quedan en el móvil y funcionan sin conexión.
+Mueve o borra puntos, inserta uno en medio tocando la ruta, deshacer, circular o ida y vuelta. Se quedan en el móvil y funcionan sin conexión.
 
 **El tiempo en la ruta.** Elige día y hora de salida y mira qué tiempo hará en cada tramo
 a la hora en que pasarás por él y a su altitud real. Avisa de tormenta, hielo, rachas o lluvia
@@ -58,8 +58,8 @@ y dice en qué km empieza.
 oficial 1:25.000 con curvas de nivel) o **Satélite** (ortofoto PNOA), también en 3D, y para
 encender o apagar el relieve, los árboles y las rutas señalizadas.
 
-**Sin conexión.** Descarga el mapa de la zona de una ruta, con relieve y topo IGN, y
-navega sin cobertura en plena sierra.
+**Sin conexión.** Descarga el mapa de la zona de una ruta o de lo que ves en *Explorar*, con
+relieve y topo IGN, y navega sin cobertura en plena sierra.
 
 **Pendiente y dificultad.** La ruta coloreada por pendiente, la rampa más dura y la
 dificultad técnica de OpenStreetMap (escala MTB S0–S6 o SAC T1–T6) de los caminos por los
@@ -190,7 +190,7 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 
 ## Hoja de ruta
 
-- [ ] Arrastrar los puntos de una ruta creada
+- [x] Mover, borrar e insertar puntos en *Crear ruta*, e ida y vuelta
 - [x] Avisos por voz en los giros
 - [x] Subidas en directo, luz restante y agua y refugios por delante
 - [x] Volver al inicio por donde has venido o por el camino más corto
@@ -200,5 +200,5 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [ ] Compañero virtual contra tu salida anterior
 - [x] Mapas sin conexión de la zona de una ruta
 - [x] Dificultad de OSM (`mtb:scale`, `sac_scale`) y pendiente por tramos
-- [ ] Descargar cualquier zona desde *Explorar*
+- [x] Descargar cualquier zona desde *Explorar*
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…)
