@@ -57,6 +57,9 @@ def bg(s):
 </vector>
 '''
 
+# Marca de cada canal en el icono: debug amarilla, beta azul; la estable, sin marca
+BADGES = {'debug': ('#FFD54F', '#3A2E00'), 'beta': ('#42A5F5', '#0D2A4A')}
+
 def fg(s, debug=False):
     c = SEASONS[s]
     trees = '\n'.join(f'    <path android:fillColor="{c["tree"]}" android:pathData="{p}" />' for p in PINES)
@@ -66,10 +69,14 @@ def fg(s, debug=False):
         f'    <path android:fillColor="{c["tree"]}" android:pathData="{f}" />\n'
         f'    <path android:fillColor="{c["shade"]}" android:pathData="{h}" />'
         for f, h, t in FRONT)
-    badge = f'''    <!-- Versión debug: marca amarilla arriba a la izquierda -->
-    <path android:fillColor="#FFD54F" android:strokeColor="#3A2E00" android:strokeWidth="2" android:pathData="{circle(36, 36, 6)}" />''' if debug else ''
+    channel = debug if isinstance(debug, str) else ('debug' if debug else None)
+    badge = ''
+    if channel:
+        fill, stroke = BADGES[channel]
+        badge = f'''    <!-- Versión {channel}: marca arriba a la izquierda -->
+    <path android:fillColor="{fill}" android:strokeColor="{stroke}" android:strokeWidth="2" android:pathData="{circle(36, 36, 6)}" />'''
     return f'''<?xml version="1.0" encoding="utf-8"?>
-<!-- Primer plano del icono ({s}{', debug' if debug else ''}): árboles y el trazo de la ruta. Generado por scripts/icons.py -->
+<!-- Primer plano del icono ({s}{', ' + (debug if isinstance(debug, str) else 'debug') if debug else ''}): árboles y el trazo de la ruta. Generado por scripts/icons.py -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
@@ -113,6 +120,7 @@ for s in SEASONS:
     w(f'{R}/drawable/ic_launcher_bg_{s}.xml', bg(s))
     w(f'{R}/drawable/ic_launcher_fg_{s}.xml', fg(s))
     w(f'{D}/drawable/ic_launcher_fg_{s}.xml', fg(s, debug=True))
+    w(f'{root}/app/src/beta/res/drawable/ic_launcher_fg_{s}.xml', fg(s, debug='beta'))
     w(f'{R}/mipmap-anydpi-v26/ic_launcher_{s}.xml', adaptive(s))
 w(f'{R}/drawable/ic_launcher_monochrome.xml', MONO)
 # El icono "de la app" (ajustes, notificaciones) es el de verano

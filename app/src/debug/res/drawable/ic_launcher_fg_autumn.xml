@@ -12,6 +12,6 @@
     <path android:fillColor="#E08A2E" android:pathData="M44.38,82.50L48.62,74.03L46.74,74.03L50.50,66.50L54.26,74.03L52.38,74.03L56.62,82.50Z" />
     <path android:fillColor="#B5532A" android:pathData="M50.50,66.50L54.26,74.03L52.38,74.03L56.62,82.50L50.50,82.50Z" />
 
-    <!-- Versión debug: marca amarilla arriba a la izquierda -->
+    <!-- Versión debug: marca arriba a la izquierda -->
     <path android:fillColor="#FFD54F" android:strokeColor="#3A2E00" android:strokeWidth="2" android:pathData="M36,36m-6,0a6,6 0,1 1,12,0a6,6 0,1 1,-12,0" />
 </vector>

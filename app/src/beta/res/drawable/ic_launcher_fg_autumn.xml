@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Primer plano del icono (autumn, beta): árboles y el trazo de la ruta. Generado por scripts/icons.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#E08A2E" android:pathData="M30,84L34.5,75L32.5,75L36.5,67L40.5,75L38.5,75L43,84Z" />
+    <path android:fillColor="#E08A2E" android:pathData="M70,80L74,72L72,72L75.5,65L79,72L77,72L81,80Z" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="7.5" android:strokeLineCap="round" android:pathData="M30,92C46,86 44,74 54,72S62,59 64,52" />
+    <path android:strokeColor="#C2410C" android:strokeWidth="4.2" android:strokeLineCap="round" android:pathData="M30,92C46,86 44,74 54,72S62,59 64,52" />
+    <path android:fillColor="#C2410C" android:strokeColor="#FFFFFF" android:strokeWidth="2.2" android:pathData="M64,52m-5.5,0a5.5,5.5 0,1 1,11.0,0a5.5,5.5 0,1 1,-11.0,0" />
+    <path android:fillColor="#6B4F35" android:pathData="M49.46,82.50h2.07v2.82h-2.07z" />
+    <path android:fillColor="#E08A2E" android:pathData="M44.38,82.50L48.62,74.03L46.74,74.03L50.50,66.50L54.26,74.03L52.38,74.03L56.62,82.50Z" />
+    <path android:fillColor="#B5532A" android:pathData="M50.50,66.50L54.26,74.03L52.38,74.03L56.62,82.50L50.50,82.50Z" />
+
+    <!-- Versión beta: marca arriba a la izquierda -->
+    <path android:fillColor="#42A5F5" android:strokeColor="#0D2A4A" android:strokeWidth="2" android:pathData="M36,36m-6,0a6,6 0,1 1,12,0a6,6 0,1 1,-12,0" />
+</vector>

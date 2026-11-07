@@ -52,6 +52,15 @@ android {
             isMinifyEnabled = false
             if (keystore != null) signingConfig = signingConfigs.getByName("release")
         }
+        // Canal beta: lo último de main, firmado con la misma clave que la estable pero como otra
+        // app ("Trazo beta"), para probar lo nuevo sin tocar la que usas para salir
+        create("beta") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".beta"
+            versionNameSuffix = "-beta"
+            if (keystore != null) signingConfig = signingConfigs.getByName("release")
+            matchingFallbacks += listOf("release")
+        }
     }
 
     compileOptions {

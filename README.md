@@ -22,7 +22,7 @@ y síguelas con avisos de desvío, perfil de desnivel y vista 3D. Sin cuentas y 
 </div>
 
 > [!NOTE]
-> Trazo es un proyecto personal en desarrollo (v0.1). Puede tener fallos: si encuentras uno, abre un *issue*.
+> Trazo es un proyecto personal en desarrollo. Puede tener fallos: si encuentras uno, abre un *issue*.
 
 ## Capturas
 
@@ -100,11 +100,16 @@ La lista completa, una línea por función, está en **[FEATURES.md](FEATURES.md
 
 ## Instalar
 
-Descarga el último `trazo-vX.Y.Z.apk` de [Releases](https://github.com/cfernande1408/trazo/releases)
-y ábrelo en el móvil (hay que permitir instalar apps de esa fuente).
+Hay tres versiones, que se instalan como apps distintas y pueden convivir, cada una con sus datos:
 
-La versión que compilas tú (`installDebug`) se llama «Trazo debug» y es otra app: puede estar
-instalada a la vez que la de Releases, cada una con sus rutas y salidas.
+| Versión | De dónde | Cuándo cambia | Nombre en el móvil |
+| --- | --- | --- | --- |
+| Estable | [Releases](https://github.com/cfernande1408/trazo/releases/latest) | al publicar una versión (`v0.3.0`…) | Trazo |
+| Beta | [Releases → beta](https://github.com/cfernande1408/trazo/releases/tag/beta) | en cada cambio en `main` | Trazo beta (marca azul) |
+| Debug | compilándola tú | cuando la instalas con el cable | Trazo debug (marca amarilla) |
+
+La estable es la de salir al monte; la beta, para probar lo nuevo sin arriesgar tus rutas. Descarga
+el APK y ábrelo en el móvil (hay que permitir instalar apps de esa fuente).
 
 Para compilarla tú necesitas JDK 17+ y el SDK de Android (compileSdk 35):
 
@@ -119,8 +124,8 @@ Funciona en Android 8.0 (API 26) o superior. No necesita Google Play Services.
 
 ## Publicar una versión
 
-Cada push a `main` pasa los tests y compila en GitHub Actions; el APK de debug queda en la
-pestaña *Actions* como artefacto. Las versiones se publican con una etiqueta:
+Cada push a `main` pasa los tests y compila en GitHub Actions, y actualiza la beta. Las versiones
+estables se publican con una etiqueta:
 
 ```bash
 git tag v0.2.0 && git push origin v0.2.0
