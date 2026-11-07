@@ -18,12 +18,18 @@ y sin claves de API.
 ![OpenStreetMap](https://img.shields.io/badge/datos-OpenStreetMap-7EBC6F?logo=openstreetmap&logoColor=white)
 ![Estado](https://img.shields.io/badge/estado-en%20desarrollo-E0A100)
 
-[Qué hace](#qué-hace) · [Todas las funciones](FEATURES.md) · [Instalar](#instalar) · [Cómo está hecho](#cómo-está-hecho) · [Datos y servicios](#datos-y-servicios) · [Hoja de ruta](#hoja-de-ruta)
+[Capturas](#capturas) · [Qué hace](#qué-hace) · [Todas las funciones](FEATURES.md) · [Instalar](#instalar) · [Cómo está hecho](#cómo-está-hecho) · [Datos y servicios](#datos-y-servicios) · [Hoja de ruta](#hoja-de-ruta)
 
 </div>
 
 > [!NOTE]
 > Trazo es un proyecto personal en desarrollo (v0.1). Puede tener fallos: si encuentras uno, abre un *issue*.
+
+## Capturas
+
+| Resumen de la ruta | Pendiente y perfil | Recorrido virtual en 3D | Vista 3D |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/resumen.png" width="200"> | <img src="docs/screenshots/pendiente.png" width="200"> | <img src="docs/screenshots/3d-recorrido.png" width="200"> | <img src="docs/screenshots/3d-vista.png" width="200"> |
 
 ## Qué hace
 
