@@ -12,13 +12,29 @@ android {
         applicationId = "app.trazo"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        // En las releases los pone GitHub Actions a partir de la etiqueta (v0.2.0) y el nº de ejecución
+        versionCode = System.getenv("TRAZO_VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("TRAZO_VERSION_NAME")?.removePrefix("v") ?: "0.1.0"
+    }
+
+    // Firma de release desde variables de entorno (secretos de GitHub o tu terminal).
+    // Sin ellas, assembleRelease sale sin firmar y assembleDebug no cambia.
+    val keystore = System.getenv("TRAZO_KEYSTORE")?.let(::file)?.takeIf { it.exists() }
+    signingConfigs {
+        if (keystore != null) {
+            create("release") {
+                storeFile = keystore
+                storePassword = System.getenv("TRAZO_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("TRAZO_KEY_ALIAS")
+                keyPassword = System.getenv("TRAZO_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (keystore != null) signingConfig = signingConfigs.getByName("release")
         }
     }
 

@@ -99,7 +99,7 @@ internal fun WeatherPeek(state: ImportState.Loaded, activity: Activity, onOpen: 
                     Text(RouteWeather.describe(worst.code).second, style = MaterialTheme.typography.titleLarge)
                     Column(Modifier.weight(1f).padding(start = 12.dp)) {
                         Text(
-                            "$whenLabel · ${f.points.minOf { it.tempC }.roundToInt()}–${f.points.maxOf { it.tempC }.roundToInt()} °C",
+                            "$whenLabel · " + tempRange(f.points.minOf { it.tempC }.roundToInt(), f.points.maxOf { it.tempC }.roundToInt()),
                             style = MaterialTheme.typography.titleSmall,
                         )
                         Text(
@@ -114,6 +114,9 @@ internal fun WeatherPeek(state: ImportState.Loaded, activity: Activity, onOpen: 
         }
     }
 }
+
+/** "13 °C" si no cambia a lo largo de la ruta, "6–11 °C" si sí. */
+private fun tempRange(min: Int, max: Int) = if (min == max) "$min °C" else "$min–$max °C"
 
 /** Para elegir el icono del resumen: el peor tiempo de la ruta. */
 private fun severity(code: Int): Int = when (code) {

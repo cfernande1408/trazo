@@ -72,9 +72,14 @@ internal fun SlopeCard(state: ImportState.Loaded) {
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
-            Text(
-                "Más del 10 %: ${km(summary.upOver10Meters)} · más del 15 %: ${km(summary.upOver15Meters)}" +
-                    " · bajada más fuerte: ${(-summary.maxDownPercent).roundToInt()} %",
+            // Solo las cifras que dicen algo: sin "más del 15 %: 0,0 km"
+            val details = listOfNotNull(
+                summary.upOver10Meters.takeIf { it >= 50 }?.let { "más del 10 %: ${km(it)}" },
+                summary.upOver15Meters.takeIf { it >= 50 }?.let { "más del 15 %: ${km(it)}" },
+                (-summary.maxDownPercent).roundToInt().takeIf { it >= 5 }?.let { "bajada más fuerte: $it %" },
+            ).joinToString(" · ").replaceFirstChar { it.uppercase() }
+            if (details.isNotEmpty()) Text(
+                details,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

@@ -10,6 +10,7 @@ Importa tus GPX de Wikiloc, encuentra las rutas de OpenStreetMap de tu zona, cre
 y síguelas con avisos de desvío, perfil de desnivel y vista 3D. Sin cuentas, sin anuncios
 y sin claves de API.
 
+[![CI](https://github.com/cfernande1408/trazo/actions/workflows/ci.yml/badge.svg)](https://github.com/cfernande1408/trazo/actions/workflows/ci.yml)
 ![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.1-7F52FF?logo=kotlin&logoColor=white)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
@@ -85,7 +86,10 @@ La lista completa, una línea por función, está en **[FEATURES.md](FEATURES.md
 
 ## Instalar
 
-Todavía no hay APK publicada. Para compilarla necesitas JDK 17+ y el SDK de Android (compileSdk 35):
+Descarga el último `trazo-vX.Y.Z.apk` de [Releases](https://github.com/cfernande1408/trazo/releases)
+y ábrelo en el móvil (hay que permitir instalar apps de esa fuente).
+
+Para compilarla tú necesitas JDK 17+ y el SDK de Android (compileSdk 35):
 
 ```bash
 git clone https://github.com/cfernande1408/trazo.git
@@ -95,6 +99,26 @@ echo "sdk.dir=$HOME/Android/Sdk" > local.properties   # si no lo crea Android St
 ```
 
 Funciona en Android 8.0 (API 26) o superior. No necesita Google Play Services.
+
+## Publicar una versión
+
+Cada push a `main` pasa los tests y compila en GitHub Actions; el APK de debug queda en la
+pestaña *Actions* como artefacto. Las versiones se publican con una etiqueta:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+La primera vez hay que crear la clave de firma y guardarla en los secretos del repo
+(*Settings → Secrets and variables → Actions*):
+
+```bash
+keytool -genkeypair -v -keystore trazo.jks -alias trazo -keyalg RSA -keysize 4096 -validity 10000
+base64 -w0 trazo.jks          # → secreto TRAZO_KEYSTORE_BASE64
+```
+
+y los secretos `TRAZO_KEYSTORE_PASSWORD`, `TRAZO_KEY_ALIAS` (`trazo`) y `TRAZO_KEY_PASSWORD`.
+Guarda `trazo.jks` fuera del repo: sin ella no se pueden publicar actualizaciones.
 
 ## Cómo está hecho
 
