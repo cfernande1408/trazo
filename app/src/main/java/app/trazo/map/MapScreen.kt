@@ -562,7 +562,8 @@ fun MapScreen(
             )
         }
         if (layers.slope && !navigating) {
-            SlopeLegend(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 84.dp))
+            // A la izquierda, bajo el botón de volver: a la derecha están los botones del mapa
+            SlopeLegend(Modifier.align(Alignment.TopStart).statusBarsPadding().padding(top = 92.dp, start = 16.dp))
         }
 
         Card(
@@ -835,8 +836,10 @@ private const val SLOPE = "slope"
 @Composable
 private fun SlopeLegend(modifier: Modifier = Modifier) {
     Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = modifier) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Slope.COLORS.zip(Slope.LABELS).forEach { (c, l) ->
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("Pendiente", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            // De más empinado a menos, como se lee una leyenda de mapa
+            Slope.COLORS.zip(Slope.LABELS).reversed().forEach { (c, l) ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("●", color = androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(c)))
                     Text(" $l", style = MaterialTheme.typography.labelSmall)

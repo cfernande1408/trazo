@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Layers
@@ -138,35 +141,39 @@ fun LayersSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text("Tipo de mapa", style = MaterialTheme.typography.titleLarge)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BaseMap.entries.forEach { b ->
-                    LayerTile(b.label, b.note, selected = prefs.base == b, onClick = { onChange(prefs.copy(base = b)) }) {
+                    LayerTile(b.label, b.note, selected = prefs.base == b, onClick = { onChange(prefs.copy(base = b)) }, modifier = Modifier.weight(1f)) {
                         BaseThumb(b)
                     }
                 }
             }
             HorizontalDivider()
             Text("Detalles del mapa", style = MaterialTheme.typography.titleLarge)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // El topo del IGN ya trae su relieve y sus bosques, y en satélite los árboles son los de verdad
                 LayerTile(
                     "Relieve", null, selected = prefs.hillshade && prefs.base != BaseMap.IGN_TOPO,
                     enabled = prefs.base != BaseMap.IGN_TOPO,
                     onClick = { onChange(prefs.copy(hillshade = !prefs.hillshade)) },
+                    modifier = Modifier.weight(1f),
                 ) { IconThumb(Icons.Filled.Terrain) }
                 LayerTile(
                     "Árboles", null, selected = prefs.trees && prefs.base == BaseMap.TRAZO,
                     enabled = prefs.base == BaseMap.TRAZO,
                     onClick = { onChange(prefs.copy(trees = !prefs.trees)) },
+                    modifier = Modifier.weight(1f),
                 ) { IconThumb(Icons.Filled.Park) }
                 LayerTile(
                     if (activity == Activity.HIKE) "Senderos" else "Rutas MTB", "señalizados", selected = prefs.routes,
                     onClick = { onChange(prefs.copy(routes = !prefs.routes)) },
+                    modifier = Modifier.weight(1f),
                 ) { IconThumb(Icons.Filled.Route) }
                 if (showSlope) {
                     LayerTile(
                         "Pendiente", "de la ruta", selected = prefs.slope,
                         onClick = { onChange(prefs.copy(slope = !prefs.slope)) },
+                        modifier = Modifier.weight(1f),
                     ) { SlopeThumb() }
                 }
             }
@@ -187,27 +194,34 @@ private fun LayerTile(
     selected: Boolean,
     onClick: () -> Unit,
     enabled: Boolean = true,
+    /** El ancho lo reparte la fila (weight): caben tres o cuatro sin partir los nombres. */
+    modifier: Modifier = Modifier,
     thumb: @Composable () -> Unit,
 ) {
     val shape = RoundedCornerShape(16.dp)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(96.dp).alpha(if (enabled) 1f else 0.4f).clip(shape).clickable(enabled = enabled, onClick = onClick),
+        modifier = modifier.alpha(if (enabled) 1f else 0.4f).clip(shape).clickable(enabled = enabled, onClick = onClick),
     ) {
         Surface(
             shape = shape,
             border = if (selected) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
-            modifier = Modifier.size(80.dp).padding(2.dp),
+            modifier = Modifier.widthIn(max = 80.dp).fillMaxWidth().aspectRatio(1f).padding(2.dp),
         ) { thumb() }
         Text(
             label,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 6.dp),
         )
         note?.let {
-            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
+            )
         }
     }
 }
