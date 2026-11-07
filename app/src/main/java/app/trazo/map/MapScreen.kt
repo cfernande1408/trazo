@@ -76,6 +76,12 @@ import app.trazo.importer.title
 import app.trazo.nav.Alerts
 import app.trazo.ride.RideSession
 import app.trazo.ui.AppMode
+import androidx.compose.material3.Surface
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.expressions.Expression
+import app.trazo.gpx.Slope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.trazo.ride.ridePermissions
 import java.io.File
@@ -148,6 +154,26 @@ fun MapScreen(
     val layers by MapPrefs.state.collectAsStateWithLifecycle()
     var showLayers by remember { mutableStateOf(false) }
     LaunchedEffect(ready, layers) { ready?.second?.applyLayers(layers, AppMode.current) }
+
+    // Ruta coloreada por pendiente, encima de la línea normal
+    val slopeLines = remember(state) { Slope.lines(state.gpx.segments, Slope.grades(ElevationProfile.of(state.gpx.segments))) }
+    LaunchedEffect(ready, layers.slope) {
+        val (_, style) = ready ?: return@LaunchedEffect
+        style.getLayer(SLOPE)?.let { style.removeLayer(it) }
+        style.getSource(SLOPE)?.let { style.removeSource(it) }
+        if (!layers.slope) return@LaunchedEffect
+        style.addSource(GeoJsonSource(SLOPE, slopeLines))
+        val stops = Slope.COLORS.mapIndexed { i, c -> Expression.stop(i, Expression.color(android.graphics.Color.parseColor(c))) }
+        val line = LineLayer(SLOPE, SLOPE).withProperties(
+            PropertyFactory.lineColor(
+                Expression.match(Expression.get("b"), Expression.color(android.graphics.Color.parseColor(Slope.COLORS.last())), *stops.toTypedArray())
+            ),
+            PropertyFactory.lineWidth(5f),
+            PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+            PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
+        )
+        if (style.getLayer("track-line") != null) style.addLayerAbove(line, "track-line") else style.addLayer(line)
+    }
 
     // El MapView necesita que le reenvíen el ciclo de vida.
     DisposableEffect(lifecycle, mapView) {
@@ -290,7 +316,13 @@ fun MapScreen(
             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp),
         )
         if (showLayers) {
-            LayersSheet(layers, AppMode.current, onChange = { MapPrefs.set(context, it) }, onDismiss = { showLayers = false })
+            LayersSheet(
+                layers, AppMode.current, onChange = { MapPrefs.set(context, it) }, onDismiss = { showLayers = false },
+                showSlope = true,
+            )
+        }
+        if (layers.slope && !navigating) {
+            SlopeLegend(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 84.dp))
         }
 
         Card(
@@ -472,3 +504,20 @@ private fun Context.hasLocationPermission() =
     listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION).any {
         ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
     }
+
+private const val SLOPE = "slope"
+
+/** Leyenda de colores de la pendiente. */
+@Composable
+private fun SlopeLegend(modifier: Modifier = Modifier) {
+    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = modifier) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Slope.COLORS.zip(Slope.LABELS).forEach { (c, l) ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("●", color = androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(c)))
+                    Text(" $l", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+    }
+}

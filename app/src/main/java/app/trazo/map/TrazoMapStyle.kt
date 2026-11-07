@@ -7,6 +7,8 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.net.Uri
 import app.trazo.gpx.Season
+import app.trazo.gpx.layers.BaseMap
+import app.trazo.gpx.offline.OfflineArea
 import app.trazo.ui.AppMode
 import org.json.JSONObject
 import java.io.File
@@ -70,6 +72,28 @@ object TrazoMapStyle {
             f.writeText(root.toString())
         }
         return f
+    }
+
+    /**
+     * Estilo para descargar mapas sin conexión: el de la estación y, si se
+     * pide, el topo IGN como una capa más, para que también se descarguen sus
+     * teselas. Luego MapLibre las sirve por URL en cualquier estilo.
+     */
+    fun offlineStyleUri(context: Context, withTopo: Boolean): String {
+        val base = styleFile(context, AppMode.season)
+        if (!withTopo) return Uri.fromFile(base).toString()
+        val topo = BaseMap.IGN_TOPO.raster!!
+        val root = JSONObject(base.readText())
+        root.getJSONObject("sources").put(topo.id, JSONObject()
+            .put("type", "raster")
+            .put("tiles", org.json.JSONArray().put(topo.tiles))
+            .put("tileSize", 256)
+            .put("maxzoom", OfflineArea.TOPO_MAX_ZOOM)
+            .put("attribution", topo.attribution))
+        root.getJSONArray("layers").put(JSONObject().put("id", topo.id).put("type", "raster").put("source", topo.id))
+        val f = File(context.cacheDir, "trazo_offline_topo.json")
+        f.writeText(root.toString())
+        return Uri.fromFile(f).toString()
     }
 
     /** Solo el mapa topo con sus árboles, sin ruta. */

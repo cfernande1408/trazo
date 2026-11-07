@@ -40,6 +40,21 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - **Guardar en tus rutas**: la ruta se queda en el móvil y funciona sin conexión
 - Lista de *Tus rutas guardadas* para abrirlas o borrarlas
 
+## 📶 Sin conexión
+
+- **Descargar mapa para usar sin conexión** en el resumen de cada ruta: la zona de la ruta y 2 km alrededor
+- Incluye mapa, relieve y, si quieres, el topo IGN; dice cuánto ocupará antes de empezar
+- Barra de progreso; si se corta la red, la descarga sigue sola al volver
+- Sin cobertura, el mapa y la navegación usan lo descargado sin hacer nada
+- Lista de *Mapas sin conexión* en *Mis rutas*, con lo que ocupa cada uno y para borrarlos
+
+## 📈 Pendiente y dificultad
+
+- Tarjeta de **pendiente**: rampa más dura y en qué km, metros por encima del 10 % y del 15 % y bajada más fuerte
+- Capa **Pendiente** en el mapa de la ruta: tramos de 100 m coloreados de verde (< 5 %) a rojo (> 20 %), con leyenda
+- **Dificultad técnica de OpenStreetMap** junto al track: escala MTB (S0–S6) en bici y SAC (T1–T6) a pie
+- Grado principal, el tramo más difícil y cuántos km van por cada grado, para cualquier GPX (no solo rutas de OSM)
+
 ## 🌦️ El tiempo en la ruta
 
 - Resumen en una línea arriba del todo en cada ruta (peor tiempo, temperaturas y primer aviso); al tocarlo se abre la pestaña Tiempo

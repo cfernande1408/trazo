@@ -124,7 +124,14 @@ fun LayersButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LayersSheet(prefs: LayerPrefs, activity: Activity, onChange: (LayerPrefs) -> Unit, onDismiss: () -> Unit) {
+fun LayersSheet(
+    prefs: LayerPrefs,
+    activity: Activity,
+    onChange: (LayerPrefs) -> Unit,
+    onDismiss: () -> Unit,
+    /** Solo en el mapa de una ruta: colorearla por pendiente. */
+    showSlope: Boolean = false,
+) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 24.dp).navigationBarsPadding().padding(bottom = 16.dp),
@@ -156,6 +163,12 @@ fun LayersSheet(prefs: LayerPrefs, activity: Activity, onChange: (LayerPrefs) ->
                     if (activity == Activity.HIKE) "Senderos" else "Rutas MTB", "señalizados", selected = prefs.routes,
                     onClick = { onChange(prefs.copy(routes = !prefs.routes)) },
                 ) { IconThumb(Icons.Filled.Route) }
+                if (showSlope) {
+                    LayerTile(
+                        "Pendiente", "de la ruta", selected = prefs.slope,
+                        onClick = { onChange(prefs.copy(slope = !prefs.slope)) },
+                    ) { SlopeThumb() }
+                }
             }
             Text(
                 "Topo y satélite: © Instituto Geográfico Nacional (CC BY 4.0). " +
@@ -207,6 +220,22 @@ private fun IconThumb(icon: ImageVector) {
     ) {
         Surface(color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.fillMaxSize()) {}
         Icon(icon, contentDescription = null, Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+    }
+}
+
+/** Miniatura de la pendiente: una línea que sube cambiando de verde a rojo. */
+@Composable
+private fun SlopeThumb() {
+    Canvas(Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp))) {
+        drawRect(Color(0xFFF0EADB))
+        val w = size.width
+        val h = size.height
+        val colors = app.trazo.gpx.Slope.COLORS.map { Color(android.graphics.Color.parseColor(it)) }
+        val pts = listOf(0.08f to 0.85f, 0.3f to 0.78f, 0.5f to 0.62f, 0.7f to 0.4f, 0.92f to 0.12f)
+        pts.zipWithNext().forEachIndexed { i, (a, b) ->
+            drawLine(colors[i + 1], Offset(w * a.first, h * a.second), Offset(w * b.first, h * b.second),
+                strokeWidth = w * 0.08f, cap = StrokeCap.Round)
+        }
     }
 }
 

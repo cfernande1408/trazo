@@ -59,6 +59,13 @@ y dice en qué km empieza.
 oficial 1:25.000 con curvas de nivel) o **Satélite** (ortofoto PNOA), también en 3D, y para
 encender o apagar el relieve, los árboles y las rutas señalizadas.
 
+📶 **Sin conexión.** Descarga el mapa de la zona de una ruta, con relieve y topo IGN, y
+navega sin cobertura en plena sierra.
+
+📈 **Pendiente y dificultad.** La ruta coloreada por pendiente, la rampa más dura y la
+dificultad técnica de OpenStreetMap (escala MTB S0–S6 o SAC T1–T6) de los caminos por los
+que pasa.
+
 🧭 **Navegar.** Tu posición sobre la ruta, vibración al salirte, la próxima subida, empezar
 desde el inicio o desde el parking y *Cómo llegar* con Google Maps.
 
@@ -108,6 +115,7 @@ core/gpx/      Kotlin puro: todo lo que se puede probar sin móvil
   gpx/plan/      BRouter (crear rutas)
   gpx/weather/   previsión a lo largo de la ruta
   gpx/layers/    tipos de mapa y capas
+  gpx/offline/   zona y tamaño de los mapas sin conexión
 app/           Android
   importer/      Mis rutas
   explore/       Explorar, buscador y navegador de Wikiloc
@@ -150,6 +158,7 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 
 - [ ] Arrastrar los puntos de una ruta creada
 - [ ] Avisos por voz en los cruces
-- [ ] Mapas sin conexión por zonas
-- [ ] Dificultad de OSM (`mtb:scale`, `sac_scale`) en las rutas
+- [x] Mapas sin conexión de la zona de una ruta
+- [x] Dificultad de OSM (`mtb:scale`, `sac_scale`) y pendiente por tramos
+- [ ] Descargar cualquier zona desde *Explorar*
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…)

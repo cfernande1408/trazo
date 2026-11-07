@@ -45,14 +45,20 @@ data class LayerPrefs(
     val hillshade: Boolean = true,
     val trees: Boolean = true,
     val routes: Boolean = false,
+    /** Ruta coloreada por pendiente (solo en el mapa de una ruta). */
+    val slope: Boolean = false,
 ) {
-    fun encode(): String = listOf(base.name, hillshade, trees, routes).joinToString(";")
+    fun encode(): String = listOf(base.name, hillshade, trees, routes, slope).joinToString(";")
 
     companion object {
         fun decode(s: String?): LayerPrefs {
             val p = s?.split(";") ?: return LayerPrefs()
             return runCatching {
-                LayerPrefs(BaseMap.valueOf(p[0]), p[1].toBooleanStrict(), p[2].toBooleanStrict(), p[3].toBooleanStrict())
+                LayerPrefs(
+                    BaseMap.valueOf(p[0]), p[1].toBooleanStrict(), p[2].toBooleanStrict(), p[3].toBooleanStrict(),
+                    // Las preferencias guardadas antes de existir la pendiente tienen 4 campos
+                    p.getOrNull(4)?.toBooleanStrict() ?: false,
+                )
             }.getOrDefault(LayerPrefs())
         }
     }

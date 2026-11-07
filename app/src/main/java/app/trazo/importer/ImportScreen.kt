@@ -56,6 +56,8 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import app.trazo.gpx.Activity
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.trazo.offline.OfflineMaps
 import app.trazo.gpx.Season
 import app.trazo.plan.SavedRoute
 import app.trazo.ride.formatDuration
@@ -185,6 +187,10 @@ private fun EmptyState(onPickFile: () -> Unit, onCreateRoute: () -> Unit, lib: L
         item { ImportCard(onPickFile) }
         item { CreateCard(onCreateRoute) }
         library(lib)
+        item {
+            val maps by OfflineMaps.maps.collectAsStateWithLifecycle()
+            if (maps.isNotEmpty()) OfflineMapsList(maps)
+        }
     }
 }
 
@@ -293,6 +299,7 @@ private fun Loaded(
         }
         item { WeatherPeek(state, activity, onOpen = { tab = 2 }) }
         item { SeasonTip(season) }
+        item { OfflineCard(state) }
         item {
             Button(onClick = onOpenMap, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                 Text("Ver en el mapa", style = MaterialTheme.typography.titleMedium)
@@ -307,7 +314,10 @@ private fun Loaded(
             }
         }
         when (tab) {
-            0 -> if (state.profile.size >= 2) {
+            0 -> {
+                item { DifficultyCard(state, activity) }
+                if (state.profile.size >= 2) {
+                item { SlopeCard(state) }
                 item {
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -324,6 +334,7 @@ private fun Loaded(
                 }
             } else {
                 item { Hint("El GPX no trae altitudes, así que no hay perfil.") }
+            }
             }
             1 -> if (state.gpx.waypoints.isEmpty()) {
                 item { Hint("El autor no marcó puntos en esta ruta.") }
@@ -350,6 +361,10 @@ private fun Loaded(
             }
         }
         library(lib)
+        item {
+            val maps by OfflineMaps.maps.collectAsStateWithLifecycle()
+            if (maps.isNotEmpty()) OfflineMapsList(maps)
+        }
     }
 }
 

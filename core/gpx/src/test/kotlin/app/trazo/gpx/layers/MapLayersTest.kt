@@ -48,6 +48,9 @@ class MapLayersTest {
         assertEquals(p, LayerPrefs.decode(p.encode()))
         assertEquals(LayerPrefs(), LayerPrefs.decode(null))
         assertEquals(LayerPrefs(), LayerPrefs.decode("PLUTON;true"))
+        // Guardadas por la versión anterior, sin el campo de pendiente
+        assertEquals(LayerPrefs(BaseMap.IGN_TOPO, true, false, true, slope = false), LayerPrefs.decode("IGN_TOPO;true;false;true"))
+        assertEquals(true, LayerPrefs.decode(LayerPrefs(slope = true).encode()).slope)
     }
 
     @Test
