@@ -103,6 +103,9 @@ La lista completa, una línea por función, está en **[FEATURES.md](FEATURES.md
 Descarga el último `trazo-vX.Y.Z.apk` de [Releases](https://github.com/cfernande1408/trazo/releases)
 y ábrelo en el móvil (hay que permitir instalar apps de esa fuente).
 
+La versión que compilas tú (`installDebug`) se llama «Trazo debug» y es otra app: puede estar
+instalada a la vez que la de Releases, cada una con sus rutas y salidas.
+
 Para compilarla tú necesitas JDK 17+ y el SDK de Android (compileSdk 35):
 
 ```bash

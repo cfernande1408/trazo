@@ -43,6 +43,11 @@ android {
     }
 
     buildTypes {
+        // La de debug lleva otro id para convivir con la de Releases (firmadas con claves distintas)
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = false
             if (keystore != null) signingConfig = signingConfigs.getByName("release")
