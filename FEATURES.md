@@ -45,7 +45,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 
 ## Inicio
 
-- Portada con el paisaje de la estación (el mismo del icono), un saludo según la hora, el consejo de temporada y los botones grandes de **Grabar** y **Explorar**
+- Portada con una sierra dibujada con los colores de la estación (cielo, cordales y el trazo de una ruta hasta la cumbre), la bienvenida, el consejo de temporada y los botones grandes de **Grabar** y **Explorar**
 - **Tu semana**: salidas, distancia, desnivel, tiempo en movimiento y kcal desde el lunes
 - Atajos a *Importar GPX*, *Crear ruta* y *Wikiloc*, y tus rutas guardadas en una fila para abrirlas con un toque
 - Importa GPX con *Abrir con…*, *Compartir → Trazo* o desde el selector de archivos

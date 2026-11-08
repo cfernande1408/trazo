@@ -1,6 +1,12 @@
 package app.trazo.importer
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Path
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,11 +30,9 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,9 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,13 +57,10 @@ import app.trazo.plan.SavedRoute
 import app.trazo.ride.RideStore
 import app.trazo.ride.SavedRide
 import app.trazo.ui.UserProfile
-import app.trazo.ui.recordCta
-import app.trazo.ui.seasonIconRes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 import kotlin.math.roundToInt
@@ -132,44 +131,91 @@ internal fun Home(activity: Activity, season: Season, routes: List<SavedRoute>, 
     }
 }
 
-/** Saludo según la hora. */
-private fun greeting(): String = when (LocalTime.now().hour) {
-    in 6..13 -> "Buenos días"
-    in 14..20 -> "Buenas tardes"
-    else -> "Buenas noches"
+/** Cielo de cada estación, de arriba abajo. */
+private fun sky(season: Season): Pair<Color, Color> = when (season) {
+    Season.SPRING -> Color(0xFF8FCBEA) to Color(0xFFE6F3D8)
+    Season.SUMMER -> Color(0xFF6DBDEB) to Color(0xFFF5E6BC)
+    Season.AUTUMN -> Color(0xFFE99A5B) to Color(0xFFF6D9B4)
+    Season.WINTER -> Color(0xFFA9C1D8) to Color(0xFFEDF2F6)
+}
+
+private fun hex(s: String) = Color(android.graphics.Color.parseColor(s))
+
+/**
+ * Sierra de la estación dibujada a lo ancho: cielo, tres cordales cada vez
+ * más cerca y oscuros, y un trazo de ruta subiendo a la cumbre, como el icono.
+ */
+@Composable
+private fun Landscape(season: Season, modifier: Modifier) {
+    val (top, bottom) = sky(season)
+    // En invierno, las cumbres del fondo nevadas
+    val far = if (season == Season.WINTER) Color(0xFFDDE6EE) else hex(season.pineLight).copy(alpha = 0.55f)
+    val mid = hex(season.pineShade).copy(alpha = 0.8f)
+    val near = hex(season.pineShade)
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        drawRect(Brush.verticalGradient(listOf(top, bottom)))
+        // Sol (o luna clara en invierno), arriba a la derecha
+        drawCircle(Color.White.copy(alpha = if (season == Season.WINTER) 0.7f else 0.55f), radius = h * 0.07f, center = Offset(w * 0.8f, h * 0.2f))
+        /** Un cordal: suma de ondas fija (siempre igual), entre [base] y [base] − [amp]. */
+        fun ridge(base: Float, amp: Float, phase: Float, color: Color) {
+            val path = Path().apply { moveTo(0f, h) }
+            val pts = (0..60).map { i ->
+                val x = w * i / 60f
+                val t = i / 60f * 6.283f
+                val y = base - amp * (0.55f * kotlin.math.sin(t * 1.3f + phase) + 0.3f * kotlin.math.sin(t * 2.9f + phase * 2) + 0.15f * kotlin.math.sin(t * 6.1f + phase * 3)).let { (it + 1f) / 2f }
+                Offset(x, y)
+            }
+            pts.forEach { path.lineTo(it.x, it.y) }
+            path.lineTo(w, h)
+            path.close()
+            drawPath(path, color)
+        }
+        ridge(h * 0.62f, h * 0.38f, 0.4f, far)
+        ridge(h * 0.78f, h * 0.30f, 2.1f, mid)
+        ridge(h * 0.98f, h * 0.24f, 4.0f, near)
+        // El trazo de la ruta, con su borde blanco, hasta un punto final
+        val trail = Path().apply {
+            moveTo(w * 0.04f, h * 0.97f)
+            cubicTo(w * 0.28f, h * 0.9f, w * 0.3f, h * 0.68f, w * 0.48f, h * 0.62f)
+            cubicTo(w * 0.6f, h * 0.58f, w * 0.62f, h * 0.42f, w * 0.7f, h * 0.36f)
+        }
+        drawPath(trail, Color.White.copy(alpha = 0.9f), style = Stroke(width = h * 0.045f, cap = StrokeCap.Round))
+        drawPath(trail, Color(0xFFD9480F), style = Stroke(width = h * 0.025f, cap = StrokeCap.Round))
+        drawCircle(Color.White, radius = h * 0.035f, center = Offset(w * 0.7f, h * 0.36f))
+        drawCircle(Color(0xFFD9480F), radius = h * 0.022f, center = Offset(w * 0.7f, h * 0.36f))
+    }
 }
 
 @Composable
 private fun Hero(activity: Activity, season: Season, a: HomeActions) {
-    val (bg, fg) = remember(season) { seasonIconRes(season) }
     Card(shape = MaterialTheme.shapes.extraLarge, modifier = Modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth().height(260.dp)) {
-            // El paisaje del icono de la estación, a lo ancho
-            // Los dos con el mismo recorte para que encajen (un poco por debajo del centro: las cumbres)
-            val crop = androidx.compose.ui.BiasAlignment(0f, 0.25f)
-            Image(painterResource(bg), contentDescription = null, contentScale = ContentScale.Crop, alignment = crop, modifier = Modifier.fillMaxSize())
-            Image(painterResource(fg), contentDescription = null, contentScale = ContentScale.Crop, alignment = crop, modifier = Modifier.fillMaxSize())
+            Landscape(season, Modifier.fillMaxSize())
             // Velo oscuro abajo para que se lea el texto
             Box(
                 Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(0f to Color.Transparent, 0.45f to Color(0x33000000), 1f to Color(0xCC000000)),
+                    Brush.verticalGradient(0f to Color.Transparent, 0.4f to Color(0x22000000), 1f to Color(0xD9000000)),
                 ),
             )
-            Column(Modifier.align(Alignment.BottomStart).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(greeting(), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
+            Column(Modifier.align(Alignment.BottomStart).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Bienvenido a Trazo", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.White)
                 Text(season.tip, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.92f), maxLines = 3, overflow = TextOverflow.Ellipsis)
+                // Los dos a partes iguales, para que quepan con la letra grande
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(onClick = a.onRecord, modifier = Modifier.height(48.dp)) {
+                    Button(onClick = a.onRecord, modifier = Modifier.weight(1f).height(48.dp)) {
                         Icon(Icons.Filled.PlayArrow, contentDescription = null)
-                        Text(" ${activity.recordCta}", maxLines = 1)
+                        Text(" Grabar", maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    FilledTonalButton(
+                    OutlinedButton(
                         onClick = a.onExplore,
-                        modifier = Modifier.height(48.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color.White.copy(alpha = 0.9f), contentColor = Color(0xFF1A1C16)),
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        border = BorderStroke(1.5.dp, Color.White),
+                        colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                     ) {
                         Icon(Icons.Filled.Place, contentDescription = null)
-                        Text(" Explorar", maxLines = 1)
+                        Text(" Explorar", maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
