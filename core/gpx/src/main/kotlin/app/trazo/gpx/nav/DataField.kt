@@ -15,7 +15,8 @@ enum class DataField(val label: String) {
     HEART_RATE("Pulso"),
     CADENCE("Cadencia"),
     POWER("Potencia"),
-    PARTNER("Vs. anterior");
+    PARTNER("Vs. anterior"),
+    KCAL("Kcal");
 
     companion object {
         val DEFAULT = listOf(REMAINING, REMAINING_GAIN, DONE, SPEED, MOVING_TIME, ETA)

@@ -1,5 +1,6 @@
 package app.trazo.ride
 
+import androidx.compose.foundation.layout.Spacer
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -37,7 +38,7 @@ internal fun Context.hasLocation() =
 
 /** Cuadrícula 3×2 con los datos de una salida. */
 @Composable
-fun RideStatsGrid(stats: RideStats, currentKmh: Double? = null, elapsedMs: Long? = null) {
+fun RideStatsGrid(stats: RideStats, currentKmh: Double? = null, elapsedMs: Long? = null, kcal: Int? = null) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Big("En movimiento", formatDuration(stats.movingMs), Modifier.weight(1f))
@@ -50,16 +51,19 @@ fun RideStatsGrid(stats: RideStats, currentKmh: Double? = null, elapsedMs: Long?
             Big("Máxima", kmh(stats.maxKmh), Modifier.weight(1f))
             Big("Desnivel +", String.format(ES, "%.0f m", stats.gainMeters), Modifier.weight(1f))
         }
-        // Solo si llevabas sensores
+        // Kcal y, si llevabas sensores, pulso, cadencia y potencia
         val sensors = listOfNotNull(
+            kcal?.takeIf { it > 0 }?.let { "Kcal" to String.format(ES, "%,d", it) },
             stats.avgHr?.let { "Pulso medio" to "$it ppm" },
             stats.maxHr?.let { "Pulso máx." to "$it ppm" },
             stats.avgCadence?.let { "Cadencia" to "$it rpm" },
             stats.avgPower?.let { "Potencia" to "$it W" },
         )
-        if (sensors.isNotEmpty()) {
+        // De tres en tres; la última fila con huecos vacíos para que no se estiren
+        sensors.chunked(3).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                sensors.take(3).forEach { (l, v) -> Big(l, v, Modifier.weight(1f)) }
+                row.forEach { (l, v) -> Big(l, v, Modifier.weight(1f)) }
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }

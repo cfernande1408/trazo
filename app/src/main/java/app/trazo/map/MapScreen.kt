@@ -1036,6 +1036,8 @@ private class NavValues(
                 val sec = kotlin.math.abs(g) / 1000
                 (if (g >= 0) "+" else "−") + String.format(java.util.Locale.ROOT, "%d:%02d", sec / 60, sec % 60)
             }
+            // Con tu peso (en Info) y la potencia si llevas potenciómetro
+            DataField.KCAL -> app.trazo.gpx.ride.Calories.format(app.trazo.ui.UserProfile.kcal(ride.stats, ride.activity))
         } ?: "—"
     }
 }

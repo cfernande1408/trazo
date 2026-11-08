@@ -164,7 +164,7 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
                         style = MaterialTheme.typography.titleMedium,
                         color = if (state.paused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                     )
-                    RideStatsGrid(state.stats, currentKmh = state.currentKmh ?: 0.0)
+                    RideStatsGrid(state.stats, currentKmh = state.currentKmh ?: 0.0, kcal = app.trazo.ui.UserProfile.kcal(state.stats, state.activity))
                     Text(
                         "Total ${formatDuration(now - state.startedAtMs)}" + if (state.barometer) " · desnivel con barómetro" else "",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

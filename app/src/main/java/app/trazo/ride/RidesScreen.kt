@@ -196,7 +196,7 @@ fun RideDetailScreen(file: File, onBack: () -> Unit, onUseAsRoute: (Gpx) -> Unit
             item {
                 Text(DATE.format(Date(r.startedAtMs)).replaceFirstChar { it.uppercase() }, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            item { RideStatsGrid(r.stats) }
+            item { RideStatsGrid(r.stats, kcal = app.trazo.ui.UserProfile.kcal(r.stats, r.activity)) }
             item {
                 val profile = remember(r) { RouteGeometry.downsample(ElevationProfile.of(r.points.map { s -> s.map { it.geo() } }), 300) }
                 if (profile.size >= 2) {

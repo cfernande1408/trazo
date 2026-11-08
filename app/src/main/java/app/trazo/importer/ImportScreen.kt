@@ -95,6 +95,9 @@ fun ImportScreen(
     season: Season = Season.AUTUMN,
     seasonOverride: Season? = null,
     onSeason: (Season?) -> Unit = {},
+    onExplore: () -> Unit = {},
+    onWikiloc: () -> Unit = {},
+    onLibrary: () -> Unit = {},
 ) {
     var switching by remember { mutableStateOf(false) }
     val lib = Library(library, onOpenSaved, onDeleteSaved)
@@ -113,16 +116,22 @@ fun ImportScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onRecord,
-                icon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
-                text = { Text(activity.recordCta) },
-            )
+            // En la portada ya está el botón grande de grabar
+            if (state !is ImportState.Empty) {
+                ExtendedFloatingActionButton(
+                    onClick = onRecord,
+                    icon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
+                    text = { Text(activity.recordCta) },
+                )
+            }
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (state) {
-                ImportState.Empty -> EmptyState(onPickFile, onCreateRoute, lib)
+                ImportState.Empty -> Home(
+                    activity, season, library,
+                    HomeActions(onRecord, onExplore, onWikiloc, onPickFile, onCreateRoute, onLibrary, onOpenSaved),
+                )
                 ImportState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 is ImportState.Error -> ErrorState(state.message, onPickFile)
                 is ImportState.Loaded -> Loaded(state, activity, season, onPickFile, onOpenMap, onCreateRoute, onSaveCurrent, lib)
@@ -146,65 +155,6 @@ private class Library(
     val onOpen: (SavedRoute) -> Unit,
     val onDelete: (SavedRoute) -> Unit,
 )
-
-@Composable
-private fun EmptyState(onPickFile: () -> Unit, onCreateRoute: () -> Unit, lib: Library) {
-    LazyColumn(
-        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item { ImportCard(onPickFile) }
-        item { CreateCard(onCreateRoute) }
-        // Tus rutas, salidas y mapas están en la pestaña Guardadas
-        if (lib.routes.isNotEmpty()) item {
-            Text(
-                "Tus ${lib.routes.size} rutas guardadas están en la pestaña Guardadas.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 4.dp),
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun CreateCard(onCreateRoute: () -> Unit) {
-    Card(
-        onClick = onCreateRoute,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Icon(Icons.Filled.Edit, contentDescription = null, Modifier.size(28.dp))
-            Column {
-                Text("Crear ruta", style = MaterialTheme.typography.titleLarge)
-                Text("Toca puntos en el mapa y la ruta se ajusta a pistas y senderos")
-            }
-        }
-    }
-}
-
-@Composable
-private fun ImportCard(onPickFile: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Importar desde Wikiloc", style = MaterialTheme.typography.titleLarge)
-            Text("1 · En la ruta, pulsa Descargar → GPX")
-            Text("2 · Compartir → Trazo")
-            Text("3 · O ábrelo desde aquí")
-            Button(onClick = onPickFile) { Text("Abrir archivo GPX") }
-        }
-    }
-}
 
 @Composable
 private fun ErrorState(message: String, onPickFile: () -> Unit) {

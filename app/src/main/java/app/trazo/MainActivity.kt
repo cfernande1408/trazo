@@ -131,6 +131,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         MapLibre.getInstance(this)
         AppMode.init(this)
+        app.trazo.ui.UserProfile.init(this)
         app.trazo.map.MapPrefs.init(this)
         app.trazo.offline.OfflineMaps.refresh(this)
         app.trazo.safety.Safety.init(this)
@@ -245,6 +246,9 @@ class MainActivity : ComponentActivity() {
                                     seasonOverride = seasonOverride,
                                     onSeason = { AppMode.setSeason(context, it) },
                                     onCreateRoute = { showPlanner = true },
+                                    onExplore = { tab = 1 },
+                                    onWikiloc = { tab = 2 },
+                                    onLibrary = { tab = TAB_LIBRARY },
                                     library = library,
                                     onOpenSaved = { r ->
                                         scope.launch {

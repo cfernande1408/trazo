@@ -45,6 +45,9 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 
 ## Inicio
 
+- Portada con el paisaje de la estación (el mismo del icono), un saludo según la hora, el consejo de temporada y los botones grandes de **Grabar** y **Explorar**
+- **Tu semana**: salidas, distancia, desnivel, tiempo en movimiento y kcal desde el lunes
+- Atajos a *Importar GPX*, *Crear ruta* y *Wikiloc*, y tus rutas guardadas en una fila para abrirlas con un toque
 - Importa GPX con *Abrir con…*, *Compartir → Trazo* o desde el selector de archivos
 - Lee `trk`, `rte` y `wpt`, con CDATA y entidades, y quita el «Wikiloc - » del nombre
 - Vista previa con el mapa topo y la ruta dibujada encima
@@ -177,6 +180,8 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - Pulso, cadencia y potencia se graban en el GPX como las extensiones de Garmin, así que Strava los lee
 - En cada salida: pulso medio y máximo, cadencia media (sin los ratos sin pedalear) y potencia media
 - **Pantalla de datos a tu gusto**: seis cifras en la tarjeta de navegación; toca una para elegir entre quedan, por subir, recorrido, velocidad, media, tiempo en movimiento, altitud, pendiente, hora de llegada, luz, pulso, cadencia, potencia y compañero virtual
+- **Kcal gastadas** en la pantalla de navegación (cifra *Kcal*), al grabar, en cada salida y en tu semana: con potenciómetro, del trabajo en los pedales; si no, por el tiempo en movimiento (MET de bici de montaña o senderismo) más lo que cuesta subir el desnivel con tu peso y el de la bici o la mochila
+- Tu peso se pone en *Info* y se queda en el móvil (75 kg si no lo dices)
 - **Compañero virtual**: si ya hiciste esa ruta, «Vs. anterior» dice cuánto vas por delante (+1:20) o por detrás (−0:45) de tu salida más reciente en el mismo punto
 
 ## Seguridad

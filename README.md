@@ -218,5 +218,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Recalcular al salirte de la ruta
 - [x] Filtrar rutas circulares o lineales en *Explorar*
 - [x] Tiempo cada 15 minutos y qué llevarte puesto
+- [x] Kcal gastadas y portada con tu semana
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones
