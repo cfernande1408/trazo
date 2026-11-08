@@ -30,8 +30,10 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -126,6 +128,11 @@ fun AboutScreen() {
                 Link(Icons.Filled.BugReport, "Avisar de un fallo o pedir algo", "Abre una incidencia en GitHub") {
                     context.openUrl("$REPO/issues/new")
                 }
+            }
+
+            OutlinedButton(onClick = { Tips.reset(context) }, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.Lightbulb, contentDescription = null)
+                Text("  Volver a ver las tarjetas de Descubre Trazo")
             }
 
             Text(

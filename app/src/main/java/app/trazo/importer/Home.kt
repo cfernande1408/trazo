@@ -40,7 +40,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -74,6 +77,7 @@ internal class HomeActions(
     val onCreateRoute: () -> Unit,
     val onLibrary: () -> Unit,
     val onOpenSaved: (SavedRoute) -> Unit,
+    val onProfile: () -> Unit,
 )
 
 /** Tu semana: salidas desde el lunes. */
@@ -86,20 +90,26 @@ private data class Week(val outings: Int, val meters: Double, val gain: Double, 
 @Composable
 internal fun Home(activity: Activity, season: Season, routes: List<SavedRoute>, a: HomeActions) {
     val context = LocalContext.current
-    val week by produceState<Week?>(null, activity) {
+    // Las salidas se leen del disco una vez; las kcal se calculan aquí, al
+    // pintar, para que cambien en cuanto tocas el peso o la altura del perfil
+    val rides by produceState<List<SavedRide>?>(null, activity) {
         value = withContext(Dispatchers.IO) {
             val monday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
                 .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            val rides: List<SavedRide> = runCatching { RideStore.list(context) }.getOrDefault(emptyList()).filter { it.startedAtMs >= monday }
-            Week(
-                rides.size,
-                rides.sumOf { it.stats.distanceMeters },
-                rides.sumOf { it.stats.gainMeters },
-                rides.sumOf { it.stats.movingMs },
-                rides.sumOf { UserProfile.kcal(it.stats, it.activity) },
-            )
+            runCatching { RideStore.list(context) }.getOrDefault(emptyList()).filter { it.startedAtMs >= monday }
         }
     }
+    val week = rides?.let { list ->
+        Week(
+            list.size,
+            list.sumOf { it.stats.distanceMeters },
+            list.sumOf { it.stats.gainMeters },
+            list.sumOf { it.stats.movingMs },
+            list.sumOf { UserProfile.kcal(it.stats, it.activity) },
+        )
+    }
+    val tipList = remember(activity, a) { tips(activity, a, webOpener(context)) }
+    var discoverOpen by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
         contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -107,6 +117,7 @@ internal fun Home(activity: Activity, season: Season, routes: List<SavedRoute>, 
         item { Hero(activity, season, a) }
         item { WeekCard(week, activity) }
         item { Shortcuts(a) }
+        discover(tipList, discoverOpen) { discoverOpen = it }
         if (routes.isNotEmpty()) {
             item {
                 Row(verticalAlignment = Alignment.CenterVertically) {

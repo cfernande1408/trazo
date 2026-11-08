@@ -36,6 +36,10 @@ y síguelas con avisos de desvío, perfil de desnivel y vista 3D. Sin cuentas y 
 las rutas que ves, a cuántos metros salta el aviso de desvío, las estadísticas y el tiempo
 estimado (método MIDE en senderismo). Lo cambias cuando quieras.
 
+**Descubre Trazo.** En Inicio, una tarjeta por función con su icono, qué hace y un botón
+para probarla. Marca el círculo cuando la conozcas o desliza la tarjeta para quitarla; desde
+Info se pueden volver a ver.
+
 **Guardadas.** Una pestaña con todo lo que tienes en el móvil, como la biblioteca de Spotify:
 tus rutas, tus salidas grabadas y los mapas sin conexión, cada cosa con su chip.
 
@@ -219,5 +223,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Filtrar rutas circulares o lineales en *Explorar*
 - [x] Tiempo cada 15 minutos y qué llevarte puesto
 - [x] Kcal gastadas y portada con tu semana
+- [x] Tarjetas de Descubre Trazo en Inicio
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones

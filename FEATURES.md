@@ -48,6 +48,9 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Portada con una sierra dibujada con los colores de la estación (cielo, cordales y el trazo de una ruta hasta la cumbre), la bienvenida, el consejo de temporada y los botones grandes de **Grabar** y **Explorar**
 - **Tu semana**: salidas, distancia, desnivel, tiempo en movimiento y kcal desde el lunes
 - Atajos a *Importar GPX*, *Crear ruta* y *Wikiloc*, y tus rutas guardadas en una fila para abrirlas con un toque
+- **Descubre Trazo**: una tarjeta por función (explorar, Wikiloc, crear ruta, mapas sin conexión, tiempo, pendiente y suelo, 3D, voz, recalcular, SOS, marcar puntos, Guardadas, perfil, sensores y la web), con su icono, qué hace y un botón para probarla
+- El círculo de cada tarjeta la marca como vista (pasa al final, atenuada) y deslizándola a un lado se quita; arriba, cuántas llevas vistas. Se ven tres y el resto con *Ver todas*
+- *Tu semana* recalcula las kcal en cuanto cambias tu perfil
 - Importa GPX con *Abrir con…*, *Compartir → Trazo* o desde el selector de archivos
 - Lee `trk`, `rte` y `wpt`, con CDATA y entidades, y quita el «Wikiloc - » del nombre
 - Vista previa con el mapa topo y la ruta dibujada encima
@@ -238,6 +241,7 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 ## Info
 
 - Pestaña **Info** con el icono de la estación, la versión, el canal (estable, beta o debug) y el commit
+- Botón para volver a ver las tarjetas de *Descubre Trazo* que hayas quitado
 - La versión sube sola con cada cambio: `0.3.0` la estable, `0.3.0.58-beta` la beta y `0.3.0.12-debug` la que compilas tú
 - Qué es Trazo, enlaces al código en GitHub, a las novedades de cada versión, a la lista de funciones y para avisar de un fallo
 - Espacio para donar (sale cuando haya enlace)

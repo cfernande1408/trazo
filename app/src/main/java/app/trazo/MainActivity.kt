@@ -132,6 +132,7 @@ class MainActivity : ComponentActivity() {
         MapLibre.getInstance(this)
         AppMode.init(this)
         app.trazo.ui.UserProfile.init(this)
+        app.trazo.ui.Tips.init(this)
         app.trazo.map.MapPrefs.init(this)
         app.trazo.offline.OfflineMaps.refresh(this)
         app.trazo.safety.Safety.init(this)

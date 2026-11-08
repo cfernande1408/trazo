@@ -136,7 +136,7 @@ fun ImportScreen(
             when (state) {
                 ImportState.Empty -> Home(
                     activity, season, library,
-                    HomeActions(onRecord, onExplore, onWikiloc, onPickFile, onCreateRoute, onLibrary, onOpenSaved),
+                    HomeActions(onRecord, onExplore, onWikiloc, onPickFile, onCreateRoute, onLibrary, onOpenSaved, onProfile = { profile = true }),
                 )
                 ImportState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 is ImportState.Error -> ErrorState(state.message, onPickFile)
