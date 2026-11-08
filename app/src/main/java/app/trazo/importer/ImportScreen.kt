@@ -1,5 +1,6 @@
 package app.trazo.importer
 
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -100,12 +101,17 @@ fun ImportScreen(
     onLibrary: () -> Unit = {},
 ) {
     var switching by remember { mutableStateOf(false) }
+    var profile by remember { mutableStateOf(false) }
     val lib = Library(library, onOpenSaved, onDeleteSaved)
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Trazo", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 actions = {
+                    // Tu perfil (peso, altura, edad: para las kcal)
+                    IconButton(onClick = { profile = true }) {
+                        Icon(Icons.Filled.AccountCircle, contentDescription = "Tu perfil")
+                    }
                     // Chip con tu actividad: tocándolo cambias de biker a senderista y viceversa
                     AssistChip(
                         onClick = { switching = true },
@@ -138,6 +144,7 @@ fun ImportScreen(
             }
         }
     }
+    if (profile) app.trazo.ui.ProfileSheet(onDismiss = { profile = false })
     if (switching) {
         ActivitySwitchDialog(
             current = activity,

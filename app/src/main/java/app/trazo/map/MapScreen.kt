@@ -270,7 +270,18 @@ fun MapScreen(
         RideSession.stop(context)?.let(onRideSaved)
         Unit
     }
-    BackHandler { if (navigating) stopNav() else onBack() }
+    // Navegando, Atrás pregunta antes de terminar: es fácil darle sin querer
+    var confirmStop by remember { mutableStateOf(false) }
+    BackHandler { if (navigating) confirmStop = true else onBack() }
+    if (confirmStop) {
+        AlertDialog(
+            onDismissRequest = { confirmStop = false },
+            title = { Text("¿Terminar la ruta?") },
+            text = { Text("Se para la navegación y se guarda lo que llevas grabado.") },
+            confirmButton = { TextButton(onClick = { confirmStop = false; stopNav() }) { Text("Terminar y guardar") } },
+            dismissButton = { TextButton(onClick = { confirmStop = false }) { Text("Seguir") } },
+        )
+    }
 
     var hasLocation by remember { mutableStateOf(context.hasLocationPermission()) }
     var startWhenGranted by remember { mutableStateOf(false) }

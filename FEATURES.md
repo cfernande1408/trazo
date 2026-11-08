@@ -145,6 +145,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Pantalla de navegación despejada para ver la ruta: la tarjeta de abajo va recogida con tres cifras y se despliega con la flecha (las seis cifras, el perfil, *Volver al inicio* y *Terminar*); se recuerda cómo la dejaste
 - Los botones del mapa van recogidos tras uno (⋮) encima de la tarjeta; el SOS siempre a la vista
 - Tu posición se centra en el hueco libre entre la tarjeta de arriba y la de abajo
+- El botón *Atrás* del móvil pregunta antes de terminar la ruta, para no pararla sin querer
 
 ## Como un GPS profesional
 
@@ -181,7 +182,7 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - En cada salida: pulso medio y máximo, cadencia media (sin los ratos sin pedalear) y potencia media
 - **Pantalla de datos a tu gusto**: seis cifras en la tarjeta de navegación; toca una para elegir entre quedan, por subir, recorrido, velocidad, media, tiempo en movimiento, altitud, pendiente, hora de llegada, luz, pulso, cadencia, potencia y compañero virtual
 - **Kcal gastadas** en la pantalla de navegación (cifra *Kcal*), al grabar, en cada salida y en tu semana: con potenciómetro, del trabajo en los pedales; si no, por el tiempo en movimiento (MET de bici de montaña o senderismo) más lo que cuesta subir el desnivel con tu peso y el de la bici o la mochila
-- Tu peso se pone en *Info* y se queda en el móvil (75 kg si no lo dices)
+- **Tu perfil** (icono de arriba en *Inicio*): peso y, si quieres afinar, altura, edad y sexo; con ellos las kcal usan tu metabolismo basal (Mifflin-St Jeor), como los relojes deportivos. Se queda en el móvil (75 kg si no lo dices)
 - **Compañero virtual**: si ya hiciste esa ruta, «Vs. anterior» dice cuánto vas por delante (+1:20) o por detrás (−0:45) de tu salida más reciente en el mismo punto
 
 ## Seguridad

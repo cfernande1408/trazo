@@ -38,4 +38,23 @@ class CaloriesTest {
         assertEquals(0, Calories.estimate(Activity.BIKE, 0, 500.0, 75.0))
         assertEquals("1.240 kcal", Calories.format(1240))
     }
+
+    @Test
+    fun `metabolismo basal de Mifflin-St Jeor`() {
+        // 75 kg, 175 cm, 35 años
+        assertEquals(1673.75, Calories.bmr(75.0, 175.0, 35, Calories.Sex.MALE), 0.01)
+        assertEquals(1507.75, Calories.bmr(75.0, 175.0, 35, Calories.Sex.FEMALE), 0.01)
+        assertEquals(1590.75, Calories.bmr(75.0, 175.0, 35, null), 0.01)
+    }
+
+    @Test
+    fun `con altura edad y sexo se usa tu metabolismo`() {
+        val bmr = Calories.bmr(75.0, 175.0, 35, Calories.Sex.MALE)
+        // 2 h en llano: 7 × (1673,75 / 24) × 2 = 976
+        assertEquals(976, Calories.estimate(Activity.BIKE, 2 * h, 0.0, 75.0, bmrKcalPerDay = bmr))
+        // Una persona mayor gasta menos en reposo y, por tanto, haciendo lo mismo
+        val older = Calories.bmr(75.0, 175.0, 65, Calories.Sex.MALE)
+        assertTrue(Calories.estimate(Activity.HIKE, 3 * h, 500.0, 75.0, bmrKcalPerDay = older) <
+            Calories.estimate(Activity.HIKE, 3 * h, 500.0, 75.0, bmrKcalPerDay = bmr))
+    }
 }
