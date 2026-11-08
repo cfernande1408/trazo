@@ -76,6 +76,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Grado principal, el tramo más difícil y cuántos km van por cada grado, para cualquier GPX (no solo rutas de OSM)
 - **Por dónde va**: km y porcentaje por asfalto, pista, sendero y escaleras, con una barra de colores (como Komoot)
 - Sale de la superficie y el tipo de cada camino de OpenStreetMap; los tramos sin camino en OSM se dicen aparte
+- Dificultad y superficie salen de una sola consulta a OpenStreetMap, que se guarda un mes en el móvil: al volver a abrir la ruta salen al momento; si los servidores van lentos, lo avisa
 
 ## El tiempo en la ruta
 

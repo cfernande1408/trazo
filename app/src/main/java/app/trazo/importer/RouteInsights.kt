@@ -1,5 +1,6 @@
 package app.trazo.importer
 
+import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -111,13 +112,14 @@ private sealed interface Rated {
 /** Dificultad según OpenStreetMap: escala MTB (S0–S6) en bici o SAC (T1–T6) a pie. */
 @Composable
 internal fun DifficultyCard(state: ImportState.Loaded, activity: Activity) {
+    val context = LocalContext.current
     val mtb = activity == Activity.BIKE
     var attempt by remember { mutableIntStateOf(0) }
     val rated by produceState<Rated>(Rated.Loading, state.gpx, mtb, attempt) {
         value = Rated.Loading
         value = runCatching {
-            val ways = Difficulty.parse(Http.overpass(Difficulty.query(state.gpx.segments)))
-            Rated.Ready(withContext(Dispatchers.Default) { Difficulty.summarize(state.gpx.segments, ways, mtb) })
+            val json = RouteOsm.ways(context, state.gpx.segments)
+            Rated.Ready(withContext(Dispatchers.Default) { Difficulty.summarize(state.gpx.segments, Difficulty.parse(json), mtb) })
         }.getOrElse { Rated.Failed(Http.friendly(it)) }
     }
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
@@ -126,7 +128,7 @@ internal fun DifficultyCard(state: ImportState.Loaded, activity: Activity) {
             when (val r = rated) {
                 Rated.Loading -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text("Mirando los caminos en OpenStreetMap…", style = MaterialTheme.typography.bodyMedium)
+                    OsmLoadingText()
                 }
                 is Rated.Failed -> Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(r.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
@@ -175,11 +177,12 @@ private sealed interface Surfaced {
 /** Por dónde va la ruta (asfalto, pista, sendero, escaleras), según OpenStreetMap. */
 @Composable
 internal fun SurfaceCard(state: ImportState.Loaded) {
+    val context = LocalContext.current
     var attempt by remember { mutableIntStateOf(0) }
     val surfaced by produceState<Surfaced>(Surfaced.Loading, state.gpx, attempt) {
         value = Surfaced.Loading
         value = runCatching {
-            val json = Http.overpass(Surface.query(state.gpx.segments))
+            val json = RouteOsm.ways(context, state.gpx.segments)
             Surfaced.Ready(withContext(Dispatchers.Default) { Surface.summarize(state.gpx.segments, Surface.parse(json)) })
         }.getOrElse { Surfaced.Failed(Http.friendly(it)) }
     }
@@ -189,7 +192,7 @@ internal fun SurfaceCard(state: ImportState.Loaded) {
             when (val r = surfaced) {
                 Surfaced.Loading -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text("Mirando los caminos en OpenStreetMap…", style = MaterialTheme.typography.bodyMedium)
+                    OsmLoadingText()
                 }
                 is Surfaced.Failed -> Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(r.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
@@ -410,5 +413,20 @@ internal fun LightLine(state: ImportState.Loaded, activity: Activity) {
         },
         style = MaterialTheme.typography.bodyMedium,
         color = if (late) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** Mientras llegan los caminos; si tarda, explica por qué (los servidores de OSM son gratuitos y a veces van saturados). */
+@Composable
+private fun OsmLoadingText() {
+    var slow by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(12_000)
+        slow = true
+    }
+    Text(
+        if (slow) "Los servidores de OpenStreetMap van lentos ahora. Sigue esperando o vuelve luego: la próxima vez saldrá al momento."
+        else "Mirando los caminos en OpenStreetMap…",
+        style = MaterialTheme.typography.bodyMedium,
     )
 }
