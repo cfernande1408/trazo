@@ -1,5 +1,13 @@
 package app.trazo.map
 
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -205,6 +213,14 @@ fun MapScreen(
     }
     val prefs = remember { context.getSharedPreferences("trazo", android.content.Context.MODE_PRIVATE) }
     var voiceOn by remember { mutableStateOf(prefs.getBoolean("voice", true)) }
+    /** Navegando, la tarjeta de abajo va recogida (tres cifras) para que se vea la ruta. */
+    var navExpanded by remember { mutableStateOf(prefs.getBoolean("nav_expanded", false)) }
+    /** Los botones del mapa, recogidos tras uno al navegar. */
+    var moreOpen by remember { mutableStateOf(false) }
+    // Lo que tapan arriba y abajo las tarjetas, para centrar tu posición en el hueco libre
+    var rootPx by remember { mutableIntStateOf(0) }
+    var topPx by remember { mutableIntStateOf(0) }
+    var bottomPx by remember { mutableIntStateOf(0) }
     val voice = remember { Voice(context) }
     DisposableEffect(Unit) { onDispose { voice.release() } }
 
@@ -408,6 +424,17 @@ fun MapScreen(
         wasNavigating = navigating
     }
 
+    // Navegando, tu posición va en el hueco entre la tarjeta de arriba y la de abajo
+    LaunchedEffect(ready, navigating, topPx, bottomPx) {
+        val (map, _) = ready ?: return@LaunchedEffect
+        map.moveCamera(
+            CameraUpdateFactory.paddingTo(
+                0.0, if (navigating) topPx.toDouble() else 0.0,
+                0.0, if (navigating) bottomPx.toDouble() else 0.0,
+            )
+        )
+    }
+
     // El punto del perfil bajo el dedo se dibuja en el mapa y, si se sale, la cámara lo sigue
     LaunchedEffect(ready, scrub, navigating) {
         val (map, style) = ready ?: return@LaunchedEffect
@@ -525,13 +552,18 @@ fun MapScreen(
             }
     }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().onGloballyPositioned { rootPx = it.size.height }) {
         AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
 
         if (navigating) {
-            Column(Modifier.statusBarsPadding().padding(16.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                Modifier.statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth()
+                    .onGloballyPositioned { topPx = it.boundsInRoot().bottom.toInt() },
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
                 NavBanner(
                     navState, extras, Modifier.fillMaxWidth(),
+                    showChart = navExpanded,
                     voiceOn = voiceOn,
                     onToggleVoice = {
                         voiceOn = !voiceOn
@@ -562,18 +594,41 @@ fun MapScreen(
             }
         }
 
-        Column(
-            // Bajo el botón de 3D (o bajo la tarjeta de navegación), lejos de la tarjeta de abajo
-            if (navigating) Modifier.align(Alignment.CenterEnd).padding(end = 16.dp, bottom = 260.dp)
-            else Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 92.dp, end = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            LayersButton(onClick = { showLayers = true })
-            SensorsButton(onClick = { showSensors = true })
-            ReportButton(onClick = { reporting = true })
-            // Navegando se graba la salida: se pueden marcar puntos como al grabar
-            if (navigating) app.trazo.ride.MarkButton(onClick = { marking = true })
-            SosButton(onClick = { showSos = true })
+        if (navigating) {
+            // Navegando: SOS siempre a mano y el resto recogido tras un botón, justo encima de la tarjeta
+            val density = LocalDensity.current
+            Column(
+                Modifier.align(Alignment.BottomEnd).padding(end = 12.dp, bottom = with(density) { bottomPx.toDp() } + 8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                if (moreOpen) {
+                    LayersButton(onClick = { showLayers = true; moreOpen = false })
+                    SensorsButton(onClick = { showSensors = true; moreOpen = false })
+                    ReportButton(onClick = { reporting = true; moreOpen = false })
+                    // Navegando se graba la salida: se pueden marcar puntos como al grabar
+                    app.trazo.ride.MarkButton(onClick = { marking = true; moreOpen = false })
+                }
+                SmallFloatingActionButton(
+                    onClick = { moreOpen = !moreOpen },
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ) {
+                    Icon(if (moreOpen) Icons.Filled.Close else Icons.Filled.MoreVert, contentDescription = if (moreOpen) "Recoger botones" else "Más botones")
+                }
+                SosButton(onClick = { showSos = true })
+            }
+        } else {
+            Column(
+                // Bajo el botón de 3D
+                Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 92.dp, end = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                LayersButton(onClick = { showLayers = true })
+                SensorsButton(onClick = { showSensors = true })
+                ReportButton(onClick = { reporting = true })
+                SosButton(onClick = { showSos = true })
+            }
         }
         if (marking) app.trazo.ride.MarkDialog(onDismiss = { marking = false })
         if (reporting) ReportDialog(onDismiss = { reporting = false }, onSent = { reporting = false; hazardsReload++ })
@@ -634,24 +689,36 @@ fun MapScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(16.dp)
-                .fillMaxWidth(),
+                .padding(if (navigating) 8.dp else 16.dp)
+                .fillMaxWidth()
+                .onGloballyPositioned { bottomPx = (rootPx - it.boundsInRoot().top).toInt().coerceAtLeast(0) },
             shape = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.padding(if (navigating) 10.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(if (navigating) 8.dp else 12.dp)) {
                 val s = navState
                 if (navigating) {
-                    // Seis cifras a tu gusto: toca una para cambiarla
+                    // Seis cifras a tu gusto (toca una para cambiarla). Recogida, solo las tres primeras
                     val values = NavValues(s, extras, ride, sensorTick.takeIf { BleSensors.fresh() != null }, partnerGap, fullProfile, grades)
-                    fields.chunked(3).forEachIndexed { row, chunk ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    (if (navExpanded) fields else fields.take(3)).chunked(3).forEachIndexed { row, chunk ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             chunk.forEachIndexed { col, f ->
                                 Stat(f.label, values.text(f), Modifier.weight(1f).clickable { picking = row * 3 + col })
                             }
+                            if (row == 0) {
+                                IconButton(onClick = {
+                                    navExpanded = !navExpanded
+                                    prefs.edit().putBoolean("nav_expanded", navExpanded).apply()
+                                }) {
+                                    Icon(
+                                        if (navExpanded) Icons.Filled.ExpandMore else Icons.Filled.ExpandLess,
+                                        contentDescription = if (navExpanded) "Recoger la tarjeta" else "Ver más datos, perfil y terminar",
+                                    )
+                                }
+                            }
                         }
                     }
-                    if (navProfile.size >= 2) {
+                    if (navExpanded && navProfile.size >= 2) {
                         ElevationChart(
                             navProfile,
                             Modifier.fillMaxWidth().height(72.dp),
@@ -659,7 +726,7 @@ fun MapScreen(
                             highlight = s?.nextClimb?.let { it.startMeters..it.endMeters },
                         )
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (navExpanded) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = { if (returnSegs != null) returnSegs = null else showReturn = true },
                             modifier = Modifier.weight(1f).height(56.dp),
@@ -776,6 +843,8 @@ private fun NavBanner(
     s: NavState?,
     extras: NavExtras,
     modifier: Modifier = Modifier,
+    /** El perfil de la subida en curso: solo con la tarjeta de abajo desplegada. */
+    showChart: Boolean = true,
     voiceOn: Boolean,
     onToggleVoice: () -> Unit,
 ) {
@@ -805,12 +874,12 @@ private fun NavBanner(
         shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
-        Column(Modifier.padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                if (s?.offRoute == true) Icon(Icons.Filled.Warning, contentDescription = null, modifier = Modifier.size(40.dp))
+        Column(Modifier.padding(start = 16.dp, end = 4.dp, top = 10.dp, bottom = 10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (s?.offRoute == true) Icon(Icons.Filled.Warning, contentDescription = null, modifier = Modifier.size(32.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-                    Text(subtitle, style = MaterialTheme.typography.titleMedium)
+                    Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+                    Text(subtitle, style = MaterialTheme.typography.bodyLarge)
                 }
                 IconButton(onClick = onToggleVoice) {
                     Icon(
@@ -819,7 +888,7 @@ private fun NavBanner(
                     )
                 }
             }
-            if (climb != null && climb.profile.size >= 2) {
+            if (showChart && climb != null && climb.profile.size >= 2) {
                 // El gráfico empieza en 0: perfil y posición relativos al pie de la subida
                 val start = climb.climb.startMeters
                 ElevationChart(

@@ -139,6 +139,9 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Tarjeta con la subida en curso, la próxima subida y lo que queda
 - La navegación sigue con la pantalla apagada y se graba como salida
 - La pantalla no se apaga sola mientras navegas
+- Pantalla de navegación despejada para ver la ruta: la tarjeta de abajo va recogida con tres cifras y se despliega con la flecha (las seis cifras, el perfil, *Volver al inicio* y *Terminar*); se recuerda cómo la dejaste
+- Los botones del mapa van recogidos tras uno (⋮) encima de la tarjeta; el SOS siempre a la vista
+- Tu posición se centra en el hueco libre entre la tarjeta de arriba y la de abajo
 
 ## Como un GPS profesional
 
@@ -222,7 +225,7 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - *Salidas* / *Excursiones* en la pestaña *Guardadas*, con el historial
 - Detalle con el recorrido coloreado por velocidad y su leyenda
 - Exportar a GPX para Strava, Wikiloc u otras apps
-- Usar una salida grabada como ruta
+- Usar una salida grabada como ruta, o **guardarla en tus rutas** para repetirla (sale en *Guardadas → Rutas*)
 - Borrar salidas
 
 ## Info

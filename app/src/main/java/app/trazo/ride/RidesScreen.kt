@@ -1,5 +1,8 @@
 package app.trazo.ride
 
+import android.widget.Toast
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.BackHandler
@@ -156,6 +159,17 @@ fun RideDetailScreen(file: File, onBack: () -> Unit, onUseAsRoute: (Gpx) -> Unit
     BackHandler(onBack = onBack)
     val ride by produceState<SavedRide?>(null, file) { value = withContext(Dispatchers.IO) { RideStore.load(file) } }
     var confirmDelete by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    // Si ya está en tus rutas (por su trazado), el botón lo dice
+    var inLibrary by remember(file) { mutableStateOf(false) }
+    LaunchedEffect(file) {
+        inLibrary = withContext(Dispatchers.IO) {
+            runCatching {
+                val gpx = GpxParser.parse(file.readText())
+                app.trazo.plan.RoutesLibrary.findByKey(context, app.trazo.gpx.offline.OfflineArea.routeKey(gpx.segments)) != null
+            }.getOrDefault(false)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -198,6 +212,24 @@ fun RideDetailScreen(file: File, onBack: () -> Unit, onUseAsRoute: (Gpx) -> Unit
             item {
                 Button(onClick = { context.shareGpx(r.file) }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                     Text("Exportar GPX (Strava, Wikiloc…)", style = MaterialTheme.typography.titleMedium)
+                }
+            }
+            item {
+                // Para repetirla: queda en Guardadas → Rutas, como las de Wikiloc o las que creas
+                FilledTonalButton(
+                    enabled = !inLibrary,
+                    onClick = {
+                        scope.launch {
+                            val ok = withContext(Dispatchers.IO) {
+                                runCatching { app.trazo.plan.RoutesLibrary.save(context, GpxParser.parse(r.file.readText())) }.isSuccess
+                            }
+                            inLibrary = ok
+                            Toast.makeText(context, if (ok) "Guardada en Guardadas → Rutas" else "No se pudo guardar", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                ) {
+                    Text(if (inLibrary) "Ya está en tus rutas" else "Guardar en mis rutas")
                 }
             }
             item {
