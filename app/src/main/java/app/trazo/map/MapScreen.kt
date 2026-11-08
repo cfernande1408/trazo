@@ -491,6 +491,7 @@ fun MapScreen(
         var startT: Long? = null
         var startAlongNav = 0.0
         var startRemainingGain = 0.0
+        val personalPace = app.trazo.ui.UserProfile.pace(activity).factor
         // Las posiciones llegan del servicio de grabación, que sigue vivo con la pantalla apagada
         // (SharedFlow: nunca termina ni lanza, no hace falta catch)
         RideSession.fixes
@@ -505,7 +506,8 @@ fun MapScreen(
                 // Cuánto falta: lo estimado para lo que queda, corregido por cómo vas hasta ahora
                 val doneM = s.alongMeters - startAlongNav
                 val expectedDone = activity.estimateMs(doneM, (startRemainingGain - s.remainingGainMeters).coerceAtLeast(0.0), 0.0)
-                val pace = if (doneM > 1_500 && expectedDone > 0) ((t - startT!!).toDouble() / expectedDone).coerceIn(0.5, 2.5) else 1.0
+                // Hasta llevar 1,5 km, tu ritmo de siempre (perfil y rutas realizadas)
+                val pace = if (doneM > 1_500 && expectedDone > 0) ((t - startT!!).toDouble() / expectedDone).coerceIn(0.5, 2.5) else personalPace
                 val eleNow = ElevationProfile.eleAt(fullProfile, s.alongMeters)
                 val eleEnd = fullProfile.lastOrNull()?.ele
                 val loss = s.remainingGainMeters + ((eleNow ?: 0.0) - (eleEnd ?: 0.0)).coerceAtLeast(-s.remainingGainMeters)

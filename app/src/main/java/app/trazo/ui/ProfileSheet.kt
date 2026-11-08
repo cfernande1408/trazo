@@ -10,7 +10,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Button
+import androidx.compose.material3.RadioButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
+import app.trazo.gpx.ride.Fitness
+import kotlin.math.abs
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +44,8 @@ private fun parse(text: String, range: ClosedFloatingPointRange<Double>) =
 
 /**
  * Tu perfil: peso (lo único necesario) y, para afinar las kcal con tu
- * metabolismo basal, altura, edad y sexo.
+ * metabolismo basal, altura, edad y sexo. Y tu forma física, para los
+ * tiempos y lo dura que es cada ruta para ti.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +55,7 @@ fun ProfileSheet(onDismiss: () -> Unit) {
     var height by remember { mutableStateOf(UserProfile.heightCm?.roundToInt()?.toString().orEmpty()) }
     var age by remember { mutableStateOf(UserProfile.ageYears?.toString().orEmpty()) }
     var sex by remember { mutableStateOf(UserProfile.sex) }
+    var fitness by remember { mutableStateOf(UserProfile.fitness) }
     val w = parse(weight, 30.0..200.0)
     val h = parse(height, 120.0..220.0)
     val a = age.toIntOrNull()?.takeIf { it in 10..100 }
@@ -95,14 +104,57 @@ fun ProfileSheet(onDismiss: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Text("Tu forma física", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                "Ajusta el tiempo estimado de las rutas y lo duras que son para ti. Cuando tengas rutas " +
+                    "realizadas, pesa más tu ritmo real.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Column(Modifier.selectableGroup()) {
+                Fitness.entries.forEach { f ->
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .selectable(selected = fitness == f, onClick = { fitness = f }, role = Role.RadioButton)
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = fitness == f, onClick = null)
+                        Column(Modifier.padding(start = 12.dp)) {
+                            Text(f.label, style = MaterialTheme.typography.bodyLarge)
+                            Text(f.hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+            PaceLine(fitness)
             Button(
                 enabled = w != null && heightOk && ageOk,
                 onClick = {
-                    UserProfile.save(context, w!!, h, a, sex)
+                    UserProfile.save(context, w!!, h, a, sex, fitness)
                     onDismiss()
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) { Text("Guardar") }
         }
     }
+}
+
+/** Lo que Trazo sabe ya de tu ritmo por tus rutas realizadas. */
+@Composable
+private fun PaceLine(fitness: Fitness?) {
+    val activity = AppMode.current
+    val p = app.trazo.gpx.ride.PersonalPace.of(activity, fitness, UserProfile.done)
+    val pct = ((p.factor - 1) * 100).roundToInt()
+    val what = if (activity == app.trazo.gpx.Activity.HIKE) "a pie" else "en bici"
+    Text(
+        when {
+            p.rides == 0 -> "Aún no hay rutas realizadas $what: se usa lo que marques aquí."
+            abs(pct) < 3 -> "Con ${p.rides} ${if (p.rides == 1) "ruta realizada" else "rutas realizadas"} $what, vas al ritmo de la estimación de serie."
+            else -> "Con ${p.rides} ${if (p.rides == 1) "ruta realizada" else "rutas realizadas"} $what, tardas un ${abs(pct)} % " +
+                (if (pct > 0) "más" else "menos") + " que la estimación de serie."
+        },
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }

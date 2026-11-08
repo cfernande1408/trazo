@@ -401,7 +401,7 @@ internal fun LightLine(state: ImportState.Loaded, activity: Activity) {
     val day = Math.floorDiv(now, 86_400_000L)
     val sunset = Daylight.sunsetMs(start.lat, start.lon, day) ?: return
     val s = state.stats
-    val finish = now + activity.estimateMs(s.distanceMeters, s.elevationGainMeters, s.elevationLossMeters)
+    val finish = now + app.trazo.ui.UserProfile.pace(activity).estimateMs(activity, s.distanceMeters, s.elevationGainMeters, s.elevationLossMeters)
     val fmt = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
     fun hhmm(ms: Long) = fmt.format(java.time.Instant.ofEpochMilli(ms).atZone(java.time.ZoneId.systemDefault()))
     val late = now < sunset && finish > sunset

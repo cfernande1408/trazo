@@ -229,14 +229,7 @@ private fun Loaded(
                 Stat("Desnivel −", metros(s.elevationLossMeters), Modifier.weight(1f))
             }
         }
-        item {
-            val est = activity.estimateMs(s.distanceMeters, s.elevationGainMeters, s.elevationLossMeters)
-            Text(
-                (if (activity == Activity.HIKE) "Tiempo estimado (MIDE): " else "Tiempo estimado en bici: ") + formatDuration(est),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        item { ForYou(s, activity) }
         item { WeatherPeek(state, activity, onOpen = { tab = 2 }) }
         item { LightLine(state, activity) }
         item { SeasonTip(season) }
@@ -377,5 +370,43 @@ private fun WaypointRow(w: Waypoint) {
             Text(w.name ?: "Punto sin nombre", style = MaterialTheme.typography.titleSmall)
             w.desc?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
+    }
+}
+
+/**
+ * Tiempo a tu ritmo (tu forma física y tus rutas realizadas) y lo dura que
+ * es la ruta para ti, con la estimación de serie debajo para comparar.
+ */
+@Composable
+private fun ForYou(s: app.trazo.gpx.TrackStats, activity: Activity) {
+    val pace = app.trazo.ui.UserProfile.pace(activity)
+    val mine = pace.estimateMs(activity, s.distanceMeters, s.elevationGainMeters, s.elevationLossMeters)
+    val base = activity.estimateMs(s.distanceMeters, s.elevationGainMeters, s.elevationLossMeters)
+    val effort = pace.effort(mine)
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("A tu ritmo: ${formatDuration(mine)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            EffortBadge(effort)
+        }
+        Text(
+            (if (activity == Activity.HIKE) "MIDE: " else "De serie en bici: ") + formatDuration(base) + " · " +
+                if (pace.rides > 0) "ajustado con tus ${pace.rides} rutas realizadas" else "ajustado con tu forma física (tu perfil)",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** «Fácil para ti», «A tu medida»… con el color de lo duro que es. */
+@Composable
+internal fun EffortBadge(effort: app.trazo.gpx.ride.Effort) {
+    val (bg, fg) = when (effort) {
+        app.trazo.gpx.ride.Effort.EASY -> Color(0xFFD3F9D8) to Color(0xFF1B5E20)
+        app.trazo.gpx.ride.Effort.MODERATE -> Color(0xFFDBE4FF) to Color(0xFF1A3A8A)
+        app.trazo.gpx.ride.Effort.HARD -> Color(0xFFFFE8CC) to Color(0xFF8A3B00)
+        app.trazo.gpx.ride.Effort.VERY_HARD -> Color(0xFFFFE3E3) to Color(0xFF8B1A1A)
+    }
+    androidx.compose.material3.Surface(color = bg, contentColor = fg, shape = MaterialTheme.shapes.small) {
+        Text(effort.label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
     }
 }

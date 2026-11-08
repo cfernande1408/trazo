@@ -36,6 +36,10 @@ y síguelas con avisos de desvío, perfil de desnivel y vista 3D. Sin cuentas y 
 las rutas que ves, a cuántos metros salta el aviso de desvío, las estadísticas y el tiempo
 estimado (método MIDE en senderismo). Lo cambias cuando quieras.
 
+**A tu medida.** Dile en tu perfil cuánto sales y Trazo ajusta los tiempos de cada ruta a tu
+ritmo, que va afinando con tus rutas realizadas. Cada ruta te dice si es fácil, a tu medida,
+exigente o muy dura para ti.
+
 **Descubre Trazo.** En Inicio, una tarjeta por función con su icono, qué hace y un botón
 para probarla. Marca el círculo cuando la conozcas o desliza la tarjeta para quitarla; desde
 Info se pueden volver a ver.
@@ -227,5 +231,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Kcal gastadas y portada con tu semana
 - [x] Tarjetas de Descubre Trazo en Inicio
 - [x] Analizar las rutas realizadas en el mapa y en 3D
+- [x] Tiempos a tu ritmo y dificultad para ti según tu forma física
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones

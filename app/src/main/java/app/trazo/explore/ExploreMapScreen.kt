@@ -587,6 +587,16 @@ private fun SelectedCard(sel: SelectedRoute, activity: Activity, onClose: () -> 
                     else "${km(dist)} · $form · calculando desnivel…",
                     style = MaterialTheme.typography.titleSmall,
                 )
+                if (loaded != null) {
+                    // Lo dura que es para ti y lo que tardarías a tu ritmo
+                    val st = loaded.stats
+                    val pace = app.trazo.ui.UserProfile.pace(activity)
+                    val mine = pace.estimateMs(activity, st.distanceMeters, st.elevationGainMeters, st.elevationLossMeters)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        app.trazo.importer.EffortBadge(pace.effort(mine))
+                        Text("${app.trazo.ride.formatDuration(mine)} a tu ritmo", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
                 if (loaded != null && loaded.profile.size >= 2) {
                     ElevationChart(loaded.profile, Modifier.fillMaxWidth().height(56.dp))
                 }

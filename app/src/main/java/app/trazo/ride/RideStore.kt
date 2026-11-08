@@ -76,6 +76,13 @@ object RideStore {
     }.getOrNull()
 
     /** Más recientes primero. */
+    /** Las [n] salidas más recientes, sin leer las demás. */
+    fun recent(context: Context, n: Int): List<SavedRide> =
+        dir(context).listFiles { f -> f.extension == "gpx" }.orEmpty()
+            .sortedByDescending { it.name }
+            .take(n)
+            .mapNotNull(::load)
+
     fun list(context: Context): List<SavedRide> =
         dir(context).listFiles { f -> f.extension == "gpx" }.orEmpty()
             .sortedByDescending { it.name }

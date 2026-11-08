@@ -168,6 +168,8 @@ class MainActivity : ComponentActivity() {
                 var analyzingFrom by rememberSaveable { mutableStateOf(0) }
                 val ride by RideSession.state.collectAsStateWithLifecycle()
                 val loaded = state as? ImportState.Loaded
+                // Tu ritmo sale de tus rutas realizadas: se releen al grabar, abrir o borrar una
+                androidx.compose.runtime.LaunchedEffect(showRecord, rideFile) { app.trazo.ui.UserProfile.refreshDone(context) }
                 val openRoute: (app.trazo.gpx.Gpx) -> Unit = { gpx ->
                     analyzing = null
                     importer.importGpx(gpx)

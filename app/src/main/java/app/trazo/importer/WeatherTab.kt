@@ -72,7 +72,9 @@ private fun startMs(dayOffset: Int, hour: Int): Long =
         .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
 private suspend fun loadForecast(state: ImportState.Loaded, activity: Activity, startMs: Long): Forecast = runCatching {
-    val samples = withContext(Dispatchers.Default) { RouteWeather.samples(state.gpx.segments, activity) }
+    // Las horas de paso, a tu ritmo
+    val factor = app.trazo.ui.UserProfile.pace(activity).factor
+    val samples = withContext(Dispatchers.Default) { RouteWeather.samples(state.gpx.segments, activity, paceFactor = factor) }
     val json = Http.get(RouteWeather.url(samples))
     val points = RouteWeather.parse(json, samples, startMs)
     if (points.isEmpty()) Forecast.Failed("No hay previsión para ese día todavía (solo ${RouteWeather.FORECAST_DAYS} días).")
@@ -216,8 +218,8 @@ internal fun WeatherTab(state: ImportState.Loaded, activity: Activity) {
                 if (!detail) f.points.forEach { WeatherRow(it, zone) }
                 else WeatherDetailView(f.rows, f.wear, zone)
                 Text(
-                    "Previsión de Open-Meteo a la altitud de cada punto. Las horas de paso son estimadas " +
-                        (if (activity == Activity.HIKE) "con el método MIDE." else "para bici de montaña."),
+                    "Previsión de Open-Meteo a la altitud de cada punto. Las horas de paso son a tu ritmo " +
+                        "(tu forma física y tus rutas realizadas).",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

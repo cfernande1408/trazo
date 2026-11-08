@@ -13,7 +13,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Aviso de desvío a 40 m en bici y a 30 m a pie, con más margen de tiempo a pie
 - Al grabar, a pie cuenta como movimiento aunque subas muy despacio
 - Filtro de saltos del GPS según la actividad (25 m/s en bici, 5 m/s a pie)
-- Tiempo estimado en bici y por el método MIDE a pie
+- Tiempo estimado en bici y por el método MIDE a pie, ajustado a tu ritmo (ver *A tu medida*)
 - *Crear ruta* va por pistas ciclables en bici y por senderos de montaña a pie
 - Colores de velocidad del recorrido grabado adaptados a cada actividad
 - Los textos dicen «salida» o «excursión» según el caso
@@ -48,14 +48,15 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Portada con una sierra dibujada con los colores de la estación (cielo, cordales y el trazo de una ruta hasta la cumbre), la bienvenida, el consejo de temporada y los botones grandes de **Grabar** y **Explorar**
 - **Tu semana**: salidas, distancia, desnivel, tiempo en movimiento y kcal desde el lunes
 - Atajos a *Importar GPX*, *Crear ruta* y *Wikiloc*, y tus rutas guardadas en una fila para abrirlas con un toque
-- **Descubre Trazo**: una tarjeta por función (explorar, Wikiloc, crear ruta, mapas sin conexión, tiempo, pendiente y suelo, 3D, voz, recalcular, SOS, marcar puntos, Guardadas, perfil, sensores y la web), con su icono, qué hace y un botón para probarla
+- **Descubre Trazo**: una tarjeta por función (explorar, Wikiloc, crear ruta, mapas sin conexión, tiempo, pendiente y suelo, 3D, voz, recalcular, SOS, marcar puntos, Guardadas, perfil, Trazo a tu medida, sensores y la web), con su icono, qué hace y un botón para probarla
 - El círculo de cada tarjeta la marca como vista (pasa al final, atenuada) y deslizándola a un lado se quita; arriba, cuántas llevas vistas. Se ven tres y el resto con *Ver todas*
 - *Tu semana* recalcula las kcal en cuanto cambias tu perfil
 - Con una ruta abierta, la flecha de arriba (o el botón *Atrás*) vuelve a la portada
 - Importa GPX con *Abrir con…*, *Compartir → Trazo* o desde el selector de archivos
 - Lee `trk`, `rte` y `wpt`, con CDATA y entidades, y quita el «Wikiloc - » del nombre
 - Vista previa con el mapa topo y la ruta dibujada encima
-- Distancia, desnivel positivo y negativo (con filtro de ruido del GPS) y tiempo estimado
+- Distancia, desnivel positivo y negativo (con filtro de ruido del GPS) y tiempo a tu ritmo, con la estimación de serie (MIDE a pie) debajo
+- Etiqueta de lo dura que es para ti: *Fácil para ti*, *A tu medida*, *Exigente para ti* o *Muy dura para ti*
 - Pestaña **Perfil**: perfil de altitud que se recorre con el dedo, con altitud mínima y máxima
 - Pestaña **Puntos**: los puntos que marcó el autor, con su descripción
 - Pestaña **Tiempo**: previsión a lo largo de la ruta (ver más abajo)
@@ -188,6 +189,10 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - **Pantalla de datos a tu gusto**: seis cifras en la tarjeta de navegación; toca una para elegir entre quedan, por subir, recorrido, velocidad, media, tiempo en movimiento, altitud, pendiente, hora de llegada, luz, pulso, cadencia, potencia y compañero virtual
 - **Kcal gastadas** en la pantalla de navegación (cifra *Kcal*), al grabar, en cada salida y en tu semana: con potenciómetro, del trabajo en los pedales; si no, por el tiempo en movimiento (MET de bici de montaña o senderismo) más lo que cuesta subir el desnivel con tu peso y el de la bici o la mochila
 - **Tu perfil** (icono de arriba en *Inicio*): peso y, si quieres afinar, altura, edad y sexo; con ellos las kcal usan tu metabolismo basal (Mifflin-St Jeor), como los relojes deportivos. Se queda en el móvil (75 kg si no lo dices)
+- **A tu medida**: en tu perfil dices cuánto sales (salgo poco, de vez en cuando, cada semana o entreno en serio). Con eso y tus rutas realizadas, Trazo calcula cuánto tardas frente a la estimación de serie y lo aplica al tiempo de cada ruta, a la hora de llegada, a las horas de paso del tiempo y a la luz restante al empezar a navegar
+- Con una o dos rutas realizadas pesa más lo que dices; desde la tercera, lo que haces (cuentan las 10 más recientes de esa actividad, de más de 2 km y 20 min). El perfil dice cuánto más rápido o lento vas
+- Lo dura que es una ruta para ti sale de lo que tardarías a tu ritmo frente a lo que se te hace cómodo: lo que duran tres de cada cuatro de tus rutas, o lo normal para tu forma física si aún no hay; sale en el resumen y en *Explorar* al tocar una ruta
+- El peso y la altura solo se usan para las kcal: la dificultad no depende de tu cuerpo, sino de cómo sales
 - **Compañero virtual**: si ya hiciste esa ruta, «Vs. anterior» dice cuánto vas por delante (+1:20) o por detrás (−0:45) de tu salida más reciente en el mismo punto
 
 ## Seguridad
@@ -216,7 +221,7 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - Tocas puntos en el mapa y BRouter traza la ruta por caminos
 - Perfil `mtb` en bici y `hiking-mountain` a pie
 - Puntos numerados y una guía recta mientras se calcula
-- Distancia, desnivel, tiempo estimado y perfil mientras la dibujas
+- Distancia, desnivel, tiempo a tu ritmo y perfil mientras la dibujas
 - Deshacer, cerrar en circular, **ida y vuelta** por el mismo camino y borrar todo
 - Tocar un punto para **moverlo** (y luego tocar dónde va) o **borrarlo**
 - Tocar la ruta calculada para **insertar un punto en medio** de ese tramo

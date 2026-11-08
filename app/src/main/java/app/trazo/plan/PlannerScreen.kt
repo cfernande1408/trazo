@@ -307,8 +307,8 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
                         Figure("Distancia", km(stats.distanceMeters))
                         Figure("Desnivel +", metros(stats.elevationGainMeters))
                         Figure(
-                            "Tiempo est.",
-                            formatDuration(activity.estimateMs(stats.distanceMeters, stats.elevationGainMeters, stats.elevationLossMeters)),
+                            "A tu ritmo",
+                            formatDuration(app.trazo.ui.UserProfile.pace(activity).estimateMs(activity, stats.distanceMeters, stats.elevationGainMeters, stats.elevationLossMeters)),
                         )
                     }
                     if (profile.size >= 2) ElevationChart(profile, Modifier.fillMaxWidth().height(64.dp))

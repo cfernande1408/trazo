@@ -88,6 +88,12 @@ internal fun tips(activity: Activity, a: HomeActions, openWeb: () -> Unit): List
             "Explorar", a.onExplore,
         ),
         Tip(
+            "for-you", Icons.Filled.AccountCircle, Color(0xFF099268), "Trazo a tu medida",
+            "Dinos cuánto sales y, con tus rutas realizadas, los tiempos van a tu ritmo y cada ruta te dice si es fácil, " +
+                "a tu medida o exigente para ti. Con tu peso y altura, también tus kcal.",
+            "Abrir perfil", a.onProfile,
+        ),
+        Tip(
             "wikiloc", Icons.Filled.FileOpen, Color(0xFF1C7ED6), "Tus rutas de Wikiloc",
             "Descarga el GPX en Wikiloc y dale a Compartir → Trazo, o búscala desde la pestaña Wikiloc. Sale con mapa, perfil y puntos del autor.",
             "Abrir Wikiloc", a.onWikiloc,
@@ -135,11 +141,6 @@ internal fun tips(activity: Activity, a: HomeActions, openWeb: () -> Unit): List
             "library", Icons.Filled.Bookmarks, Color(0xFF495057), "Todo en Guardadas",
             "Tus rutas, lo que has grabado y los mapas descargados, en una pestaña, como tu biblioteca de música.",
             "Ver Guardadas", a.onLibrary,
-        ),
-        Tip(
-            "profile", Icons.Filled.AccountCircle, Color(0xFF099268), "Kcal a tu medida",
-            "Pon tu peso, altura y edad en tu perfil y las kcal de cada salida se calculan con tu metabolismo.",
-            "Abrir perfil", a.onProfile,
         ),
         Tip(
             "sensors", Icons.Filled.MonitorHeart, Color(0xFFD6336C), "Pulso y potencia (en pruebas)",
