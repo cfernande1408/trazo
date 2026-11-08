@@ -8,6 +8,7 @@ import app.trazo.gpx.osm.Json
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 /** Un punto de la ruta y cuándo llegarás a él desde la salida. */
 data class RouteSample(
@@ -40,8 +41,11 @@ object RouteWeather {
 
     const val FORECAST_DAYS = 7
 
-    /** Puntos repartidos por la ruta: uno cada ~5 km, entre 2 y 8. */
-    fun samples(segments: List<List<GeoPoint>>, activity: Activity, count: Int? = null): List<RouteSample> {
+    /**
+     * Puntos repartidos por la ruta: uno cada ~5 km, entre 2 y 8. [paceFactor]
+     * es tu ritmo frente al de serie (1,2 si tardas un 20 % más).
+     */
+    fun samples(segments: List<List<GeoPoint>>, activity: Activity, count: Int? = null, paceFactor: Double = 1.0): List<RouteSample> {
         val total = TrackStatsCalculator.compute(segments).distanceMeters
         if (total <= 0) return emptyList()
         val n = count ?: (total / 5_000).roundToInt().plus(1).coerceIn(2, 8)
@@ -51,7 +55,7 @@ object RouteWeather {
             val p = RouteGeometry.pointAt(segments, d) ?: segments.first().first()
             RouteSample(
                 d, p.lat, p.lon, p.ele ?: nearestEle(segments, p),
-                if (k == 0) 0 else activity.estimateMs(partial.distanceMeters, partial.elevationGainMeters, partial.elevationLossMeters),
+                if (k == 0) 0 else (activity.estimateMs(partial.distanceMeters, partial.elevationGainMeters, partial.elevationLossMeters) * paceFactor).roundToLong(),
             )
         }
     }

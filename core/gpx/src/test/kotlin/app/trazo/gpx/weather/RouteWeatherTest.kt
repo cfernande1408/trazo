@@ -26,6 +26,14 @@ class RouteWeatherTest {
     }
 
     @Test
+    fun `a tu ritmo llegas antes o despues a cada punto`() {
+        val base = RouteWeather.samples(climb, Activity.HIKE)
+        val slow = RouteWeather.samples(climb, Activity.HIKE, paceFactor = 1.5)
+        assertEquals(base.last().offsetMs * 1.5, slow.last().offsetMs.toDouble(), 1.0)
+        assertEquals(base.last().distanceMeters, slow.last().distanceMeters, 0.0)
+    }
+
+    @Test
     fun `url con todos los puntos y su altitud`() {
         val u = RouteWeather.url(RouteWeather.samples(climb, Activity.BIKE, count = 2))
         assertTrue(u, u.startsWith("https://api.open-meteo.com/v1/forecast?latitude=40.7000,40.8000&longitude=-3.9000,-3.9000"))
