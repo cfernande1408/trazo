@@ -44,7 +44,6 @@ import app.trazo.map.TrazoMapStyle
 import app.trazo.map.rememberMapView
 import app.trazo.ui.AppMode
 import app.trazo.ui.outing
-import app.trazo.ui.outingsTitle
 import kotlinx.coroutines.delay
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
@@ -182,7 +181,7 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
                 } else {
                     Text("Graba tu ${AppMode.current.outing} aunque no sigas ninguna ruta.", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Sigue grabando con la pantalla apagada. Al terminar verás distancia, tiempo y velocidades, y se guarda en ${AppMode.current.outingsTitle}.",
+                        "Sigue grabando con la pantalla apagada. Al terminar verás distancia, tiempo y velocidades, y se guarda en Guardadas → Realizadas.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Button(

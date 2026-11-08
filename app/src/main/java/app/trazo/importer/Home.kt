@@ -257,7 +257,7 @@ private fun WeekCard(week: Week?, activity: Activity) {
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         val min = (w.movingMs / 60_000.0).roundToInt()
-                        WeekStat("En movimiento", "${min / 60} h ${"%02d".format(min % 60)}", Modifier.weight(1f))
+                        WeekStat("En marcha", "${min / 60} h ${"%02d".format(min % 60)}", Modifier.weight(1f))
                         WeekStat("Kcal", Calories.format(w.kcal).removeSuffix(" kcal"), Modifier.weight(1f))
                         androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
                     }
@@ -271,7 +271,7 @@ private fun WeekCard(week: Week?, activity: Activity) {
 private fun WeekStat(label: String, value: String, modifier: Modifier) {
     Column(modifier) {
         Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
     }
 }
 

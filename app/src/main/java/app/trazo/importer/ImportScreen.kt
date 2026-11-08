@@ -36,6 +36,8 @@ import androidx.compose.ui.platform.LocalContext
 import android.net.Uri
 import app.trazo.ui.openUrl
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -99,7 +101,10 @@ fun ImportScreen(
     onExplore: () -> Unit = {},
     onWikiloc: () -> Unit = {},
     onLibrary: () -> Unit = {},
+    /** Cerrar la ruta abierta (vuelve a la portada o a la salida que analizabas). */
+    onClose: () -> Unit = {},
 ) {
+    BackHandler(enabled = state !is ImportState.Empty, onBack = onClose)
     var switching by remember { mutableStateOf(false) }
     var profile by remember { mutableStateOf(false) }
     val lib = Library(library, onOpenSaved, onDeleteSaved)
@@ -107,6 +112,11 @@ fun ImportScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Trazo", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                navigationIcon = {
+                    if (state !is ImportState.Empty) {
+                        IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver") }
+                    }
+                },
                 actions = {
                     // Tu perfil (peso, altura, edad: para las kcal)
                     IconButton(onClick = { profile = true }) {

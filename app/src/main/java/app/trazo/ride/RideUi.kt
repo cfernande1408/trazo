@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import app.trazo.gpx.ride.RideStats
@@ -41,7 +42,7 @@ internal fun Context.hasLocation() =
 fun RideStatsGrid(stats: RideStats, currentKmh: Double? = null, elapsedMs: Long? = null, kcal: Int? = null) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Big("En movimiento", formatDuration(stats.movingMs), Modifier.weight(1f))
+            Big("En marcha", formatDuration(stats.movingMs), Modifier.weight(1f))
             Big("Distancia", kmStr(stats.distanceMeters), Modifier.weight(1f))
             if (currentKmh != null) Big("Ahora", kmh(currentKmh), Modifier.weight(1f))
             else Big("Total", formatDuration(elapsedMs ?: stats.totalMs), Modifier.weight(1f))
@@ -73,7 +74,7 @@ fun RideStatsGrid(stats: RideStats, currentKmh: Double? = null, elapsedMs: Long?
 private fun Big(label: String, value: String, modifier: Modifier) {
     Card(modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
         Column(Modifier.padding(10.dp)) {
-            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
         }
     }

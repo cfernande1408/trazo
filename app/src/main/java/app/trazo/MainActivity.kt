@@ -163,9 +163,13 @@ class MainActivity : ComponentActivity() {
                 var exploreFocus by remember { mutableStateOf<org.maplibre.android.geometry.LatLngBounds?>(null) }
                 /** Ruta del archivo de la salida abierta en detalle. */
                 var rideFile by rememberSaveable { mutableStateOf<String?>(null) }
+                /** Salida abierta para analizar en Inicio: al cerrarla se vuelve a su detalle. */
+                var analyzing by rememberSaveable { mutableStateOf<String?>(null) }
+                var analyzingFrom by rememberSaveable { mutableStateOf(0) }
                 val ride by RideSession.state.collectAsStateWithLifecycle()
                 val loaded = state as? ImportState.Loaded
                 val openRoute: (app.trazo.gpx.Gpx) -> Unit = { gpx ->
+                    analyzing = null
                     importer.importGpx(gpx)
                     showRides = false
                     rideFile = null
@@ -181,7 +185,13 @@ class MainActivity : ComponentActivity() {
                     rideFile != null -> RideDetailScreen(
                         File(rideFile!!),
                         onBack = { rideFile = null },
-                        onUseAsRoute = openRoute,
+                        onAnalyze = { gpx ->
+                            val f = rideFile
+                            val from = tab
+                            openRoute(gpx)
+                            analyzing = f
+                            analyzingFrom = from
+                        },
                         // Si venías de Guardadas, vuelves allí; si no, a la lista de salidas
                         onDeleted = { rideFile = null; if (tab != TAB_LIBRARY) showRides = true },
                     )
@@ -238,7 +248,7 @@ class MainActivity : ComponentActivity() {
                             when (tab) {
                                 0 -> ImportScreen(
                                     state,
-                                    onPickFile = { pickGpx.launch(arrayOf("*/*")) },
+                                    onPickFile = { analyzing = null; pickGpx.launch(arrayOf("*/*")) },
                                     onOpenMap = { showMap = true },
                                     onRecord = { showRecord = true },
                                     activity = activity,
@@ -250,11 +260,16 @@ class MainActivity : ComponentActivity() {
                                     onExplore = { tab = 1 },
                                     onWikiloc = { tab = 2 },
                                     onLibrary = { tab = TAB_LIBRARY },
+                                    onClose = {
+                                        importer.clear()
+                                        analyzing?.let { rideFile = it; tab = analyzingFrom }
+                                        analyzing = null
+                                    },
                                     library = library,
                                     onOpenSaved = { r ->
                                         scope.launch {
                                             val gpx = withContext(Dispatchers.IO) { runCatching { RoutesLibrary.open(r.file) }.getOrNull() }
-                                            if (gpx != null) importer.importGpx(gpx)
+                                            if (gpx != null) openRoute(gpx)
                                         }
                                     },
                                     onDeleteSaved = { r ->

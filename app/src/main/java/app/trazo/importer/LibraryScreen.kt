@@ -43,7 +43,6 @@ import app.trazo.gpx.Activity
 import app.trazo.plan.SavedRoute
 import app.trazo.offline.OfflineMaps
 import app.trazo.ride.RidesList
-import app.trazo.ui.outingsTitle
 import java.io.File
 
 /** Las estanterías de Guardadas, como los filtros de la biblioteca de Spotify. */
@@ -69,8 +68,8 @@ fun LibraryScreen(
 ) {
     var shelf by rememberSaveable { mutableStateOf(Shelf.ROUTES) }
     val maps by OfflineMaps.maps.collectAsStateWithLifecycle()
-    // "Mis salidas" → "Salidas"
-    val outings = activity.outingsTitle.removePrefix("Mis ").replaceFirstChar { it.uppercase() }
+    // Junto al chip de Rutas, basta con «Realizadas»
+    val outings = "Realizadas"
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Guardadas") }) },

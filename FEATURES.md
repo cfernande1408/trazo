@@ -38,7 +38,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Todo lo que tienes en el móvil, con un chip arriba para cada cosa, como la biblioteca de Spotify
 - **Rutas**: las que guardas desde Wikiloc, Explorar o *Crear ruta*; se abren con un toque (con su resumen, mapa y navegación) y se borran con confirmación
 - Botón **Importar GPX** para traer los que tengas en el móvil, uno o varios a la vez, directos a tus rutas
-- **Salidas** (o *Excursiones*): lo que has grabado, de lo más reciente a lo más antiguo
+- **Realizadas**: las rutas que has grabado, de la más reciente a la más antigua
 - **Mapas**: las zonas descargadas, con lo que ocupa cada una y para borrarlas
 - Tocar el mapa de una ruta abre esa ruta; el de una zona descargada desde *Explorar*, esa zona en el mapa
 - Al descargar el mapa de una ruta, la ruta se guarda también en *Rutas*
@@ -51,6 +51,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - **Descubre Trazo**: una tarjeta por función (explorar, Wikiloc, crear ruta, mapas sin conexión, tiempo, pendiente y suelo, 3D, voz, recalcular, SOS, marcar puntos, Guardadas, perfil, sensores y la web), con su icono, qué hace y un botón para probarla
 - El círculo de cada tarjeta la marca como vista (pasa al final, atenuada) y deslizándola a un lado se quita; arriba, cuántas llevas vistas. Se ven tres y el resto con *Ver todas*
 - *Tu semana* recalcula las kcal en cuanto cambias tu perfil
+- Con una ruta abierta, la flecha de arriba (o el botón *Atrás*) vuelve a la portada
 - Importa GPX con *Abrir con…*, *Compartir → Trazo* o desde el selector de archivos
 - Lee `trk`, `rte` y `wpt`, con CDATA y entidades, y quita el «Wikiloc - » del nombre
 - Vista previa con el mapa topo y la ruta dibujada encima
@@ -232,10 +233,11 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - En el detalle de la salida, en el mapa y en una lista; tocando la foto se abre en grande
 - Distancia, tiempo total y en movimiento, velocidad media y máxima, desnivel
 - Aviso en la barra de abajo mientras grabas, para volver a la grabación
-- *Salidas* / *Excursiones* en la pestaña *Guardadas*, con el historial
+- *Rutas realizadas* en la pestaña *Guardadas* (chip *Realizadas*), con el historial
+- **Analizar** una ruta realizada: se abre como cualquier ruta, con su mapa y la capa de pendiente, dificultad, por dónde va, puntos marcados, vista 3D y vuelo virtual; al volver, regresas a su detalle
 - Detalle con el recorrido coloreado por velocidad y su leyenda
 - Exportar a GPX para Strava, Wikiloc u otras apps
-- Usar una salida grabada como ruta, o **guardarla en tus rutas** para repetirla (sale en *Guardadas → Rutas*)
+- Desde el análisis se puede seguir como ruta, o **guardarla en tus rutas** para repetirla (sale en *Guardadas → Rutas*)
 - Borrar salidas
 
 ## Info

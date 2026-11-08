@@ -69,7 +69,8 @@ val Activity.icon: ImageVector get() = if (this == Activity.BIKE) Icons.Filled.D
 
 /** "salida" / "excursión" */
 val Activity.outing: String get() = if (this == Activity.BIKE) "salida" else "excursión"
-val Activity.outingsTitle: String get() = if (this == Activity.BIKE) "Mis salidas" else "Mis excursiones"
+/** Lo que has grabado, en bici o a pie. */
+val Activity.outingsTitle: String get() = "Rutas realizadas"
 val Activity.recordCta: String get() = if (this == Activity.BIKE) "Grabar salida" else "Grabar excursión"
 val Activity.exploreHint: String get() =
     if (this == Activity.BIKE) "Toca una bici para ver su recorrido" else "Toca un excursionista para ver el sendero"

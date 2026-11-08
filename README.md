@@ -41,7 +41,9 @@ para probarla. Marca el círculo cuando la conozcas o desliza la tarjeta para qu
 Info se pueden volver a ver.
 
 **Guardadas.** Una pestaña con todo lo que tienes en el móvil, como la biblioteca de Spotify:
-tus rutas, tus salidas grabadas y los mapas sin conexión, cada cosa con su chip.
+tus rutas, las rutas realizadas y los mapas sin conexión, cada cosa con su chip. Una ruta
+realizada se puede analizar como cualquier otra: mapa con la pendiente, dificultad, suelo,
+puntos marcados y vista 3D.
 
 **Buscador.** Escribe *Bola del Mundo* o *PR-M 13*: te lleva al sitio y te enseña las rutas
 de alrededor, o directamente las que se llaman así. Con un botón de **Lista** para ver todas
@@ -224,5 +226,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Tiempo cada 15 minutos y qué llevarte puesto
 - [x] Kcal gastadas y portada con tu semana
 - [x] Tarjetas de Descubre Trazo en Inicio
+- [x] Analizar las rutas realizadas en el mapa y en 3D
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones

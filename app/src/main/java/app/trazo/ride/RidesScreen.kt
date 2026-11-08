@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -154,7 +155,7 @@ fun RidesList(onOpen: (File) -> Unit, onRecord: () -> Unit, modifier: Modifier =
 /** Una salida: mapa coloreado por velocidad, datos, perfil, exportar y usar como ruta. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RideDetailScreen(file: File, onBack: () -> Unit, onUseAsRoute: (Gpx) -> Unit, onDeleted: () -> Unit) {
+fun RideDetailScreen(file: File, onBack: () -> Unit, onAnalyze: (Gpx) -> Unit, onDeleted: () -> Unit) {
     val context = LocalContext.current
     BackHandler(onBack = onBack)
     val ride by produceState<SavedRide?>(null, file) { value = withContext(Dispatchers.IO) { RideStore.load(file) } }
@@ -191,6 +192,17 @@ fun RideDetailScreen(file: File, onBack: () -> Unit, onUseAsRoute: (Gpx) -> Unit
         ) {
             item {
                 Card(shape = MaterialTheme.shapes.extraLarge) { SpeedMap(r, Modifier.fillMaxWidth().height(260.dp)) }
+            }
+            item {
+                // Lo hecho, con todo lo de una ruta: mapa con la capa de pendiente,
+                // dificultad, suelo, puntos, 3D y vuelo virtual
+                FilledTonalButton(
+                    onClick = { analyze(r.file, onAnalyze) },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                ) {
+                    Icon(Icons.Filled.Insights, contentDescription = null)
+                    Text("  Analizar: mapa, pendiente y 3D")
+                }
             }
             item { SpeedLegend(r.activity) }
             item {
@@ -233,11 +245,8 @@ fun RideDetailScreen(file: File, onBack: () -> Unit, onUseAsRoute: (Gpx) -> Unit
                 }
             }
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = { onUseAsRoute(GpxParser.parse(r.file.readText())) }, modifier = Modifier.weight(1f)) {
-                        Text("Usar como ruta")
-                    }
-                    TextButton(onClick = { confirmDelete = true }) { Text("Borrar", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = { confirmDelete = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Borrar", color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -254,6 +263,11 @@ fun RideDetailScreen(file: File, onBack: () -> Unit, onUseAsRoute: (Gpx) -> Unit
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancelar") } },
         )
     }
+}
+
+/** Abre la salida como una ruta más, con su resumen, mapa y 3D. */
+private fun analyze(file: File, onAnalyze: (Gpx) -> Unit) {
+    runCatching { GpxParser.parse(file.readText()) }.onSuccess(onAnalyze)
 }
 
 /** El recorrido grabado, coloreado de azul (despacio) a rojo (rápido). */

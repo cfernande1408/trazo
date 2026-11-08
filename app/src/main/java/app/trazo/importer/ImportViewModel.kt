@@ -65,6 +65,11 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Cierra la ruta abierta y vuelve a la portada de Inicio. */
+    fun clear() {
+        _state.value = ImportState.Empty
+    }
+
     /**
      * Si el GPX no trae altitudes (rutas creadas en otras apps, algunos
      * exportes), se piden a Open-Meteo y se rehace el resumen con perfil.
