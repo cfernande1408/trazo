@@ -239,10 +239,14 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - Distancia, tiempo total y en movimiento, velocidad media y máxima, desnivel
 - Aviso en la barra de abajo mientras grabas, para volver a la grabación
 - *Rutas realizadas* en la pestaña *Guardadas* (chip *Realizadas*), con el historial
-- **Analizar** una ruta realizada: se abre como cualquier ruta, con su mapa y la capa de pendiente, dificultad, por dónde va, puntos marcados, vista 3D y vuelo virtual; al volver, regresas a su detalle
+- Dos botones en el detalle de una ruta realizada: **Analizar** (ver lo que hiciste) y **Repetir** (prepararla para hacerla otra vez)
+- **Analizar**: cuándo la hiciste, tiempo en marcha y total, media y lo que tardaste frente a MIDE (o la estimación de bici); dificultad, por dónde va, pendiente, perfil y tus puntos marcados. Sin previsión, luz ni descargas, que son para planear
+- *Analizar en el mapa* abre el mapa con la pendiente ya coloreada (sin tocar tus capas) y sin *Empezar ruta*; la vista 3D y el vuelo virtual, igual que en cualquier ruta
+- **Repetir esta ruta** (en el detalle o al final del análisis): la abre para planear, con el tiempo a tu ritmo, previsión, luz, mapa sin conexión y navegación
+- Al volver, regresas al detalle de la ruta realizada
 - Detalle con el recorrido coloreado por velocidad y su leyenda
 - Exportar a GPX para Strava, Wikiloc u otras apps
-- Desde el análisis se puede seguir como ruta, o **guardarla en tus rutas** para repetirla (sale en *Guardadas → Rutas*)
+- Desde el análisis o al repetirla se puede **guardar en tus rutas** para repetirla (sale en *Guardadas → Rutas*)
 - Borrar salidas
 
 ## Info

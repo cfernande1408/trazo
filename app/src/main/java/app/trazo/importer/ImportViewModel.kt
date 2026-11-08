@@ -20,6 +20,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** Una ruta realizada abierta para analizarla. */
+data class DoneRide(val startedAtMs: Long, val stats: app.trazo.gpx.ride.RideStats)
+
 sealed interface ImportState {
     data object Empty : ImportState
     data object Loading : ImportState
@@ -29,6 +32,8 @@ sealed interface ImportState {
         /** Track reducido para dibujar la silueta sin cargar miles de puntos. */
         val preview: List<List<GeoPoint>>,
         val profile: List<ProfilePoint>,
+        /** Si es una ruta que has hecho y la abres para analizarla: cuándo y cómo te fue. */
+        val done: DoneRide? = null,
     ) : ImportState
     data class Error(val message: String) : ImportState
 }
@@ -55,14 +60,19 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Para rutas que no vienen de un archivo: Explorar (OSM) o el navegador de Wikiloc. */
-    fun importGpx(gpx: Gpx) {
+    fun importGpx(gpx: Gpx, done: DoneRide? = null) {
         _state.value = ImportState.Loading
         viewModelScope.launch {
             _state.value = withContext(Dispatchers.Default) {
-                runCatching { loaded(gpx) }.getOrElse { ImportState.Error(it.message ?: "Ruta no válida") }
+                runCatching { loaded(gpx).copy(done = done) }.getOrElse { ImportState.Error(it.message ?: "Ruta no válida") }
             }
             fillElevation()
         }
+    }
+
+    /** De analizar una ruta realizada a prepararla para repetirla. */
+    fun plan() {
+        (_state.value as? ImportState.Loaded)?.let { _state.value = it.copy(done = null) }
     }
 
     /** Cierra la ruta abierta y vuelve a la portada de Inicio. */
@@ -80,7 +90,7 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
         val withEle = Http.withElevation(current.gpx)
         if (withEle === current.gpx) return
         // Solo si sigue abierta la misma ruta
-        if (_state.value === current) _state.value = withContext(Dispatchers.Default) { loadedFrom(withEle) }
+        if (_state.value === current) _state.value = withContext(Dispatchers.Default) { loadedFrom(withEle).copy(done = current.done) }
     }
 
     private fun loaded(gpx: Gpx): ImportState.Loaded = loadedFrom(gpx)

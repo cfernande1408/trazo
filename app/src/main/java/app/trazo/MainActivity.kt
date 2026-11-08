@@ -187,7 +187,18 @@ class MainActivity : ComponentActivity() {
                     rideFile != null -> RideDetailScreen(
                         File(rideFile!!),
                         onBack = { rideFile = null },
-                        onAnalyze = { gpx ->
+                        onAnalyze = { gpx, done ->
+                            val f = rideFile
+                            val from = tab
+                            // Como openRoute, pero en modo «realizada»
+                            importer.importGpx(gpx, done)
+                            showRides = false
+                            rideFile = null
+                            tab = 0
+                            analyzing = f
+                            analyzingFrom = from
+                        },
+                        onRepeat = { gpx ->
                             val f = rideFile
                             val from = tab
                             openRoute(gpx)
@@ -262,6 +273,7 @@ class MainActivity : ComponentActivity() {
                                     onExplore = { tab = 1 },
                                     onWikiloc = { tab = 2 },
                                     onLibrary = { tab = TAB_LIBRARY },
+                                    onPlan = { importer.plan() },
                                     onClose = {
                                         importer.clear()
                                         analyzing?.let { rideFile = it; tab = analyzingFrom }

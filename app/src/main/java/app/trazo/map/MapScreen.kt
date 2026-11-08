@@ -299,6 +299,10 @@ fun MapScreen(
     val mapView = remember { MapView(context).apply { onCreate(null) } }
     var ready by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
     val layers by MapPrefs.state.collectAsStateWithLifecycle()
+    // Al analizar una ruta realizada, la pendiente sale puesta (sin tocar tus capas)
+    val analysis = state.done != null
+    var slopeOverride by remember(state.gpx) { mutableStateOf<Boolean?>(if (analysis) true else null) }
+    val slopeOn = slopeOverride ?: layers.slope
     var showLayers by remember { mutableStateOf(false) }
     LaunchedEffect(ready, layers) { ready?.second?.applyLayers(layers, AppMode.current) }
 
@@ -355,11 +359,11 @@ fun MapScreen(
 
     // Ruta coloreada por pendiente, encima de la línea normal
     val slopeLines = remember(state) { Slope.lines(state.gpx.segments, Slope.grades(ElevationProfile.of(state.gpx.segments))) }
-    LaunchedEffect(ready, layers.slope) {
+    LaunchedEffect(ready, slopeOn) {
         val (_, style) = ready ?: return@LaunchedEffect
         style.getLayer(SLOPE)?.let { style.removeLayer(it) }
         style.getSource(SLOPE)?.let { style.removeSource(it) }
-        if (!layers.slope) return@LaunchedEffect
+        if (!slopeOn) return@LaunchedEffect
         style.addSource(GeoJsonSource(SLOPE, slopeLines))
         val stops = Slope.COLORS.mapIndexed { i, c -> Expression.stop(i, Expression.color(android.graphics.Color.parseColor(c))) }
         val line = LineLayer(SLOPE, SLOPE).withProperties(
@@ -607,8 +611,12 @@ fun MapScreen(
                 Text("3D", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
             // La pendiente a la vista: antes solo estaba dentro de Capas
-            val slopeOn = layers.slope
-            val toggleSlope = { MapPrefs.set(context, layers.copy(slope = !slopeOn)) }
+            val toggleSlope: () -> Unit = {
+                // Al analizar se cambia solo aquí; si no, en tus capas
+                val o = slopeOverride
+                if (o != null) slopeOverride = !o
+                if (o == null) MapPrefs.set(context, layers.copy(slope = !slopeOn))
+            }
             val slopeMod = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 16.dp).height(56.dp)
             if (slopeOn) {
                 Button(onClick = toggleSlope, modifier = slopeMod) {
@@ -709,7 +717,7 @@ fun MapScreen(
                 showSlope = true,
             )
         }
-        if (layers.slope && !navigating) {
+        if (slopeOn && !navigating) {
             // A la izquierda, bajo el botón de volver: a la derecha están los botones del mapa
             SlopeLegend(Modifier.align(Alignment.TopStart).statusBarsPadding().padding(top = 92.dp, start = 16.dp))
         }
@@ -784,7 +792,8 @@ fun MapScreen(
                     navError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                     returnError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                     if (returnSegs != null) Text("Volviendo al inicio", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-                    Button(
+                    // Una ruta realizada se mira; para hacerla otra vez, «Repetir esta ruta»
+                    if (!analysis) Button(
                         onClick = { showStartSheet = true },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                     ) {

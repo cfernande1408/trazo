@@ -46,8 +46,8 @@ Info se pueden volver a ver.
 
 **Guardadas.** Una pestaña con todo lo que tienes en el móvil, como la biblioteca de Spotify:
 tus rutas, las rutas realizadas y los mapas sin conexión, cada cosa con su chip. Una ruta
-realizada se puede analizar como cualquier otra: mapa con la pendiente, dificultad, suelo,
-puntos marcados y vista 3D.
+realizada se puede **analizar** (lo que tardaste frente a MIDE, dificultad, suelo, mapa con la
+pendiente, tus puntos y vista 3D) o **repetir** (planearla de nuevo, con tiempo y navegación).
 
 **Buscador.** Escribe *Bola del Mundo* o *PR-M 13*: te lleva al sitio y te enseña las rutas
 de alrededor, o directamente las que se llaman así. Con un botón de **Lista** para ver todas
@@ -230,7 +230,7 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Tiempo cada 15 minutos y qué llevarte puesto
 - [x] Kcal gastadas y portada con tu semana
 - [x] Tarjetas de Descubre Trazo en Inicio
-- [x] Analizar las rutas realizadas en el mapa y en 3D
+- [x] Analizar o repetir las rutas realizadas
 - [x] Tiempos a tu ritmo y dificultad para ti según tu forma física
 - [x] Botón de pendiente a la vista en el mapa de la ruta
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor

@@ -95,7 +95,7 @@ internal fun SlopeCard(state: ImportState.Loaded) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                "Activa «Pendiente» en las capas del mapa para verla tramo a tramo.",
+                "En el mapa, el botón «Pendiente» de arriba la colorea tramo a tramo.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

@@ -36,10 +36,12 @@ import androidx.compose.ui.platform.LocalContext
 import android.net.Uri
 import app.trazo.ui.openUrl
 import androidx.compose.material.icons.Icons
+import kotlin.math.roundToInt
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
@@ -103,6 +105,8 @@ fun ImportScreen(
     onLibrary: () -> Unit = {},
     /** Cerrar la ruta abierta (vuelve a la portada o a la salida que analizabas). */
     onClose: () -> Unit = {},
+    /** De una ruta realizada que analizas a prepararla para repetirla. */
+    onPlan: () -> Unit = {},
 ) {
     BackHandler(enabled = state !is ImportState.Empty, onBack = onClose)
     var switching by remember { mutableStateOf(false) }
@@ -133,7 +137,8 @@ fun ImportScreen(
         },
         floatingActionButton = {
             // En la portada ya está el botón grande de grabar
-            if (state !is ImportState.Empty) {
+            // Ni al analizar una ruta realizada: ahí se mira lo hecho
+            if (state !is ImportState.Empty && (state as? ImportState.Loaded)?.done == null) {
                 ExtendedFloatingActionButton(
                     onClick = onRecord,
                     icon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
@@ -150,7 +155,7 @@ fun ImportScreen(
                 )
                 ImportState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 is ImportState.Error -> ErrorState(state.message, onPickFile)
-                is ImportState.Loaded -> Loaded(state, activity, season, onPickFile, onOpenMap, onCreateRoute, onSaveCurrent, lib)
+                is ImportState.Loaded -> Loaded(state, activity, season, onPickFile, onOpenMap, onCreateRoute, onSaveCurrent, lib, onPlan)
             }
         }
     }
@@ -196,9 +201,13 @@ private fun Loaded(
     onCreateRoute: () -> Unit,
     onSaveCurrent: () -> Unit,
     lib: Library,
+    onPlan: () -> Unit,
 ) {
     val s = state.stats
+    val done = state.done
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    // Al analizar solo hay Perfil y Puntos
+    androidx.compose.runtime.LaunchedEffect(done) { if (done != null && tab > 1) tab = 0 }
     var scrub by remember(state.gpx) { mutableStateOf<Double?>(null) }
     LazyColumn(
         contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 96.dp),
@@ -229,20 +238,26 @@ private fun Loaded(
                 Stat("Desnivel −", metros(s.elevationLossMeters), Modifier.weight(1f))
             }
         }
-        item { ForYou(s, activity) }
-        item { WeatherPeek(state, activity, onOpen = { tab = 2 }) }
-        item { LightLine(state, activity) }
-        item { SeasonTip(season) }
-        item { OfflineCard(state) }
+        if (done != null) {
+            // Lo que hiciste: nada de previsión, luz ni descargas
+            item { DoneSummary(s, done, activity) }
+        } else {
+            item { ForYou(s, activity) }
+            item { WeatherPeek(state, activity, onOpen = { tab = 2 }) }
+            item { LightLine(state, activity) }
+            item { SeasonTip(season) }
+            item { OfflineCard(state) }
+        }
         item {
             Button(onClick = onOpenMap, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                Text("Ver en el mapa", style = MaterialTheme.typography.titleMedium)
+                Text(if (done != null) "Analizar en el mapa" else "Ver en el mapa", style = MaterialTheme.typography.titleMedium)
             }
         }
         item {
             PrimaryScrollableTabRow(selectedTabIndex = tab, containerColor = Color.Transparent, edgePadding = 0.dp) {
                 val n = state.gpx.waypoints.size
-                listOf("Perfil", if (n > 0) "Puntos ($n)" else "Puntos", "Tiempo", "Comentarios").forEachIndexed { i, label ->
+                val tabs = listOf("Perfil", if (n > 0) "Puntos ($n)" else "Puntos", "Tiempo", "Comentarios")
+                (if (done != null) tabs.take(2) else tabs).forEachIndexed { i, label ->
                     Tab(selected = tab == i, onClick = { tab = i }, text = { Text(label, maxLines = 1) })
                 }
             }
@@ -274,7 +289,7 @@ private fun Loaded(
             1 -> {
                 item { PoisSection(state) }
                 if (state.gpx.waypoints.isEmpty()) {
-                    item { Hint("El autor no marcó puntos en esta ruta.") }
+                    item { Hint(if (done != null) "No marcaste puntos en esta ruta." else "El autor no marcó puntos en esta ruta.") }
                 } else {
                     items(state.gpx.waypoints) { WaypointRow(it) }
                 }
@@ -285,13 +300,28 @@ private fun Loaded(
                 item { CommentsTab(state) }
             }
         }
+        if (done != null) {
+            item {
+                Button(onClick = onPlan, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                    Icon(Icons.Filled.Replay, contentDescription = null)
+                    Text("  Repetir esta ruta", style = MaterialTheme.typography.titleMedium)
+                }
+            }
+            item {
+                Text(
+                    "Para planear la salida: tiempo a tu ritmo, previsión, luz, mapa sin conexión y navegación.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         item {
             val saved = lib.routes.any { it.name == state.title() && kotlin.math.abs(it.distanceMeters - s.distanceMeters) < 1.0 }
             OutlinedButton(onClick = onSaveCurrent, enabled = !saved, modifier = Modifier.fillMaxWidth().height(48.dp)) {
                 Text(if (saved) "Guardada en tus rutas" else "Guardar en tus rutas")
             }
         }
-        item {
+        if (done == null) item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton(onClick = onPickFile, modifier = Modifier.weight(1f).height(48.dp)) {
                     Text("Importar otra")
@@ -408,5 +438,41 @@ internal fun EffortBadge(effort: app.trazo.gpx.ride.Effort) {
     }
     androidx.compose.material3.Surface(color = bg, contentColor = fg, shape = MaterialTheme.shapes.small) {
         Text(effort.label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+    }
+}
+
+private val DONE_DATE = java.text.SimpleDateFormat("EEEE d 'de' MMMM, HH:mm", java.util.Locale.forLanguageTag("es-ES"))
+
+/**
+ * Cómo te fue en una ruta realizada: cuándo, tiempo en marcha y total, media,
+ * y lo que tardaste frente a la estimación de serie (MIDE a pie).
+ */
+@Composable
+private fun DoneSummary(s: app.trazo.gpx.TrackStats, done: DoneRide, activity: Activity) {
+    val r = done.stats
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "Realizada el " + DONE_DATE.format(java.util.Date(done.startedAtMs)),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Stat("En marcha", formatDuration(r.movingMs), Modifier.weight(1f))
+            Stat("Total", formatDuration(r.totalMs), Modifier.weight(1f))
+            Stat("Media", String.format(java.util.Locale.forLanguageTag("es-ES"), "%.1f km/h", r.avgMovingKmh), Modifier.weight(1f))
+        }
+        val base = activity.estimateMs(s.distanceMeters, s.elevationGainMeters, s.elevationLossMeters)
+        if (base > 0 && r.movingMs > 0) {
+            val pct = ((r.movingMs.toDouble() / base - 1) * 100).roundToInt()
+            val ref = if (activity == Activity.HIKE) "MIDE" else "La estimación de serie"
+            Text(
+                "$ref la daba en ${formatDuration(base)}: " + when {
+                    kotlin.math.abs(pct) < 5 -> "fuiste justo a ese ritmo."
+                    pct < 0 -> "fuiste un ${-pct} % más rápido."
+                    else -> "tardaste un $pct % más."
+                } + " Las paradas no cuentan.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     }
 }
