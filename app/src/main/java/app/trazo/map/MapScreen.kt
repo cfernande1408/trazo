@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Terrain
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
@@ -604,6 +605,21 @@ fun MapScreen(
                 modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(16.dp).height(56.dp),
             ) {
                 Text("3D", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            // La pendiente a la vista: antes solo estaba dentro de Capas
+            val slopeOn = layers.slope
+            val toggleSlope = { MapPrefs.set(context, layers.copy(slope = !slopeOn)) }
+            val slopeMod = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 16.dp).height(56.dp)
+            if (slopeOn) {
+                Button(onClick = toggleSlope, modifier = slopeMod) {
+                    Icon(Icons.Filled.Terrain, contentDescription = null)
+                    Text(" Pendiente", style = MaterialTheme.typography.titleSmall)
+                }
+            } else {
+                FilledTonalButton(onClick = toggleSlope, modifier = slopeMod) {
+                    Icon(Icons.Filled.Terrain, contentDescription = null)
+                    Text(" Pendiente", style = MaterialTheme.typography.titleSmall)
+                }
             }
         }
 

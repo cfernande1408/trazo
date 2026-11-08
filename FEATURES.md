@@ -76,7 +76,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 ## Pendiente y dificultad
 
 - Tarjeta de **pendiente**: rampa más dura y en qué km, metros por encima del 10 % y del 15 % y bajada más fuerte
-- Capa **Pendiente** en el mapa de la ruta: tramos de 100 m coloreados de verde (< 5 %) a rojo (> 20 %), con leyenda
+- Capa **Pendiente** en el mapa de la ruta: tramos de 100 m coloreados de verde (< 5 %) a rojo (> 20 %), con leyenda; se enciende con el botón *Pendiente* de arriba del mapa (también en *Capas*), y sirve igual para analizar una ruta realizada
 - **Dificultad técnica de OpenStreetMap** junto al track: escala MTB (S0–S6) en bici y SAC (T1–T6) a pie
 - Grado principal, el tramo más difícil y cuántos km van por cada grado, para cualquier GPX (no solo rutas de OSM)
 - **Por dónde va**: km y porcentaje por asfalto, pista, sendero y escaleras, con una barra de colores (como Komoot)

@@ -232,5 +232,6 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Tarjetas de Descubre Trazo en Inicio
 - [x] Analizar las rutas realizadas en el mapa y en 3D
 - [x] Tiempos a tu ritmo y dificultad para ti según tu forma física
+- [x] Botón de pendiente a la vista en el mapa de la ruta
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor
 - [ ] Fotos en los avisos y en las valoraciones
