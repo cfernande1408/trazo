@@ -136,7 +136,7 @@ Todo lo que hace la app, una línea por cosa. Lo que aún falta está en la
 - Mapa topográfico propio: teselas vectoriales de OpenFreeMap, sombreado de relieve y árboles dibujados en los bosques
 - Caminos, pistas, carreteras, ríos, picos con altitud y pueblos
 - Ruta con borde blanco, puntos del autor, inicio y final
-- Al recorrer el perfil con el dedo, un punto marca en el mapa dónde estás
+- Al recorrer el perfil con el dedo, un punto marca en el mapa dónde estás, y el mapa lo sigue para que no se esconda tras la tarjeta ni los botones
 - *¿Desde dónde empiezas?*: desde el inicio, desde el punto de la ruta más cercano o desde un punto del autor (el parking)
 - *Cómo llegar* al inicio con Google Maps
 - Posición con el GPS de Android (sin Google Play Services); la de la red (wifi y antenas) solo se usa hasta que coge el GPS o si se pierde más de 10 s, y su altitud nunca

@@ -451,18 +451,30 @@ fun MapScreen(
         )
     }
 
-    // El punto del perfil bajo el dedo se dibuja en el mapa y, si se sale, la cámara lo sigue
+    // El punto del perfil bajo el dedo se dibuja en el mapa y la cámara lo sigue: en cuanto
+    // se acerca al borde del hueco libre (entre los botones de arriba y la tarjeta de abajo),
+    // el mapa se mueve para dejarlo en el centro de ese hueco
+    val scrubDensity = LocalDensity.current
     LaunchedEffect(ready, scrub, navigating) {
         val (map, style) = ready ?: return@LaunchedEffect
         val p = scrub?.takeIf { !navigating }?.let { RouteGeometry.pointAt(state.gpx.segments, it) }
         style.getSourceAs<GeoJsonSource>(TrazoMapStyle.CURSOR)
             ?.setGeoJson(GeoJson.points(listOfNotNull(p?.let { it.lat to it.lon })))
-        if (p != null) {
-            val here = LatLng(p.lat, p.lon)
-            if (!map.projection.visibleRegion.latLngBounds.contains(here)) {
-                map.animateCamera(CameraUpdateFactory.newLatLng(here), 300)
-            }
-        }
+        if (p == null) return@LaunchedEffect
+        val w = mapView.width.toFloat()
+        val h = mapView.height.toFloat()
+        if (w <= 0f || h <= 0f) return@LaunchedEffect
+        val top = with(scrubDensity) { 120.dp.toPx() }
+        val bottom = (h - bottomPx - with(scrubDensity) { 16.dp.toPx() }).coerceAtLeast(top + 1f)
+        val s = map.projection.toScreenLocation(LatLng(p.lat, p.lon))
+        // Margen: una quinta parte del hueco por cada lado
+        val mx = w * 0.15f
+        val my = (bottom - top) * 0.2f
+        if (s.x in mx..(w - mx) && s.y in (top + my)..(bottom - my)) return@LaunchedEffect
+        // Centro nuevo para que el punto quede en mitad del hueco libre
+        val fy = (top + bottom) / 2
+        val center = map.projection.fromScreenLocation(android.graphics.PointF(s.x, h / 2 + s.y - fy))
+        map.animateCamera(CameraUpdateFactory.newLatLng(center), 250)
     }
 
     // Pantalla encendida mientras navegas
