@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  matchesQuery,
   expand, fromMerc, mercBbox, mercCenter, overpassArea, parseOverpassArea, parseOverpassRoute, parsePlaces, parseWmtDetails,
   parseWmtList, parseWmtSegments, routeShape, stitch, summaries, toMerc, wmtSearch, zoomFor, type Bbox,
 } from './osm'
@@ -95,5 +96,18 @@ describe('lugares', () => {
     expect(zoomFor(pl)).toBe(12.5)
     expect(zoomFor({ ...pl, bbox: undefined })).toBe(13)
     expect(expand({ south: 0, west: 0, north: 1, east: 1 }, 0.1)).toEqual({ south: -0.1, west: -0.1, north: 1.1, east: 1.1 })
+  })
+})
+
+describe('matchesQuery', () => {
+  it('quita las rutas que solo se parecen', () => {
+    expect(matchesQuery('Cerf', undefined, 'Cercedilla')).toBe(false)
+    expect(matchesQuery('Camino de Campamentos', 'Nº 18', 'cercedilla')).toBe(false)
+  })
+  it('sin tildes ni mayúsculas, en el nombre o la referencia', () => {
+    expect(matchesQuery('Senda de los Pescadores de Cercedilla', undefined, 'cercedilla')).toBe(true)
+    expect(matchesQuery('Bola del Mundo', 'PR-M 13', 'pr-m 13')).toBe(true)
+    expect(matchesQuery('Peñalara', undefined, 'penalara')).toBe(true)
+    expect(matchesQuery('Peñalara', undefined, 'Peñálara')).toBe(true)
   })
 })

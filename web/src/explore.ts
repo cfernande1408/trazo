@@ -3,7 +3,7 @@ import type { Activity, Segments } from './geo'
 import { friendly, getJson, overpass } from './net'
 import {
   contains, expand, flavoursFor, MIN_ZOOM, mercBbox, mercCenter, osmUrl, overpassArea, overpassRoute, parseOverpassArea,
-  parseOverpassRoute, parsePlaces, parseWmtDetails, parseWmtList, parseWmtSegments, placeUrl, SHAPE_LABEL, stitch,
+  matchesQuery, parseOverpassRoute, parsePlaces, parseWmtDetails, parseWmtList, parseWmtSegments, placeUrl, SHAPE_LABEL, stitch,
   summaries, wmtByArea, wmtDetails, wmtSearch, wmtSegments, zoomFor, type Bbox, type Flavour, type OsmRoute, type Place, type Shape,
 } from './osm'
 
@@ -15,7 +15,7 @@ export interface LoadedOsmRoute {
   link: string
 }
 
-const ZOOM_HINT = 'Acerca el mapa para ver las rutas'
+const ZOOM_HINT = 'Acerca el mapa para ver las rutas · Acercar aquí'
 const KIND_COLOR = { mtb: '#4A8A1C', cycling: '#1F8A84', hiking: '#B8650A' }
 const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
 
@@ -48,7 +48,11 @@ export class Explorer {
     })
     map.on('mouseenter', 'explore', () => (map.getCanvas().style.cursor = 'pointer'))
     map.on('mouseleave', 'explore', () => (map.getCanvas().style.cursor = ''))
-    el.status.addEventListener('click', () => { if (this.status?.retry) this.onViewport(true) })
+    el.status.addEventListener('click', () => {
+      // El aviso de acercar también acerca: al zoom en el que ya salen las rutas
+      if (this.status?.text === ZOOM_HINT) this.map.easeTo({ zoom: MIN_ZOOM + 0.6 })
+      else if (this.status?.retry) this.onViewport(true)
+    })
     this.renderFilters()
   }
 
@@ -99,6 +103,7 @@ export class Explorer {
     this.el.status.hidden = !text
     this.el.status.textContent = text ?? ''
     this.el.status.classList.toggle('retry', retry)
+    this.el.status.classList.toggle('zoom', text === ZOOM_HINT)
   }
 
   private view(): Bbox {
@@ -213,7 +218,7 @@ export class Explorer {
   /** La lista no trae posición, así que se pide el recuadro de cada una. */
   private async routesNamed(q: string, signal: AbortSignal): Promise<OsmRoute[]> {
     const lists = await Promise.allSettled(flavoursFor(this.activity).map(async (f) => {
-      const listed = parseWmtList(await getJson(wmtSearch(f, q), signal)).slice(0, 8)
+      const listed = parseWmtList(await getJson(wmtSearch(f, q), signal)).filter((l) => matchesQuery(l.name, l.ref, q)).slice(0, 8)
       const found = await Promise.allSettled(listed.map(async (l): Promise<OsmRoute> => {
         const d = parseWmtDetails(await getJson(wmtDetails(f, l.id), signal))
         const c = mercCenter(d.merc!)!

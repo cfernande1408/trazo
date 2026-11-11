@@ -86,6 +86,7 @@ select.chip { appearance: auto; }
   border: 0; border-radius: 10px; padding: 8px 12px; cursor: default;
 }
 .status.retry { color: var(--error); cursor: pointer; }
+.status.zoom { color: var(--primary); font-weight: 600; cursor: pointer; }
 .gpx-card { display: flex; flex-direction: column; gap: 6px; }
 .gpx-card .btn { align-self: flex-start; margin-top: 4px; }
 .back {

@@ -257,5 +257,18 @@ export function zoomFor(p: Place, minZoom = MIN_ZOOM): number {
   return span < 0.02 ? 13 : span < 0.08 ? 12.5 : span < 0.3 ? 11.5 : minZoom + 1
 }
 
+const fold = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+/**
+ * Si una ruta encontrada por nombre tiene de verdad lo que se busca: todas las
+ * palabras, sin mirar tildes ni mayúsculas, en su nombre o su referencia.
+ * Waymarked Trails busca por parecido y devuelve "Cerf" para "Cercedilla".
+ */
+export function matchesQuery(name: string, ref: string | undefined, q: string): boolean {
+  const hay = fold(`${name} ${ref ?? ''}`).replace(/[^a-z0-9ñ]+/g, ' ')
+  const words = fold(q).split(/[^a-z0-9ñ]+/).filter((w) => w.length >= 2)
+  return words.length > 0 && words.every((w) => hay.includes(w))
+}
+
 /** Más alejado que esto la zona es enorme y la consulta tardaría demasiado. */
 export const MIN_ZOOM = 10

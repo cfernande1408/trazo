@@ -122,6 +122,10 @@ const map: MlMap = new maplibregl.Map({
   attributionControl: { compact: true },
 })
 map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right')
+// Ir a donde estás (el navegador pide permiso al pulsarlo)
+map.addControl(new maplibregl.GeolocateControl({ fitBoundsOptions: { maxZoom: 12 } }), 'bottom-right')
+// El mapa cambia de tamaño con el panel y el perfil: sin esto se queda dibujado en un trozo
+new ResizeObserver(() => map.resize()).observe($('map'))
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left')
 
 const empty = { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection
@@ -352,8 +356,8 @@ $('search').addEventListener('submit', async (e) => {
     `<button type="button" data-route="${i}"><span><b>${escapeHtml(r.name)}</b><small>${escapeHtml([r.ref, r.isMtb && activity === 'bike' ? 'MTB' : null].filter(Boolean).join(' · ') || 'Ruta de OpenStreetMap')}</small></span></button>`
   results.innerHTML = error
     ? `<div class="muted">${escapeHtml(error)}</div>`
-    : (found.length ? `<h4>Rutas</h4>${found.map(routeBtn).join('')}` : '') +
-      (places.length ? `<h4>Lugares</h4>${places.map(placeBtn).join('')}` : '') ||
+    : (places.length ? `<h4>Lugares</h4>${places.map(placeBtn).join('')}` : '') +
+      (found.length ? `<h4>Rutas</h4>${found.map(routeBtn).join('')}` : '') ||
       '<div class="muted">No se ha encontrado nada con ese nombre.</div>'
   results.querySelectorAll<HTMLButtonElement>('[data-place]').forEach((b) => b.addEventListener('click', () => {
     results.hidden = true
