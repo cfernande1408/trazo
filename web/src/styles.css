@@ -88,6 +88,8 @@ select.chip { appearance: auto; }
 .status.retry { color: var(--error); cursor: pointer; }
 .status.zoom { color: var(--primary); font-weight: 600; cursor: pointer; }
 .gpx-card { display: flex; flex-direction: column; gap: 6px; }
+.view3d { display: flex; gap: 8px; flex-wrap: wrap; }
+.view3d .btn[aria-pressed="true"] { background: var(--primary); color: var(--on-primary, #fff); }
 .gpx-card .btn { align-self: flex-start; margin-top: 4px; }
 .back {
   align-self: flex-start; font: inherit; font-weight: 600; color: var(--primary); background: transparent;

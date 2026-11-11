@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bucket, downsample, eleAt, estimateMs, grades, haversine, isLoop, pointAt, profile, slopeLines, slopeSummary, stats, type GeoPoint } from './geo'
+import { bearing, bucket, flyMs, downsample, eleAt, estimateMs, grades, haversine, isLoop, pointAt, profile, slopeLines, slopeSummary, stats, type GeoPoint } from './geo'
 
 const lat0 = 40.78
 const mLon = 111_195 * Math.cos((lat0 * Math.PI) / 180)
@@ -84,5 +84,19 @@ describe('resumen', () => {
     expect(r.length).toBe(10)
     expect(r[0]).toBe(0)
     expect(r[9]).toBe(999)
+  })
+})
+
+describe('bearing y flyMs', () => {
+  it('rumbos de los cuatro puntos cardinales', () => {
+    expect(bearing({ lat: 40, lon: -4 }, { lat: 41, lon: -4 })).toBeCloseTo(0, 5)
+    expect(bearing({ lat: 40, lon: -4 }, { lat: 40, lon: -3 })).toBeCloseTo(89.7, 0)
+    expect(bearing({ lat: 40, lon: -4 }, { lat: 39, lon: -4 })).toBeCloseTo(180, 5)
+    expect(bearing({ lat: 40, lon: -4 }, { lat: 40, lon: -5 })).toBeCloseTo(270.3, 0)
+  })
+  it('el vuelo dura entre 30 y 90 s', () => {
+    expect(flyMs(2_000)).toBe(30_000)
+    expect(flyMs(20_000)).toBe(50_000)
+    expect(flyMs(100_000)).toBe(90_000)
   })
 })

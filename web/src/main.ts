@@ -12,6 +12,7 @@ import { GpxError, parseGpx, writeGpx, type Gpx } from './gpx'
 import { applyBase, BASE_MAPS, trazoStyle, treeImage, type BaseMap } from './mapstyle'
 import { seasonOf } from './season'
 import { Explorer, type LoadedOsmRoute } from './explore'
+import { Terrain3D } from './terrain3d'
 import { friendly } from './net'
 import type { OsmRoute, Place } from './osm'
 
@@ -220,6 +221,35 @@ function applySlope() {
     .map(({ l, i }) => `<span><i style="background:${SLOPE_COLORS[i]}"></i>${l}</span>`).join('')
 }
 
+// ---- 3D y vuelo virtual ----
+const terrain = new Terrain3D(map)
+const view3d = $<HTMLButtonElement>('view3d')
+const flyBtn = $<HTMLButtonElement>('fly')
+function render3d() {
+  view3d.setAttribute('aria-pressed', String(terrain.on))
+  view3d.textContent = terrain.on ? 'Volver a 2D' : 'Ver en 3D'
+  flyBtn.textContent = terrain.flying ? 'Parar el vuelo' : 'Vuelo virtual'
+  const ok = !!shown?.gpx.segments.length
+  view3d.disabled = !ok
+  flyBtn.disabled = !ok
+}
+view3d.addEventListener('click', () => {
+  if (!mapReady || !shown) return
+  if (terrain.on) terrain.disable()
+  else terrain.enable(shown.gpx.segments)
+  render3d()
+})
+flyBtn.addEventListener('click', () => {
+  if (!mapReady || !shown) return
+  if (terrain.flying) terrain.stop()
+  else terrain.fly(shown.gpx.segments, render3d)
+  render3d()
+})
+// Si tocas el mapa durante el vuelo, se para y la cámara es tuya
+for (const ev of ['mousedown', 'touchstart', 'wheel'] as const) {
+  map.on(ev, () => { if (terrain.flying) { terrain.stop(); render3d() } })
+}
+
 // ---- Perfil ----
 const chart = new ProfileChart($<HTMLCanvasElement>('chart'), (m) => {
   const r = shown
@@ -284,6 +314,7 @@ function show(r: Route, fit = true) {
 /** Volver a Explorar: se quita la ruta del mapa y vuelve la lista de rutas. */
 function back() {
   picking?.abort()
+  terrain.disable()
   shown = null
   current = -1
   explorer.select(null)
@@ -417,6 +448,7 @@ function renderRoutes() {
 
 function renderSummary() {
   const r = shown
+  render3d()
   $('empty').hidden = !!r
   $('summary').hidden = !r
   if (!r) return

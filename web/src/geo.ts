@@ -259,3 +259,14 @@ export function bounds(segments: Segments): [number, number, number, number] | u
   }
   return [w, s, e, n]
 }
+
+/** Rumbo de a hacia b en grados (0 = norte, 90 = este). */
+export function bearing(a: GeoPoint, b: GeoPoint): number {
+  const r = Math.PI / 180
+  const y = Math.sin((b.lon - a.lon) * r) * Math.cos(b.lat * r)
+  const x = Math.cos(a.lat * r) * Math.sin(b.lat * r) - Math.sin(a.lat * r) * Math.cos(b.lat * r) * Math.cos((b.lon - a.lon) * r)
+  return ((Math.atan2(y, x) / r) + 360) % 360
+}
+
+/** Lo que dura el vuelo virtual: unos 2,5 s por km, entre 30 y 90 s (como en la app). */
+export const flyMs = (meters: number) => Math.min(90_000, Math.max(30_000, (meters / 1000) * 2500))

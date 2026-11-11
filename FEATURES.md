@@ -269,6 +269,7 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - Abre o suelta uno o varios GPX; con varios, una lista para pasar de uno a otro
 - El recorrido en el mapa topo de Trazo (con los colores y árboles de la estación), el topo IGN o la ortofoto PNOA, con relieve
 - Capa de pendiente en el mapa, con leyenda
+- **Vista 3D** en el mismo mapa: relieve, cielo y casas con su altura, con la ruta inclinada; y **vuelo virtual** que la recorre con la cámara (se para al tocar el mapa)
 - Perfil coloreado por pendiente: al pasar el ratón marca el punto en el mapa con su km, altitud y pendiente
 - Distancia, desnivel, tiempo estimado en bici o a pie (MIDE), altitud máxima y mínima, y si es circular o lineal
 - Rampa más dura, metros a más del 10 % y del 15 % y la bajada más fuerte
