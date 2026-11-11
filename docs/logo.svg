@@ -1,25 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#C5F26B"/>
-      <stop offset="1" stop-color="#8CCB5E"/>
-    </linearGradient>
-    <clipPath id="tile"><rect width="160" height="160" rx="40"/></clipPath>
-  </defs>
-  <g clip-path="url(#tile)">
-    <rect width="160" height="160" fill="url(#sky)"/>
-    <!-- Sierra al fondo y monte delante -->
-    <path d="M0 112 L38 70 L58 88 L88 50 L122 92 L138 78 L160 98 L160 160 L0 160 Z" fill="#4F7F33"/>
-    <path d="M88 50 L100 64 L94 62 L88 70 L82 61 L77 63 Z" fill="#FFFFFF" opacity="0.9"/>
-    <path d="M0 132 L44 104 L84 122 L124 102 L160 118 L160 160 L0 160 Z" fill="#2E4F00"/>
-    <!-- Pinos -->
-    <g fill="#1F3700">
-      <path d="M26 128 L33 114 L30 114 L36 102 L42 114 L39 114 L46 128 Z"/>
-      <path d="M128 122 L134 110 L131 110 L136 100 L141 110 L138 110 L144 122 Z"/>
-    </g>
-    <!-- El trazo: la ruta que sube el monte -->
-    <path d="M18 150 C 50 140, 46 118, 78 116 S 104 84, 122 74" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
-    <path d="M18 150 C 50 140, 46 118, 78 116 S 104 84, 122 74" fill="none" stroke="#C2410C" stroke-width="7" stroke-linecap="round"/>
-    <circle cx="122" cy="74" r="10" fill="#C2410C" stroke="#FFFFFF" stroke-width="4"/>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="18 18 72 72">
+<!-- Logo de Trazo. Generado por scripts/icons.py con el icono de la app -->
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C5F26B"/><stop offset="1" stop-color="#8CCB5E"/></linearGradient>
+<clipPath id="tile"><rect x="18" y="18" width="72" height="72" rx="18"/></clipPath></defs>
+<g clip-path="url(#tile)"><rect x="18" y="18" width="72" height="72" fill="url(#sky)"/>
+<path fill="#4F7F33" d="M0,70L26,46L38,56L58,34L80,58L90,50L108,62L108,108L0,108Z"/><path fill="#fff" fill-opacity=".92" d="M58,34L66,43L62,42L58,47L54,41L51,42Z"/><path fill="#2E4F00" d="M0,82L28,66L54,77L80,64L108,74L108,108L0,108Z"/>
+<path fill="#7FB24F" d="M30,84L34.5,75L32.5,75L36.5,67L40.5,75L38.5,75L43,84Z"/><path fill="#7FB24F" d="M70,80L74,72L72,72L75.5,65L79,72L77,72L81,80Z"/>
+<path fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" d="M30,92C46,86 44,74 54,72S62,59 64,52"/>
+<path fill="none" stroke="#C2410C" stroke-width="4.2" stroke-linecap="round" d="M30,92C46,86 44,74 54,72S62,59 64,52"/>
+<circle cx="64" cy="52" r="5.5" fill="#C2410C" stroke="#fff" stroke-width="2.2"/>
+<path fill="#6B4F35" d="M49.46,82.50h2.07v2.82h-2.07z"/><path fill="#7FB24F" d="M44.38,82.50L48.62,74.03L46.74,74.03L50.50,66.50L54.26,74.03L52.38,74.03L56.62,82.50Z"/><path fill="#4E8A2E" d="M50.50,66.50L54.26,74.03L52.38,74.03L56.62,82.50L50.50,82.50Z"/></g></svg>

@@ -131,6 +131,25 @@ def svg(s, i):
 <path fill="none" stroke="#C2410C" stroke-width="4.2" stroke-linecap="round" d="{ROUTE}"/>
 <circle cx="{END[0]}" cy="{END[1]}" r="5.5" fill="#C2410C" stroke="#fff" stroke-width="2.2"/>
 {''.join(f'<path fill="#6B4F35" d="{t}"/><path fill="{c["tree"]}" d="{f}"/><path fill="{c["shade"]}" d="{h}"/>' for f, h, t in FRONT)}{blooms}</g></svg>'''
+# Logo del README y de la web: el icono de verano en baldosa redondeada, recortado a la
+# parte que enseña el escritorio (el círculo central de 72 de los 108 del icono adaptativo)
+def logo(s='summer'):
+    c = SEASONS[s]
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="18 18 72 72">
+<!-- Logo de Trazo. Generado por scripts/icons.py con el icono de la app -->
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{c['top']}"/><stop offset="1" stop-color="{c['bottom']}"/></linearGradient>
+<clipPath id="tile"><rect x="18" y="18" width="72" height="72" rx="18"/></clipPath></defs>
+<g clip-path="url(#tile)"><rect x="18" y="18" width="72" height="72" fill="url(#sky)"/>
+<path fill="{c['ridge']}" d="{RIDGE}"/><path fill="#fff" fill-opacity=".92" d="{SNOW}"/><path fill="{c['hill']}" d="{HILL}"/>
+{''.join(f'<path fill="{c["tree"]}" d="{p}"/>' for p in PINES)}
+<path fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" d="{ROUTE}"/>
+<path fill="none" stroke="#C2410C" stroke-width="4.2" stroke-linecap="round" d="{ROUTE}"/>
+<circle cx="{END[0]}" cy="{END[1]}" r="5.5" fill="#C2410C" stroke="#fff" stroke-width="2.2"/>
+{''.join(f'<path fill="#6B4F35" d="{t}"/><path fill="{c["tree"]}" d="{f}"/><path fill="{c["shade"]}" d="{h}"/>' for f, h, t in FRONT)}</g></svg>
+'''
+
+w(root + '/docs/logo.svg', logo())
+
 html = '<body style="margin:0;background:#1d1b16;display:flex;gap:16px;padding:12px;color:#eee;font:14px sans-serif">' + \
     ''.join(f'<div style="text-align:center">{svg(s, i)}<br>{s}</div>' for i, s in enumerate(SEASONS)) + '</body>'
 open(out + '/icons.html', 'w').write(html)
