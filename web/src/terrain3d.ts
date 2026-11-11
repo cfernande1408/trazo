@@ -61,12 +61,20 @@ export class Terrain3D {
     // Encuadre calculado en plano y luego inclinado: fitBounds con inclinación dejaba la
     // ruta fuera, por arriba. Algo más lejos para que quepa la parte del fondo.
     const cam = b && m.cameraForBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 60, bearing: -20, maxZoom: 15 })
-    if (cam?.center && cam.zoom != null) {
+    if (b && cam?.center && cam.zoom != null) {
       const view = { center: cam.center, zoom: cam.zoom - 0.4, bearing: -20, pitch: 60 }
       m.easeTo({ ...view, duration: 1200 })
       // Al llegar el relieve, el suelo sube (en la sierra, más de 1.500 m con la exageración) y
       // la vista inclinada se va hacia la cámara: se vuelve a centrar con el relieve ya puesto
-      m.once('idle', () => { if (this.on && !this.flying) m.easeTo({ ...view, duration: 700 }) })
+      // (se mira dónde cae el centro de la ruta, ya sobre el relieve, y se lleva al centro)
+      const mid: [number, number] = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]
+      m.once('idle', () => {
+        if (!this.on || this.flying) return
+        const p = m.project(mid)
+        const c = m.getCanvas()
+        const dx = p.x - c.clientWidth / 2, dy = p.y - c.clientHeight / 2
+        if (Math.hypot(dx, dy) > 20) m.panBy([dx, dy], { duration: 700 })
+      })
     } else m.easeTo({ pitch: 60, bearing: -20, duration: 800 })
   }
 
