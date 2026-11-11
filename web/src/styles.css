@@ -192,3 +192,26 @@ select.chip { appearance: auto; }
   .layers { top: 8px; right: 8px; padding: 8px 10px; }
   .layers-title { display: none; }
 }
+
+/* Tiempo por el camino */
+.weather { display: flex; flex-direction: column; gap: 10px; }
+.weather h3 { margin: 0; }
+.weather h4 { margin: 4px 0 0; font-size: 14px; }
+.weather .days { flex-wrap: wrap; }
+.weather .hour { font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.weather select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--outline, #c4c8b6); background: var(--surface, #fff); color: inherit; }
+.weather .warn { background: #FDE2DE; color: #5C1610; border-radius: 10px; padding: 10px 12px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
+.weather .ok { background: var(--primary-container); color: var(--on-primary-container); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.weather .error { color: var(--error); }
+.wx-list { display: flex; flex-direction: column; gap: 8px; }
+.wx-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 8px; }
+.wx-row > span:nth-child(2) { display: flex; flex-direction: column; font-size: 14px; }
+.wx-row small { color: var(--muted); font-size: 12px; }
+.wx-icon { font-size: 24px; }
+.wx-temp { font-size: 20px; font-variant-numeric: tabular-nums; }
+.wx-table { overflow-x: auto; }
+.wx-table table { border-collapse: collapse; font-size: 13px; width: 100%; font-variant-numeric: tabular-nums; }
+.wx-table th { text-align: left; color: var(--muted); font-weight: 500; padding: 4px 6px; position: sticky; top: 0; background: var(--surface-container); }
+.wx-table td { padding: 4px 6px; border-top: 1px solid rgba(0,0,0,.06); white-space: nowrap; }
+.wx-table tr.night td { opacity: .75; }
+.wear { margin: 0; padding-left: 18px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }

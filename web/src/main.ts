@@ -13,6 +13,7 @@ import { applyBase, BASE_MAPS, trazoStyle, treeImage, type BaseMap } from './map
 import { seasonOf } from './season'
 import { Explorer, type LoadedOsmRoute } from './explore'
 import { Terrain3D } from './terrain3d'
+import { WeatherCard } from './weathercard'
 import { friendly } from './net'
 import type { OsmRoute, Place } from './osm'
 
@@ -221,6 +222,9 @@ function applySlope() {
     .map(({ l, i }) => `<span><i style="background:${SLOPE_COLORS[i]}"></i>${l}</span>`).join('')
 }
 
+// ---- Tiempo por el camino ----
+const weather = new WeatherCard($('weather'))
+
 // ---- 3D y vuelo virtual ----
 const terrain = new Terrain3D(map)
 const view3d = $<HTMLButtonElement>('view3d')
@@ -315,6 +319,7 @@ function show(r: Route, fit = true) {
 function back() {
   picking?.abort()
   terrain.disable()
+  weather.clear()
   shown = null
   current = -1
   explorer.select(null)
@@ -481,6 +486,8 @@ function renderSummary() {
       </div>`
     : ''
   $('tip').textContent = season.tip
+  // Se pide cuando el recorrido está completo (con altitudes), no con el trazado provisional
+  weather.set(r.gpx.segments, activity, !r.loading)
   $('points').innerHTML = r.gpx.waypoints.length
     ? `<h3>Puntos del autor</h3><ul class="points">${r.gpx.waypoints.map((w, i) => `<li data-i="${i}">${escapeHtml(w.name ?? 'Punto sin nombre')}</li>`).join('')}</ul>`
     : ''
