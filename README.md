@@ -143,7 +143,8 @@ Para compilarla, publicar versiones o activar la comunidad, mira [docs/DESARROLL
 Para revisar rutas desde el ordenador antes de salir: **[cfernande1408.github.io/trazo](https://cfernande1408.github.io/trazo/)**.
 Exploras las rutas señalizadas de OpenStreetMap moviendo el mapa o con el buscador, como en la app,
 o abres o sueltas tus GPX, y ves el recorrido sobre el mapa topo de Trazo, el topo IGN o la ortofoto,
-el perfil coloreado por pendiente (al pasar el ratón se marca el punto en el mapa), la vista 3D
+el perfil coloreado por pendiente (al pasar el ratón se marca el punto en el mapa), la dificultad
+y por dónde va (asfalto, pista o sendero), la vista 3D
 con vuelo virtual, el tiempo por el camino a la hora de salida que elijas con qué llevarte puesto,
 las rampas más duras, el tiempo estimado en bici o a pie y los puntos del autor. Desde ahí descargas el GPX
 para abrirlo en el móvil. No es para navegar: para seguir la ruta en el monte está la app.

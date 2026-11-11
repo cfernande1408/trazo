@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Trazo web</title>
-    <meta name="description" content="Revisa tus rutas GPX de bici de montaña y senderismo: mapa topo, perfil, pendiente y tiempo estimado." />
+    <meta name="description" content="Revisa tus rutas GPX de bici de montaña y senderismo: mapa topo, perfil, pendiente, dificultad, tiempo por el camino y 3D." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -36,7 +36,8 @@
           <h1>Explorar</h1>
           <p class="muted">
             Mueve el mapa y salen las rutas señalizadas de OpenStreetMap. Toca una para ver su recorrido, perfil,
-            pendiente y cuánto tardarás, o abre los GPX que tengas (de Wikiloc o de donde sea).
+            pendiente, dificultad, por dónde va, el tiempo que hará y la vista 3D, o abre los GPX que tengas
+            (de Wikiloc o de donde sea).
           </p>
           <div class="filters" id="filters"></div>
           <button type="button" class="status" id="status" hidden></button>
@@ -62,6 +63,8 @@
             <button type="button" class="btn" id="view3d" aria-pressed="false">Ver en 3D</button>
             <button type="button" class="btn" id="fly">Vuelo virtual</button>
           </div>
+          <div class="card" id="difficulty"></div>
+          <div class="card" id="surface"></div>
           <div class="card" id="slope"></div>
           <div class="card weather" id="weather"></div>
           <div class="card tip" id="tip"></div>

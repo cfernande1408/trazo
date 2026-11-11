@@ -202,7 +202,7 @@ select.chip { appearance: auto; }
 .weather select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--outline, #c4c8b6); background: var(--surface, #fff); color: inherit; }
 .weather .warn { background: #FDE2DE; color: #5C1610; border-radius: 10px; padding: 10px 12px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
 .weather .ok { background: var(--primary-container); color: var(--on-primary-container); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
-.weather .error { color: var(--error); }
+.error { color: var(--error); }
 .wx-list { display: flex; flex-direction: column; gap: 8px; }
 .wx-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 8px; }
 .wx-row > span:nth-child(2) { display: flex; flex-direction: column; font-size: 14px; }
@@ -215,3 +215,15 @@ select.chip { appearance: auto; }
 .wx-table td { padding: 4px 6px; border-top: 1px solid rgba(0,0,0,.06); white-space: nowrap; }
 .wx-table tr.night td { opacity: .75; }
 .wear { margin: 0; padding-left: 18px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
+
+/* Dificultad y por dónde va */
+.bars { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.bar-row { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 10px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.bar { height: 10px; background: rgba(0,0,0,.07); border-radius: 5px; overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 5px; }
+.strip { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin: 4px 0 10px; }
+.strip i { display: block; height: 100%; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+.spinner { display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; border: 2px solid var(--primary); border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn.small { padding: 6px 12px; font-size: 13px; }

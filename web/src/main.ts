@@ -14,6 +14,7 @@ import { seasonOf } from './season'
 import { Explorer, type LoadedOsmRoute } from './explore'
 import { Terrain3D } from './terrain3d'
 import { WeatherCard } from './weathercard'
+import { OsmCard } from './osmcard'
 import { friendly } from './net'
 import type { OsmRoute, Place } from './osm'
 
@@ -224,6 +225,7 @@ function applySlope() {
 
 // ---- Tiempo por el camino ----
 const weather = new WeatherCard($('weather'))
+const osmInfo = new OsmCard($('difficulty'), $('surface'))
 
 // ---- 3D y vuelo virtual ----
 const terrain = new Terrain3D(map)
@@ -320,6 +322,7 @@ function back() {
   picking?.abort()
   terrain.disable()
   weather.clear()
+  osmInfo.clear()
   shown = null
   current = -1
   explorer.select(null)
@@ -488,6 +491,7 @@ function renderSummary() {
   $('tip').textContent = season.tip
   // Se pide cuando el recorrido está completo (con altitudes), no con el trazado provisional
   weather.set(r.gpx.segments, activity, !r.loading)
+  osmInfo.set(r.gpx.segments, activity, !r.loading)
   $('points').innerHTML = r.gpx.waypoints.length
     ? `<h3>Puntos del autor</h3><ul class="points">${r.gpx.waypoints.map((w, i) => `<li data-i="${i}">${escapeHtml(w.name ?? 'Punto sin nombre')}</li>`).join('')}</ul>`
     : ''

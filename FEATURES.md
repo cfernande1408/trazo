@@ -273,6 +273,8 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - Perfil coloreado por pendiente: al pasar el ratón marca el punto en el mapa con su km, altitud y pendiente
 - Distancia, desnivel, tiempo estimado en bici o a pie (MIDE), altitud máxima y mínima, y si es circular o lineal
 - Rampa más dura, metros a más del 10 % y del 15 % y la bajada más fuerte
+- **Dificultad** según OpenStreetMap: escala MTB (S0–S6) en bici o SAC (T1–T6) a pie, con barras por grado, la principal y la más difícil
+- **Por dónde va**: km y % por asfalto, pista, sendero y escaleras; las dos salen de una sola consulta a Overpass, como en la app
 - **Tiempo por el camino** como en la app: eliges día (hasta 6) y hora de salida y ves los avisos (tormenta, nieve, hielo, rachas, lluvia, calor), el tiempo en cada tramo cuando pases, el **detalle cada 15 minutos** (temperatura, sensación, lluvia, viento y UV) y **qué llevarte puesto**
 - Puntos del autor: en el mapa con su nota y en una lista que lleva a cada uno
 - Si el GPX no trae altitudes, las pide a Open-Meteo
