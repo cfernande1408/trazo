@@ -1,4 +1,5 @@
 import { downsample, haversine, type Segments } from './geo'
+import { L } from './i18n'
 
 /**
  * Altitudes de Open-Meteo para un GPX que no las trae (como Http.withElevation
@@ -19,7 +20,7 @@ export async function fillElevation(segments: Segments, fetcher: typeof fetch = 
     const url = 'https://api.open-meteo.com/v1/elevation?latitude=' +
       chunk.map((k) => all[k].lat.toFixed(5)).join(',') + '&longitude=' + chunk.map((k) => all[k].lon.toFixed(5)).join(',')
     const res = await fetcher(url)
-    if (!res.ok) throw new Error('No se pudieron pedir las altitudes')
+    if (!res.ok) throw new Error(L('No se pudieron pedir las altitudes', 'Could not get the altitudes'))
     const json = (await res.json()) as { elevation: number[] }
     eles.push(...json.elevation)
   }

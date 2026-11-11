@@ -16,6 +16,7 @@ import { Terrain3D } from './terrain3d'
 import { WeatherCard } from './weathercard'
 import { OsmCard } from './osmcard'
 import { friendly } from './net'
+import { L, lang, locale, percent, switchLang, translatePage } from './i18n'
 import type { OsmRoute, Place } from './osm'
 
 // ---- Preferencias de este navegador (si se pueden guardar) ----
@@ -28,10 +29,10 @@ const prefs = {
   },
 }
 
-const ES = 'es-ES'
+const ES = locale()
 const km = (m: number) => `${(m / 1000).toLocaleString(ES, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`
 const metros = (m: number) => `${Math.round(m).toLocaleString(ES)} m`
-const pct = (p: number) => `${p.toLocaleString(ES, { maximumFractionDigits: 0 })} %`
+const pct = (p: number) => percent(p.toLocaleString(ES, { maximumFractionDigits: 0 }))
 const hours = (ms: number) => {
   const min = Math.round(ms / 60_000)
   return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')} min`
@@ -75,11 +76,18 @@ const logo = $<HTMLImageElement>('logo')
 logo.src = logoUrl
 document.head.insertAdjacentHTML('beforeend', `<link rel="icon" href="${logoUrl}" type="image/svg+xml">`)
 
+// ---- Idioma ----
+translatePage()
+document.querySelectorAll<HTMLButtonElement>('[data-lang]').forEach((b) => {
+  b.setAttribute('aria-checked', String(b.dataset.lang === lang()))
+  b.addEventListener('click', () => { if (b.dataset.lang !== lang()) switchLang(b.dataset.lang as 'es' | 'en') })
+})
+
 function setActivity(a: Activity) {
   activity = a
   prefs.set('activity', a)
   document.documentElement.dataset.activity = a
-  document.querySelectorAll<HTMLButtonElement>('.segmented button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.activity === a)))
+  document.querySelectorAll<HTMLButtonElement>('.segmented [data-activity]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.activity === a)))
   explorer?.setActivity(a)
   renderSummary()
   chart.draw()
@@ -105,7 +113,7 @@ window.addEventListener('drop', (e) => {
   drop.hidden = true
   const files = Array.from(e.dataTransfer?.files ?? []).filter((f) => /\.(gpx|xml)$/i.test(f.name) || f.type.includes('xml'))
   if (files.length) openFiles(files)
-  else toast('Eso no parece un GPX')
+  else toast(L('Eso no parece un GPX', 'That does not look like a GPX'))
 })
 
 function toast(text: string) {
@@ -176,7 +184,7 @@ map.on('click', 'wpts', (e) => {
   const p = f.properties as { name?: string; desc?: string }
   new maplibregl.Popup({ maxWidth: '280px' })
     .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
-    .setHTML(`<b>${escapeHtml(p.name ?? 'Punto')}</b>${p.desc ? `<br>${escapeHtml(p.desc)}` : ''}`)
+    .setHTML(`<b>${escapeHtml(p.name ?? L('Punto', 'Point'))}</b>${p.desc ? `<br>${escapeHtml(p.desc)}` : ''}`)
     .addTo(map)
 })
 map.on('mouseenter', 'wpts', () => (map.getCanvas().style.cursor = 'pointer'))
@@ -219,7 +227,7 @@ function applySlope() {
   }
   const legend = $('legend')
   legend.hidden = !slopeOn || !shown
-  legend.innerHTML = '<b>Pendiente</b>' + SLOPE_LABELS.map((l, i) => ({ l, i })).reverse()
+  legend.innerHTML = `<b>${L('Pendiente', 'Gradient')}</b>` + SLOPE_LABELS.map((l, i) => ({ l, i })).reverse()
     .map(({ l, i }) => `<span><i style="background:${SLOPE_COLORS[i]}"></i>${l}</span>`).join('')
 }
 
@@ -233,8 +241,8 @@ const view3d = $<HTMLButtonElement>('view3d')
 const flyBtn = $<HTMLButtonElement>('fly')
 function render3d() {
   view3d.setAttribute('aria-pressed', String(terrain.on))
-  view3d.textContent = terrain.on ? 'Volver a 2D' : 'Ver en 3D'
-  flyBtn.textContent = terrain.flying ? 'Parar el vuelo' : 'Vuelo virtual'
+  view3d.textContent = terrain.on ? L('Volver a 2D', 'Back to 2D') : L('Ver en 3D', 'View in 3D')
+  flyBtn.textContent = terrain.flying ? L('Parar el vuelo', 'Stop the flyover') : L('Vuelo virtual', 'Virtual flyover')
   const ok = !!shown?.gpx.segments.length
   view3d.disabled = !ok
   flyBtn.disabled = !ok
@@ -284,13 +292,13 @@ async function openFiles(files: File[]) {
           gpx.segments = await fillElevation(gpx.segments)
           filledEle = true
         } catch {
-          toast('Sin conexión para pedir las altitudes: el perfil saldrá incompleto')
+          toast(L('Sin conexión para pedir las altitudes: el perfil saldrá incompleto', 'No connection to get the altitudes: the profile will be incomplete'))
         }
       }
       routes.push(makeRoute(f.name, gpx, filledEle))
       opened++
     } catch (e) {
-      toast(`${f.name}: ${e instanceof GpxError ? e.message : 'no se pudo leer'}`)
+      toast(`${f.name}: ${e instanceof GpxError ? e.message : L('no se pudo leer', 'could not be read')}`)
     }
   }
   if (opened) select(routes.length - 1)
@@ -386,18 +394,18 @@ $('search').addEventListener('submit', async (e) => {
   const ctl = new AbortController()
   searching = ctl
   results.hidden = false
-  results.innerHTML = '<div class="muted">Buscando…</div>'
+  results.innerHTML = `<div class="muted">${L('Buscando…', 'Searching…')}</div>`
   const { places, routes: found, error } = await explorer.search(q, ctl.signal)
   if (ctl.signal.aborted) return
   const placeBtn = (p: Place, i: number) =>
     `<button type="button" data-place="${i}"><span><b>${escapeHtml(p.name)}</b><small>${escapeHtml(p.detail)}</small></span></button>`
   const routeBtn = (r: OsmRoute, i: number) =>
-    `<button type="button" data-route="${i}"><span><b>${escapeHtml(r.name)}</b><small>${escapeHtml([r.ref, r.isMtb && activity === 'bike' ? 'MTB' : null].filter(Boolean).join(' · ') || 'Ruta de OpenStreetMap')}</small></span></button>`
+    `<button type="button" data-route="${i}"><span><b>${escapeHtml(r.name)}</b><small>${escapeHtml([r.ref, r.isMtb && activity === 'bike' ? 'MTB' : null].filter(Boolean).join(' · ') || L('Ruta de OpenStreetMap', 'OpenStreetMap route'))}</small></span></button>`
   results.innerHTML = error
     ? `<div class="muted">${escapeHtml(error)}</div>`
-    : (places.length ? `<h4>Lugares</h4>${places.map(placeBtn).join('')}` : '') +
-      (found.length ? `<h4>Rutas</h4>${found.map(routeBtn).join('')}` : '') ||
-      '<div class="muted">No se ha encontrado nada con ese nombre.</div>'
+    : (places.length ? `<h4>${L('Lugares', 'Places')}</h4>${places.map(placeBtn).join('')}` : '') +
+      (found.length ? `<h4>${L('Rutas', 'Routes')}</h4>${found.map(routeBtn).join('')}` : '') ||
+      `<div class="muted">${L('No se ha encontrado nada con ese nombre.', 'Nothing found with that name.')}</div>`
   results.querySelectorAll<HTMLButtonElement>('[data-place]').forEach((b) => b.addEventListener('click', () => {
     results.hidden = true
     if (shown) back()
@@ -443,7 +451,7 @@ function renderRoutes() {
   const el = $('routes')
   // Los GPX abiertos, para volver a ellos (con uno solo, mientras se ve, no hace falta)
   el.hidden = routes.length === 0 || (routes.length === 1 && current === 0)
-  el.innerHTML = '<div class="list-head">Tus GPX</div>'
+  el.innerHTML = `<div class="list-head">${L('Tus GPX', 'Your GPX files')}</div>`
   routes.forEach((r, i) => {
     const b = document.createElement('button')
     b.type = 'button'
@@ -463,29 +471,29 @@ function renderSummary() {
   const s = r.stats
   $('name').textContent = r.gpx.name ?? r.file
   const loop = isLoop(r.gpx.segments)
-  const tags = r.gpx.segments.length ? [loop ? 'Circular' : 'Lineal', activity === 'hike' ? 'A pie · método MIDE' : 'Bici de montaña'] : []
-  if (r.gpx.waypoints.length) tags.push(`${r.gpx.waypoints.length} puntos`)
+  const tags = r.gpx.segments.length ? [loop ? L('Circular', 'Loop') : L('Lineal', 'One way'), activity === 'hike' ? L('A pie · método MIDE', 'Hiking · MIDE method') : L('Bici de montaña', 'Mountain bike')] : []
+  if (r.gpx.waypoints.length) tags.push(`${r.gpx.waypoints.length} ${L('puntos', 'points')}`)
   if (r.osmLink) tags.push('OpenStreetMap')
-  if (r.loading) tags.push(r.gpx.segments.length ? 'Completando altitudes…' : 'Cargando recorrido…')
+  if (r.loading) tags.push(r.gpx.segments.length ? L('Completando altitudes…', 'Filling in altitudes…') : L('Cargando recorrido…', 'Loading the track…'))
   $('tags').innerHTML = tags.map((t) => `<span class="tag">${t}</span>`).join('')
   $('stats').hidden = !r.gpx.segments.length
   const items: [string, string][] = [
-    ['Distancia', km(s.distanceMeters)],
-    ['Desnivel +', metros(s.gainMeters)],
-    ['Desnivel −', metros(s.lossMeters)],
-    ['Tiempo estimado', hours(estimateMs(activity, s.distanceMeters, s.gainMeters, s.lossMeters))],
-    ['Altitud máx.', s.maxEle != null ? metros(s.maxEle) : '—'],
-    ['Altitud mín.', s.minEle != null ? metros(s.minEle) : '—'],
+    [L('Distancia', 'Distance'), km(s.distanceMeters)],
+    [L('Desnivel +', 'Ascent'), metros(s.gainMeters)],
+    [L('Desnivel −', 'Descent'), metros(s.lossMeters)],
+    [L('Tiempo estimado', 'Estimated time'), hours(estimateMs(activity, s.distanceMeters, s.gainMeters, s.lossMeters))],
+    [L('Altitud máx.', 'Max. altitude'), s.maxEle != null ? metros(s.maxEle) : '—'],
+    [L('Altitud mín.', 'Min. altitude'), s.minEle != null ? metros(s.minEle) : '—'],
   ]
   $('stats').innerHTML = items.map(([l, v]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('')
 
   const sl = slopeSummary(r.gs)
   $('slope').innerHTML = sl
-    ? `<h3>Pendiente</h3><div class="rows">
-        <span>Rampa más dura</span><b>${pct(sl.maxUpPercent)} en el km ${(sl.maxUpAtMeters / 1000).toLocaleString(ES, { maximumFractionDigits: 1 })}</b>
-        <span>Subiendo a más del 10 %</span><b>${metros(sl.upOver10Meters)}</b>
-        <span>A más del 15 %</span><b>${metros(sl.upOver15Meters)}</b>
-        <span>Bajada más fuerte</span><b>${pct(sl.maxDownPercent)}</b>
+    ? `<h3>${L('Pendiente', 'Gradient')}</h3><div class="rows">
+        <span>${L('Rampa más dura', 'Steepest ramp')}</span><b>${pct(sl.maxUpPercent)} ${L('en el km', 'at km')} ${(sl.maxUpAtMeters / 1000).toLocaleString(ES, { maximumFractionDigits: 1 })}</b>
+        <span>${L('Subiendo a más del 10 %', 'Climbing over 10%')}</span><b>${metros(sl.upOver10Meters)}</b>
+        <span>${L('A más del 15 %', 'Over 15%')}</span><b>${metros(sl.upOver15Meters)}</b>
+        <span>${L('Bajada más fuerte', 'Steepest descent')}</span><b>${pct(sl.maxDownPercent)}</b>
       </div>`
     : ''
   $('tip').textContent = season.tip
@@ -493,7 +501,7 @@ function renderSummary() {
   weather.set(r.gpx.segments, activity, !r.loading)
   osmInfo.set(r.gpx.segments, activity, !r.loading)
   $('points').innerHTML = r.gpx.waypoints.length
-    ? `<h3>Puntos del autor</h3><ul class="points">${r.gpx.waypoints.map((w, i) => `<li data-i="${i}">${escapeHtml(w.name ?? 'Punto sin nombre')}</li>`).join('')}</ul>`
+    ? `<h3>${L('Puntos del autor', 'Author waypoints')}</h3><ul class="points">${r.gpx.waypoints.map((w, i) => `<li data-i="${i}">${escapeHtml(w.name ?? L('Punto sin nombre', 'Unnamed point'))}</li>`).join('')}</ul>`
     : ''
   $('points').querySelectorAll<HTMLLIElement>('li').forEach((li) => li.addEventListener('click', () => {
     const w = r.gpx.waypoints[Number(li.dataset.i)]
@@ -508,7 +516,7 @@ function renderSummary() {
   if (r.osmLink) osm.href = r.osmLink
   $<HTMLButtonElement>('download').disabled = !r.gpx.segments.length
   if (r.gpx.description) $('tip').textContent = `${r.gpx.description.replace(/<[^>]+>/g, ' ').trim().slice(0, 600)}\n\n${season.tip}`
-  $('note').textContent = r.filledEle ? 'El GPX no traía altitudes: las del perfil son de Open-Meteo.' : ''
+  $('note').textContent = r.filledEle ? L('El GPX no traía altitudes: las del perfil son de Open-Meteo.', 'The GPX had no altitudes: the profile uses Open-Meteo’s.') : ''
 }
 
 $('download').addEventListener('click', () => {
@@ -517,7 +525,7 @@ $('download').addEventListener('click', () => {
   const blob = new Blob([writeGpx(r.gpx)], { type: 'application/gpx+xml' })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
-  a.download = (r.gpx.name ?? 'ruta').toLowerCase().replace(/[^a-z0-9áéíóúñü]+/gi, '-').replace(/^-|-$/g, '') + '.gpx'
+  a.download = (r.gpx.name ?? L('ruta', 'route')).toLowerCase().replace(/[^a-z0-9áéíóúñü]+/gi, '-').replace(/^-|-$/g, '') + '.gpx'
   a.click()
   setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 })

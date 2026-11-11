@@ -17,15 +17,19 @@
         <small>web</small>
       </a>
       <form class="search" id="search" role="search">
-        <input type="search" id="q" placeholder="Buscar lugar o ruta (p. ej. PR-M 13)" aria-label="Buscar lugar o ruta" autocomplete="off" />
+        <input type="search" id="q" placeholder="Buscar lugar o ruta (p. ej. PR-M 13)" aria-label="Buscar lugar o ruta" data-en-placeholder="Search a place or route (e.g. GR 11)" data-en-aria="Search a place or route" autocomplete="off" />
         <div class="results card" id="results" hidden></div>
       </form>
       <div class="top-actions">
-        <div class="segmented" role="radiogroup" aria-label="Actividad">
-          <button type="button" role="radio" data-activity="bike">Bici</button>
-          <button type="button" role="radio" data-activity="hike">A pie</button>
+        <div class="segmented" role="radiogroup" aria-label="Actividad" data-en-aria="Activity">
+          <button type="button" role="radio" data-activity="bike" data-en="Bike">Bici</button>
+          <button type="button" role="radio" data-activity="hike" data-en="Hike">A pie</button>
         </div>
-        <button type="button" class="btn primary" id="open">Abrir GPX</button>
+        <button type="button" class="btn primary" id="open" data-en="Open GPX">Abrir GPX</button>
+        <div class="segmented lang" role="radiogroup" aria-label="Idioma" data-en-aria="Language">
+          <button type="button" role="radio" data-lang="es" title="Español">ES</button>
+          <button type="button" role="radio" data-lang="en" title="English">EN</button>
+        </div>
         <input type="file" id="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" multiple hidden />
       </div>
     </header>
@@ -33,8 +37,8 @@
     <main class="layout">
       <aside class="panel" id="panel">
         <section class="empty" id="empty">
-          <h1>Explorar</h1>
-          <p class="muted">
+          <h1 data-en="Explore">Explorar</h1>
+          <p class="muted" data-en="Move the map to see the waymarked routes from OpenStreetMap. Tap one for its track, profile, gradient, difficulty, surface, the weather along the way and the 3D view, or open any GPX you have (from Wikiloc or anywhere else).">
             Mueve el mapa y salen las rutas señalizadas de OpenStreetMap. Toca una para ver su recorrido, perfil,
             pendiente, dificultad, por dónde va, el tiempo que hará y la vista 3D, o abre los GPX que tengas
             (de Wikiloc o de donde sea).
@@ -43,25 +47,25 @@
           <button type="button" class="status" id="status" hidden></button>
           <div class="list" id="list"></div>
           <div class="card gpx-card">
-            <b>¿Tienes un GPX?</b>
-            <span class="muted small">Ábrelo o suéltalo aquí. Nada sale de tu ordenador.</span>
-            <button type="button" class="btn primary" id="open2">Abrir GPX</button>
+            <b data-en="Got a GPX?">¿Tienes un GPX?</b>
+            <span class="muted small" data-en="Open it or drop it here. Nothing leaves your computer.">Ábrelo o suéltalo aquí. Nada sale de tu ordenador.</span>
+            <button type="button" class="btn primary" id="open2" data-en="Open GPX">Abrir GPX</button>
           </div>
-          <p class="muted small">Para seguir la ruta en el monte, pásala al móvil y ábrela con la app Trazo.</p>
+          <p class="muted small" data-en="To follow the route out there, send it to your phone and open it with the Trazo app.">Para seguir la ruta en el monte, pásala al móvil y ábrela con la app Trazo.</p>
         </section>
 
         <section id="routes" class="routes" hidden></section>
 
         <section id="summary" class="summary" hidden>
-          <button type="button" class="back" id="back">← Explorar</button>
+          <button type="button" class="back" id="back" data-en="← Explore">← Explorar</button>
           <div class="title-row">
             <h2 id="name"></h2>
           </div>
           <div class="tags" id="tags"></div>
           <div class="stats" id="stats"></div>
           <div class="view3d">
-            <button type="button" class="btn" id="view3d" aria-pressed="false">Ver en 3D</button>
-            <button type="button" class="btn" id="fly">Vuelo virtual</button>
+            <button type="button" class="btn" id="view3d" aria-pressed="false">3D</button>
+            <button type="button" class="btn" id="fly"></button>
           </div>
           <div class="card" id="difficulty"></div>
           <div class="card" id="surface"></div>
@@ -70,9 +74,9 @@
           <div class="card tip" id="tip"></div>
           <div class="card" id="points"></div>
           <div class="actions">
-            <button type="button" class="btn primary" id="download">Descargar GPX para el móvil</button>
-            <a class="btn" id="source" target="_blank" rel="noopener" hidden>Ver en Wikiloc</a>
-            <a class="btn" id="osm" target="_blank" rel="noopener" hidden>Ver en OpenStreetMap</a>
+            <button type="button" class="btn primary" id="download" data-en="Download GPX for your phone">Descargar GPX para el móvil</button>
+            <a class="btn" id="source" target="_blank" rel="noopener" hidden data-en="View on Wikiloc">Ver en Wikiloc</a>
+            <a class="btn" id="osm" target="_blank" rel="noopener" hidden data-en="View on OpenStreetMap">Ver en OpenStreetMap</a>
           </div>
           <p class="muted small" id="note"></p>
         </section>
@@ -81,24 +85,24 @@
       <div class="mapwrap">
         <div id="map"></div>
         <div class="layers card" id="layers">
-          <div class="layers-title">Tipo de mapa</div>
+          <div class="layers-title" data-en="Map type">Tipo de mapa</div>
           <div class="layers-row" id="bases"></div>
-          <label class="check"><input type="checkbox" id="relief" checked /> Relieve</label>
-          <label class="check"><input type="checkbox" id="slopeLayer" /> Pendiente</label>
+          <label class="check"><input type="checkbox" id="relief" checked /> <span data-en="Relief">Relieve</span></label>
+          <label class="check"><input type="checkbox" id="slopeLayer" /> <span data-en="Gradient">Pendiente</span></label>
         </div>
         <div class="legend card" id="legend" hidden></div>
       </div>
 
       <section class="profile" id="profile" hidden>
         <div class="profile-head">
-          <span>Perfil</span>
+          <span data-en="Profile">Perfil</span>
           <span id="readout" class="muted"></span>
         </div>
         <canvas id="chart"></canvas>
       </section>
     </main>
 
-    <div class="drop" id="drop" hidden><div>Suelta aquí tus GPX</div></div>
+    <div class="drop" id="drop" hidden><div data-en="Drop your GPX files here">Suelta aquí tus GPX</div></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

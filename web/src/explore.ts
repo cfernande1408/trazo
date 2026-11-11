@@ -1,3 +1,4 @@
+import { L } from './i18n'
 import type { GeoJSONSource, Map as MlMap } from 'maplibre-gl'
 import type { Activity, Segments } from './geo'
 import { friendly, getJson, overpass } from './net'
@@ -15,7 +16,7 @@ export interface LoadedOsmRoute {
   link: string
 }
 
-const ZOOM_HINT = 'Acerca el mapa para ver las rutas · Acercar aquí'
+const ZOOM_HINT = L('Acerca el mapa para ver las rutas · Acercar aquí', 'Zoom in to see the routes · Zoom in here')
 const KIND_COLOR = { mtb: '#4A8A1C', cycling: '#1F8A84', hiking: '#B8650A' }
 const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
 
@@ -133,7 +134,7 @@ export class Explorer {
     this.load?.abort()
     const ctl = new AbortController()
     this.load = ctl
-    this.setStatus('Buscando rutas en esta zona…')
+    this.setStatus(L('Buscando rutas en esta zona…', 'Looking for routes in this area…'))
     try {
       const found = await this.findRoutes(area, ctl.signal)
       for (const r of found) {
@@ -142,11 +143,11 @@ export class Explorer {
         this.routes.set(r.id, r.shape === 'unknown' && known && known !== 'unknown' ? { ...r, shape: known } : r)
       }
       this.covered.push(area)
-      this.setStatus(this.routes.size ? null : 'No hay rutas mapeadas en esta zona')
+      this.setStatus(this.routes.size ? null : L('No hay rutas mapeadas en esta zona', 'No mapped routes in this area'))
       this.render()
     } catch (e) {
       if (ctl.signal.aborted) return
-      this.setStatus(`${friendly(e)} Toca para reintentar.`, true)
+      this.setStatus(`${friendly(e)} ${L('Toca para reintentar.', 'Tap to retry.')}`, true)
     }
   }
 
@@ -163,7 +164,7 @@ export class Explorer {
       // Si una ruta sale en las dos listas, gana la de MTB (va primero)
       return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).filter((r) => !seen.has(r.id) && !!seen.add(r.id))
     }
-    if (signal.aborted) throw new DOMException('Cancelado', 'AbortError')
+    if (signal.aborted) throw new DOMException(L('Cancelado', 'Cancelled'), 'AbortError')
     const kinds = this.activity === 'hike' ? 'hiking|foot' : 'mtb|bicycle'
     return parseOverpassArea(await overpass(overpassArea(area, kinds), signal))
   }
@@ -194,7 +195,7 @@ export class Explorer {
     } catch (e) {
       if (signal.aborted) throw e
       if (quick) return quick
-      throw new Error('No se pudo descargar el recorrido')
+      throw new Error(L('No se pudo descargar el recorrido', 'Could not download the track'))
     }
   }
 
@@ -251,12 +252,12 @@ export class Explorer {
 
   private renderFilters() {
     const chips: string[] = []
-    if (this.activity === 'bike') chips.push(`<button type="button" class="chip" data-f="mtb" aria-pressed="${this.onlyMtb}">Solo MTB</button>`)
+    if (this.activity === 'bike') chips.push(`<button type="button" class="chip" data-f="mtb" aria-pressed="${this.onlyMtb}">${L('Solo MTB', 'MTB only')}</button>`)
     chips.push(
-      `<select class="chip" data-f="shape" aria-label="Circular o lineal">
-        <option value="">Circular o lineal</option>
-        <option value="loop"${this.shape === 'loop' ? ' selected' : ''}>Solo circulares</option>
-        <option value="linear"${this.shape === 'linear' ? ' selected' : ''}>Solo lineales</option>
+      `<select class="chip" data-f="shape" aria-label="${L('Circular o lineal', 'Loop or one way')}">
+        <option value="">${L('Circular o lineal', 'Loop or one way')}</option>
+        <option value="loop"${this.shape === 'loop' ? ' selected' : ''}>${L('Solo circulares', 'Loops only')}</option>
+        <option value="linear"${this.shape === 'linear' ? ' selected' : ''}>${L('Solo lineales', 'One way only')}</option>
       </select>`,
     )
     this.el.filters.innerHTML = chips.join('')
@@ -283,9 +284,9 @@ export class Explorer {
       .filter((r) => r.lat >= v.south && r.lat <= v.north && r.lon >= v.west && r.lon <= v.east && this.passes(r))
       .sort((a, b) => (a.lat - c.lat) ** 2 + (a.lon - c.lng) ** 2 - ((b.lat - c.lat) ** 2 + (b.lon - c.lng) ** 2))
     this.el.list.innerHTML = visible.length
-      ? `<div class="list-head">${visible.length} ${visible.length === 1 ? 'ruta' : 'rutas'} en pantalla</div>` +
+      ? `<div class="list-head">${visible.length} ${visible.length === 1 ? L('ruta en pantalla', 'route on screen') : L('rutas en pantalla', 'routes on screen')}</div>` +
         visible.slice(0, 40).map((r) => {
-          const kind = this.activity === 'hike' ? 'Sendero' : r.isMtb ? 'MTB' : 'Ciclista'
+          const kind = this.activity === 'hike' ? L('Sendero', 'Hiking') : r.isMtb ? 'MTB' : L('Ciclista', 'Cycling')
           const meta = [kind, SHAPE_LABEL[r.shape], r.ref].filter(Boolean).join(' · ')
           return `<button type="button" data-id="${r.id}"><i style="background:${KIND_COLOR[this.flavourOf(r)]}"></i><span><b>${escapeHtml(r.name)}</b><small>${escapeHtml(meta)}</small></span></button>`
         }).join('')

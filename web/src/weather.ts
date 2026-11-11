@@ -1,6 +1,7 @@
 // Previsión a lo largo de la ruta con Open-Meteo, como en la app
 // (RouteWeather.kt y WeatherDetail.kt del núcleo)
 import { estimateMs, haversine, pointAt, stats, type Activity, type GeoPoint, type Segments } from './geo'
+import { L } from './i18n'
 
 /** Un punto de la ruta y cuándo llegarás a él desde la salida. */
 export interface RouteSample { distanceMeters: number; lat: number; lon: number; ele?: number; offsetMs: number }
@@ -131,20 +132,20 @@ export function parse(json: unknown, ss: RouteSample[], startMs: number): Weathe
 
 /** Código WMO del tiempo → texto e icono. */
 export function describe(code: number): [string, string] {
-  if (code === 0) return ['Despejado', '☀️']
-  if (code === 1 || code === 2) return ['Poco nuboso', '🌤️']
-  if (code === 3) return ['Nublado', '☁️']
-  if (code === 45 || code === 48) return ['Niebla', '🌫️']
-  if (code >= 51 && code <= 57) return ['Llovizna', '🌦️']
-  if (code >= 61 && code <= 67) return ['Lluvia', '🌧️']
-  if (code >= 71 && code <= 77) return ['Nieve', '🌨️']
-  if (code >= 80 && code <= 82) return ['Chubascos', '🌦️']
-  if (code === 85 || code === 86) return ['Chubascos de nieve', '🌨️']
-  if (code >= 95 && code <= 99) return ['Tormenta', '⛈️']
+  if (code === 0) return [L('Despejado', 'Clear'), '☀️']
+  if (code === 1 || code === 2) return [L('Poco nuboso', 'Partly cloudy'), '🌤️']
+  if (code === 3) return [L('Nublado', 'Cloudy'), '☁️']
+  if (code === 45 || code === 48) return [L('Niebla', 'Fog'), '🌫️']
+  if (code >= 51 && code <= 57) return [L('Llovizna', 'Drizzle'), '🌦️']
+  if (code >= 61 && code <= 67) return [L('Lluvia', 'Rain'), '🌧️']
+  if (code >= 71 && code <= 77) return [L('Nieve', 'Snow'), '🌨️']
+  if (code >= 80 && code <= 82) return [L('Chubascos', 'Showers'), '🌦️']
+  if (code === 85 || code === 86) return [L('Chubascos de nieve', 'Snow showers'), '🌨️']
+  if (code >= 95 && code <= 99) return [L('Tormenta', 'Thunderstorm'), '⛈️']
   return ['—', '🌡️']
 }
 
-const kmOf = (meters: number) => `km ${Math.round(meters / 1000)}`
+const kmOf = (meters: number) => L(`el km ${Math.round(meters / 1000)}`, `km ${Math.round(meters / 1000)}`)
 
 /** Avisos para la salida: tormenta, nieve, hielo, viento, lluvia o calor, con el km donde empieza. */
 export function warnings(points: WeatherAt[]): string[] {
@@ -152,17 +153,17 @@ export function warnings(points: WeatherAt[]): string[] {
   const first = (f: (w: WeatherAt) => boolean) => points.find(f)
   const km = (w: WeatherAt) => kmOf(w.sample.distanceMeters)
   let w = first((p) => p.code >= 95 && p.code <= 99)
-  if (w) out.push(`⛈️ Tormenta prevista desde el ${km(w)}. Mejor otro día.`)
+  if (w) out.push(L(`⛈️ Tormenta prevista desde ${km(w)}. Mejor otro día.`, `⛈️ Thunderstorm forecast from ${km(w)}. Better another day.`))
   w = first((p) => (p.code >= 71 && p.code <= 77) || p.code === 85 || p.code === 86)
-  if (w) out.push(`🌨️ Nieve desde el ${km(w)}.`)
+  if (w) out.push(L(`🌨️ Nieve desde ${km(w)}.`, `🌨️ Snow from ${km(w)}.`))
   w = first((p) => p.tempC <= 0)
-  if (w) out.push(`🧊 Bajo cero en el ${km(w)}: puede haber hielo.`)
+  if (w) out.push(L(`🧊 Bajo cero en ${km(w)}: puede haber hielo.`, `🧊 Below zero at ${km(w)}: there may be ice.`))
   w = first((p) => p.gustKmh >= 50)
-  if (w) out.push(`💨 Rachas de ${Math.round(w.gustKmh)} km/h en el ${km(w)}. Cuidado en crestas y collados.`)
+  if (w) out.push(L(`💨 Rachas de ${Math.round(w.gustKmh)} km/h en ${km(w)}. Cuidado en crestas y collados.`, `💨 Gusts of ${Math.round(w.gustKmh)} km/h at ${km(w)}. Take care on ridges and passes.`))
   w = first((p) => (p.precipProbability ?? 0) >= 60 && !(p.code >= 95 && p.code <= 99))
-  if (w) out.push(`🌧️ Lluvia probable (${w.precipProbability} %) desde el ${km(w)}.`)
+  if (w) out.push(L(`🌧️ Lluvia probable (${w.precipProbability} %) desde ${km(w)}.`, `🌧️ Rain likely (${w.precipProbability}%) from ${km(w)}.`))
   w = first((p) => p.tempC >= 32)
-  if (w) out.push(`🥵 ${Math.round(w.tempC)} °C en el ${km(w)}: lleva agua de sobra.`)
+  if (w) out.push(L(`🥵 ${Math.round(w.tempC)} °C en ${km(w)}: lleva agua de sobra.`, `🥵 ${Math.round(w.tempC)} °C at ${km(w)}: carry plenty of water.`))
   return out
 }
 
@@ -247,33 +248,35 @@ export function whatToWear(rows: DetailRow[], activity: Activity): string[] {
   const out: string[] = []
   const km = (r: DetailRow) => kmOf(r.distanceMeters)
   out.push(
-    coldest >= 20 ? 'Arriba: manga corta transpirable.'
-      : coldest >= 14 ? (bike ? 'Arriba: manga corta, con chaleco o manguitos para las bajadas.' : 'Arriba: manga corta y una capa fina en la mochila.')
-      : coldest >= 8 ? 'Arriba: manga larga fina y cortavientos.'
-      : coldest >= 2 ? 'Arriba: camiseta térmica de manga larga y chaqueta cortavientos o softshell.'
-      : 'Arriba: tres capas: térmica, forro polar y chaqueta cortavientos o impermeable.',
+    coldest >= 20 ? L('Arriba: manga corta transpirable.', 'Top: breathable short sleeves.')
+      : coldest >= 14 ? (bike ? L('Arriba: manga corta, con chaleco o manguitos para las bajadas.', 'Top: short sleeves, with a gilet or arm warmers for the descents.') : L('Arriba: manga corta y una capa fina en la mochila.', 'Top: short sleeves and a light layer in the pack.'))
+      : coldest >= 8 ? L('Arriba: manga larga fina y cortavientos.', 'Top: light long sleeves and a windproof.')
+      : coldest >= 2 ? L('Arriba: camiseta térmica de manga larga y chaqueta cortavientos o softshell.', 'Top: long-sleeve thermal base layer and a windproof or softshell jacket.')
+      : L('Arriba: tres capas: térmica, forro polar y chaqueta cortavientos o impermeable.', 'Top: three layers: thermal, fleece and a windproof or waterproof jacket.'),
   )
   out.push(
-    coldest >= 14 ? (bike ? 'Abajo: culotte corto.' : 'Abajo: pantalón corto o fino.')
-      : coldest >= 6 ? (bike ? 'Abajo: culotte corto con perneras o rodilleras.' : 'Abajo: pantalón largo fino.')
-      : bike ? 'Abajo: culotte largo térmico.' : 'Abajo: pantalón largo de abrigo.',
+    coldest >= 14 ? (bike ? L('Abajo: culotte corto.', 'Bottom: bib shorts.') : L('Abajo: pantalón corto o fino.', 'Bottom: shorts or light trousers.'))
+      : coldest >= 6 ? (bike ? L('Abajo: culotte corto con perneras o rodilleras.', 'Bottom: bib shorts with leg or knee warmers.') : L('Abajo: pantalón largo fino.', 'Bottom: light long trousers.'))
+      : bike ? L('Abajo: culotte largo térmico.', 'Bottom: thermal bib tights.') : L('Abajo: pantalón largo de abrigo.', 'Bottom: warm long trousers.'),
   )
-  if (coldest < 2) out.push(bike ? 'Guantes de invierno, gorro bajo el casco, braga de cuello y cubrezapatillas.' : 'Guantes, gorro y braga de cuello.')
-  else if (coldest < 10) out.push(bike ? 'Guantes largos y braga de cuello.' : 'Guantes finos.')
-  if (warmest - coldest >= 8) out.push(`Por capas: la sensación va de ${Math.round(coldest)} a ${Math.round(warmest)} °C a lo largo de la salida.`)
+  if (coldest < 2) out.push(bike ? L('Guantes de invierno, gorro bajo el casco, braga de cuello y cubrezapatillas.', 'Winter gloves, a cap under the helmet, a neck gaiter and overshoes.') : L('Guantes, gorro y braga de cuello.', 'Gloves, a hat and a neck gaiter.'))
+  else if (coldest < 10) out.push(bike ? L('Guantes largos y braga de cuello.', 'Full-finger gloves and a neck gaiter.') : L('Guantes finos.', 'Light gloves.'))
+  if (warmest - coldest >= 8) out.push(L(`Por capas: la sensación va de ${Math.round(coldest)} a ${Math.round(warmest)} °C a lo largo de la salida.`, `Layer up: it will feel like ${Math.round(coldest)} to ${Math.round(warmest)} °C over the ride.`))
   const wet = rows.find((r) => r.precipMm >= 0.3 || (r.precipProbability ?? 0) >= 50)
   if (wet) {
     const heavy = rows.some((r) => r.precipMm >= 2 || (r.precipProbability ?? 0) >= 80)
-    out.push(heavy ? `Chubasquero puesto desde el ${km(wet)}` + (bike ? ' y guardabarros.' : ' y funda para la mochila.') : `Chubasquero en la mochila: puede llover desde el ${km(wet)}.`)
+    out.push(heavy
+      ? L(`Chubasquero puesto desde ${km(wet)}` + (bike ? ' y guardabarros.' : ' y funda para la mochila.'), `Rain jacket on from ${km(wet)}` + (bike ? ' and mudguards.' : ' and a pack cover.'))
+      : L(`Chubasquero en la mochila: puede llover desde ${km(wet)}.`, `Rain jacket in the pack: it may rain from ${km(wet)}.`))
   }
   const gust = rows.find((r) => r.gustKmh >= 40)
-  if (gust && coldest >= 14) out.push(`Cortavientos: rachas de ${Math.round(gust.gustKmh)} km/h en el ${km(gust)}.`)
+  if (gust && coldest >= 14) out.push(L(`Cortavientos: rachas de ${Math.round(gust.gustKmh)} km/h en ${km(gust)}.`, `Windproof: gusts of ${Math.round(gust.gustKmh)} km/h at ${km(gust)}.`))
   const uv = Math.max(0, ...rows.map((r) => r.uv ?? 0))
-  if (uv >= 6) out.push(`Sol fuerte (UV ${Math.round(uv)}): crema, gafas de sol y gorra o visera.`)
-  else if (uv >= 3) out.push('Gafas de sol y crema.')
-  if (Math.max(...rows.map((r) => r.feelsC)) >= 28) out.push('Calor: agua de sobra (medio litro por hora) y sales.')
+  if (uv >= 6) out.push(L(`Sol fuerte (UV ${Math.round(uv)}): crema, gafas de sol y gorra o visera.`, `Strong sun (UV ${Math.round(uv)}): sunscreen, sunglasses and a cap or visor.`))
+  else if (uv >= 3) out.push(L('Gafas de sol y crema.', 'Sunglasses and sunscreen.'))
+  if (Math.max(...rows.map((r) => r.feelsC)) >= 28) out.push(L('Calor: agua de sobra (medio litro por hora) y sales.', 'Heat: plenty of water (half a litre an hour) and electrolytes.'))
   const dark = rows.find((r) => !r.isDay)
-  if (dark) out.push(`Anochece por el camino (${km(dark)}): ` + (bike ? 'luces delante y detrás.' : 'frontal.'))
+  if (dark) out.push(L(`Anochece por el camino (km ${Math.round(dark.distanceMeters / 1000)}): ` + (bike ? 'luces delante y detrás.' : 'frontal.'), `It gets dark on the way (${km(dark)}): ` + (bike ? 'front and rear lights.' : 'a head torch.')))
   return out
 }
 

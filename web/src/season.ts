@@ -1,3 +1,4 @@
+import { L } from './i18n'
 /** Colores del mapa por estación, los mismos que en la app (Season.kt). */
 export interface Season {
   label: string
@@ -22,14 +23,14 @@ const s = (
 ): Season => ({ label, background, grass, wood, park, pineLight, pineShade, broadleaf, broadleafShade, blossom, snow, broadleafShare, tip })
 
 export const SEASONS = {
-  spring: s('Primavera', '#EEF0DF', '#D2E7AE', '#B3D78B', '#C9E3A6', '#74B04A', '#4E8A2E', '#8CCB5E', '#5FA03A', '#F4A7C0', false, 0.35,
-    'Primavera: barro tras las lluvias y arroyos crecidos. Ojo con los vados.'),
-  summer: s('Verano', '#F1EDD8', '#E4E0B0', '#B2CA8A', '#D3DCA8', '#5E9340', '#3F6F2A', '#6FA048', '#4D7F31', null, false, 0.3,
-    'Verano: sal temprano, lleva agua de sobra y respeta las restricciones por riesgo de incendio.'),
-  autumn: s('Otoño', '#F0EADB', '#E5D7AA', '#C7CD93', '#DCD3A4', '#6E9F48', '#4F7F33', '#E08A2E', '#B5532A', null, false, 0.45,
-    'Otoño: hojas y raíces mojadas resbalan y anochece pronto. Lleva luz.'),
-  winter: s('Invierno', '#F2F4F2', '#E3E8DE', '#C5D3BD', '#D9E2D3', '#5D8A5A', '#3D6B44', '#9C7E62', '#7A5F48', null, true, 0.0,
-    'Invierno: hielo en las umbrías y nieve en las cumbres. Mira el parte antes de salir.'),
+  spring: s(L('Primavera', 'Spring'), '#EEF0DF', '#D2E7AE', '#B3D78B', '#C9E3A6', '#74B04A', '#4E8A2E', '#8CCB5E', '#5FA03A', '#F4A7C0', false, 0.35,
+    L('Primavera: barro tras las lluvias y arroyos crecidos. Ojo con los vados.', 'Spring: mud after the rain and swollen streams. Take care at fords.')),
+  summer: s(L('Verano', 'Summer'), '#F1EDD8', '#E4E0B0', '#B2CA8A', '#D3DCA8', '#5E9340', '#3F6F2A', '#6FA048', '#4D7F31', null, false, 0.3,
+    L('Verano: sal temprano, lleva agua de sobra y respeta las restricciones por riesgo de incendio.', 'Summer: start early, carry plenty of water and respect fire-risk restrictions.')),
+  autumn: s(L('Otoño', 'Autumn'), '#F0EADB', '#E5D7AA', '#C7CD93', '#DCD3A4', '#6E9F48', '#4F7F33', '#E08A2E', '#B5532A', null, false, 0.45,
+    L('Otoño: hojas y raíces mojadas resbalan y anochece pronto. Lleva luz.', 'Autumn: wet leaves and roots are slippery and it gets dark early. Bring a light.')),
+  winter: s(L('Invierno', 'Winter'), '#F2F4F2', '#E3E8DE', '#C5D3BD', '#D9E2D3', '#5D8A5A', '#3D6B44', '#9C7E62', '#7A5F48', null, true, 0.0,
+    L('Invierno: hielo en las umbrías y nieve en las cumbres. Mira el parte antes de salir.', 'Winter: ice on shady slopes and snow on the peaks. Check the forecast before you go.')),
 }
 
 /** Por fecha: equinoccios y solsticios redondeados al día. */

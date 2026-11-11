@@ -98,3 +98,21 @@ describe('defaultStart', () => {
     expect([evening.getDate(), evening.getHours()]).toEqual([12, 9])
   })
 })
+
+describe('en inglés', () => {
+  it('avisos y ropa en inglés', async () => {
+    const { setLang } = await import('./i18n')
+    setLang('en')
+    try {
+      const o = { precip: [0, 2.5, 3, 0], isDay: [1, 1, 0, 0], gust: 60 }
+      const json = [loc([2, 2, 2, 2], [-1, -1, -1, -1], o), loc([0, 0, 0, 0], [-3, -3, -3, -3], o)]
+      const wear = whatToWear(detailRows(json, ss, t0 * 1000), 'bike').join('\n')
+      expect(wear).toContain('Top: three layers')
+      expect(wear).toContain('Rain jacket on from km 3 and mudguards.')
+      const warn = warnings(parse(json, ss, t0 * 1000)).join('\n')
+      expect(warn).toContain('Gusts of 60 km/h at km 0')
+    } finally {
+      setLang('es')
+    }
+  })
+})

@@ -2,33 +2,34 @@
 // (Difficulty.kt y Surface.kt del núcleo). Una sola consulta a Overpass vale
 // para las dos: los caminos junto al track traen sus etiquetas.
 import { downsample, haversine, type GeoPoint, type Segments } from './geo'
+import { L } from './i18n'
 
 export type SurfaceKind = 'paved' | 'track' | 'path' | 'steps'
 export const SURFACE: Record<SurfaceKind, { label: string; color: string }> = {
-  paved: { label: 'Asfalto', color: '#8A8F98' },
-  track: { label: 'Pista', color: '#C8963E' },
-  path: { label: 'Sendero', color: '#4E8A2E' },
-  steps: { label: 'Escaleras', color: '#B5532A' },
+  paved: { label: L('Asfalto', 'Paved'), color: '#8A8F98' },
+  track: { label: L('Pista', 'Track'), color: '#C8963E' },
+  path: { label: L('Sendero', 'Trail'), color: '#4E8A2E' },
+  steps: { label: L('Escaleras', 'Steps'), color: '#B5532A' },
 }
 const KINDS: SurfaceKind[] = ['paved', 'track', 'path', 'steps']
 
 export const MTB_LABELS: [string, string][] = [
-  ['S0', 'pista o sendero fácil'],
-  ['S1', 'raíces y piedras pequeñas'],
-  ['S2', 'escalones bajos y piedra suelta'],
-  ['S3', 'bloques, escalones y curvas cerradas'],
-  ['S4', 'muy técnico, pasos de trial'],
-  ['S5', 'extremo'],
-  ['S6', 'no ciclable'],
+  ['S0', L('pista o sendero fácil', 'easy track or trail')],
+  ['S1', L('raíces y piedras pequeñas', 'roots and small rocks')],
+  ['S2', L('escalones bajos y piedra suelta', 'low steps and loose rock')],
+  ['S3', L('bloques, escalones y curvas cerradas', 'boulders, steps and tight switchbacks')],
+  ['S4', L('muy técnico, pasos de trial', 'very technical, trials moves')],
+  ['S5', L('extremo', 'extreme')],
+  ['S6', L('no ciclable', 'not rideable')],
 ]
 /** Índice 1–6 → T1–T6. */
 export const SAC_LABELS: [string, string][] = [
-  ['T1', 'senderismo'],
-  ['T2', 'senderismo de montaña'],
-  ['T3', 'montaña exigente'],
-  ['T4', 'alpino'],
-  ['T5', 'alpino exigente'],
-  ['T6', 'alpino difícil'],
+  ['T1', L('senderismo', 'hiking')],
+  ['T2', L('senderismo de montaña', 'mountain hiking')],
+  ['T3', L('montaña exigente', 'demanding mountain hiking')],
+  ['T4', L('alpino', 'alpine hiking')],
+  ['T5', L('alpino exigente', 'demanding alpine hiking')],
+  ['T6', L('alpino difícil', 'difficult alpine hiking')],
 ]
 const SAC: Record<string, number> = {
   hiking: 1, mountain_hiking: 2, demanding_mountain_hiking: 3,

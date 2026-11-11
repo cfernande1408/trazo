@@ -227,3 +227,6 @@ select.chip { appearance: auto; }
 .spinner { display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; border: 2px solid var(--primary); border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .btn.small { padding: 6px 12px; font-size: 13px; }
+
+/* Idioma */
+.segmented.lang button { padding: 0 10px; font-size: 13px; letter-spacing: .02em; }

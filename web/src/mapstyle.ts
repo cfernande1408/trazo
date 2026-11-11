@@ -2,6 +2,7 @@ import type { Map as MlMap, StyleSpecification } from 'maplibre-gl'
 // El mismo estilo que la app Android: una sola fuente para los dos
 import trazoTopo from '../../app/src/main/assets/trazo_topo.json'
 import type { Season } from './season'
+import { L } from './i18n'
 
 export type BaseMap = 'trazo' | 'ign' | 'pnoa'
 
@@ -11,8 +12,8 @@ const wmts = (service: string, layer: string) =>
 
 export const BASE_MAPS: Record<BaseMap, { label: string; note?: string; tiles?: string; attribution?: string; maxzoom?: number }> = {
   trazo: { label: 'Trazo' },
-  ign: { label: 'Topo IGN', note: 'Solo España', tiles: wmts('mapa-raster', 'MTN'), attribution: 'Mapa topográfico © Instituto Geográfico Nacional', maxzoom: 17 },
-  pnoa: { label: 'Satélite', note: 'Solo España', tiles: wmts('pnoa-ma', 'OI.OrthoimageCoverage'), attribution: 'Ortofoto PNOA © Instituto Geográfico Nacional', maxzoom: 19 },
+  ign: { label: 'Topo IGN', note: L('Solo España', 'Spain only'), tiles: wmts('mapa-raster', 'MTN'), attribution: L('Mapa topográfico © Instituto Geográfico Nacional', 'Topographic map © Instituto Geográfico Nacional'), maxzoom: 17 },
+  pnoa: { label: L('Satélite', 'Satellite'), note: L('Solo España', 'Spain only'), tiles: wmts('pnoa-ma', 'OI.OrthoimageCoverage'), attribution: L('Ortofoto PNOA © Instituto Geográfico Nacional', 'PNOA orthophoto © Instituto Geográfico Nacional'), maxzoom: 19 },
 }
 
 /** El estilo topo de Trazo con los colores de la estación (como TrazoMapStyle.styleFile). */
@@ -30,6 +31,10 @@ export function trazoStyle(season: Season): StyleSpecification {
   const omt = style.sources.omt as { attribution?: string } | undefined
   if (omt && !omt.attribution) {
     omt.attribution = '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+  }
+  // El estilo es el de la app, con los créditos en español
+  for (const src of Object.values(style.sources) as { attribution?: string }[]) {
+    if (src.attribution) src.attribution = src.attribution.replace(/^Relieve:/, L('Relieve:', 'Relief:'))
   }
   return style
 }

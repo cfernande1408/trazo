@@ -4,11 +4,12 @@
  * búsqueda de lugares con Nominatim. Pasado de core/gpx/osm a TypeScript.
  */
 import { haversine, pointAt, stats, type Activity, type GeoPoint, type Segments } from './geo'
+import { L, lang } from './i18n'
 
 export interface Bbox { south: number; west: number; north: number; east: number }
 
 export type Shape = 'loop' | 'linear' | 'unknown'
-export const SHAPE_LABEL: Record<Shape, string> = { loop: 'Circular', linear: 'Lineal', unknown: '' }
+export const SHAPE_LABEL: Record<Shape, string> = { loop: L('Circular', 'Loop'), linear: L('Lineal', 'One way'), unknown: '' }
 
 export interface OsmRoute {
   id: number
@@ -62,7 +63,7 @@ export function parseWmtList(json: unknown): Listed[] {
   return results.flatMap((r) => {
     const m = r as { id?: number; name?: string; ref?: string }
     if (typeof m.id !== 'number') return []
-    return [{ id: m.id, name: m.name ?? m.ref ?? `Ruta ${m.id}`, ref: m.ref ?? undefined }]
+    return [{ id: m.id, name: m.name ?? m.ref ?? `${L('Ruta', 'Route')} ${m.id}`, ref: m.ref ?? undefined }]
   })
 }
 
@@ -125,7 +126,7 @@ export const overpassRoute = (id: number) => `[out:json][timeout:60];relation(${
 export const osmUrl = (id: number) => `https://www.openstreetmap.org/relation/${id}`
 
 type OsmTags = Record<string, string>
-const nameOf = (tags: OsmTags, id: number) => tags['name:es'] ?? tags.name ?? tags.ref ?? `Ruta ${id}`
+const nameOf = (tags: OsmTags, id: number) => tags[`name:${lang()}`] ?? tags.name ?? tags.ref ?? `${L('Ruta', 'Route')} ${id}`
 const shapeOfTag = (v?: string): Shape => (v === 'yes' ? 'loop' : v === 'no' ? 'linear' : 'unknown')
 
 interface OsmElement { type: string; id: number; tags?: OsmTags; center?: { lat: number; lon: number }; geometry?: { lat: number; lon: number }[] }
@@ -147,7 +148,7 @@ export function parseOverpassRoute(json: unknown, id: number): { name: string; d
   const tags = els.find((e) => e.type === 'relation')?.tags ?? {}
   const ways = els.filter((e) => e.type === 'way' && e.geometry).map((w) => w.geometry!.map((p) => ({ lat: p.lat, lon: p.lon })))
   const segments = stitch(ways)
-  if (!segments.length) throw new Error('La ruta no tiene trazado en OpenStreetMap')
+  if (!segments.length) throw new Error(L('La ruta no tiene trazado en OpenStreetMap', 'The route has no track in OpenStreetMap'))
   return { name: nameOf(tags, id), description: tags.description, segments }
 }
 
@@ -230,7 +231,7 @@ export interface Place { name: string; detail: string; lat: number; lon: number;
 
 /** Nominatim pide una consulta por segundo como mucho y nada de autocompletar: se busca al pulsar Intro. */
 export const placeUrl = (q: string, limit = 8) =>
-  `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=${limit}&accept-language=es&q=${encodeURIComponent(q.trim())}`
+  `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=${limit}&accept-language=${lang()}&q=${encodeURIComponent(q.trim())}`
 
 export function parsePlaces(json: unknown): Place[] {
   return ((json as unknown[]) ?? []).flatMap((r) => {

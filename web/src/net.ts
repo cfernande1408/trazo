@@ -1,11 +1,12 @@
 import { OVERPASS } from './osm'
+import { L } from './i18n'
 
 /** Mensajes de error entendibles, como Http.friendly en la app. */
 export function friendly(e: unknown): string {
-  if (e instanceof DOMException && e.name === 'AbortError') return 'Cancelado'
-  if (e instanceof TypeError) return 'Sin conexión o el servidor no contesta.'
+  if (e instanceof DOMException && e.name === 'AbortError') return L('Cancelado', 'Cancelled')
+  if (e instanceof TypeError) return L('Sin conexión o el servidor no contesta.', 'No connection or the server is not answering.')
   if (e instanceof Error && e.message) return e.message
-  return 'Algo ha fallado.'
+  return L('Algo ha fallado.', 'Something went wrong.')
 }
 
 export class BusyError extends Error {}
@@ -13,8 +14,8 @@ export class BusyError extends Error {}
 /** GET de JSON con tiempo máximo. */
 export async function getJson<T = unknown>(url: string, signal?: AbortSignal, timeoutMs = 20_000): Promise<T> {
   const res = await fetch(url, { signal: anySignal(signal, AbortSignal.timeout(timeoutMs)) })
-  if (res.status === 429 || res.status === 503 || res.status === 504) throw new BusyError('El servidor está saturado. Prueba en un momento.')
-  if (!res.ok) throw new Error(`El servidor contestó ${res.status}`)
+  if (res.status === 429 || res.status === 503 || res.status === 504) throw new BusyError(L('El servidor está saturado. Prueba en un momento.', 'The server is busy. Try again in a moment.'))
+  if (!res.ok) throw new Error(L(`El servidor contestó ${res.status}`, `The server answered ${res.status}`))
   return (await res.json()) as T
 }
 
@@ -38,7 +39,7 @@ export function overpass<T = unknown>(query: string, signal?: AbortSignal): Prom
       clearTimeout(timer)
       controllers.forEach((c) => c.abort())
     }
-    signal?.addEventListener('abort', () => { if (!done) { finish(); reject(new DOMException('Cancelado', 'AbortError')) } })
+    signal?.addEventListener('abort', () => { if (!done) { finish(); reject(new DOMException(L('Cancelado', 'Cancelled'), 'AbortError')) } })
     const launch = () => {
       if (done || next >= OVERPASS.length) return
       const endpoint = OVERPASS[next++]
@@ -53,7 +54,7 @@ export function overpass<T = unknown>(query: string, signal?: AbortSignal): Prom
       })
         .then(async (res) => {
           if (res.status === 429 || res.status === 504) throw new BusyError('busy')
-          if (!res.ok) throw new Error(`Overpass contestó ${res.status}`)
+          if (!res.ok) throw new Error(L(`Overpass contestó ${res.status}`, `Overpass answered ${res.status}`))
           return (await res.json()) as T
         })
         .then((json) => { if (!done) { finish(); resolve(json) } })
@@ -63,7 +64,7 @@ export function overpass<T = unknown>(query: string, signal?: AbortSignal): Prom
           if (failures.length === OVERPASS.length) {
             finish()
             reject(failures.some((f) => f instanceof BusyError)
-              ? new BusyError('Los servidores de rutas de OpenStreetMap están saturados. Prueba en un par de minutos.')
+              ? new BusyError(L('Los servidores de rutas de OpenStreetMap están saturados. Prueba en un par de minutos.', 'The OpenStreetMap route servers are busy. Try again in a couple of minutes.'))
               : new Error(friendly(e)))
           } else launch()
         })

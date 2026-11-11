@@ -1,8 +1,9 @@
 import { stats, type Activity, type Segments } from './geo'
 import { friendly, overpass } from './net'
 import { gradeLabel, osmWaysQuery, parseWays, summarizeDifficulty, summarizeSurface, SURFACE, type OsmWay, type SurfaceKind } from './surface'
+import { L, locale, percent } from './i18n'
 
-const ES = 'es-ES'
+const ES = locale()
 const km = (m: number) => `${(m / 1000).toLocaleString(ES, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`
 /** A partir de aquí se avisa de que Overpass va lento, como en la app. */
 const SLOW_MS = 12_000
@@ -72,10 +73,10 @@ export class OsmCard {
 
   private render() {
     const mtb = this.activity === 'bike'
-    const title = mtb ? 'Dificultad técnica (escala MTB)' : 'Dificultad (escala SAC)'
-    const waiting = `<p class="muted small"><span class="spinner"></span>Mirando los caminos en OpenStreetMap…${this.slow ? ' Overpass va lento ahora; sigue intentándolo.' : ''}</p>`
+    const title = mtb ? L('Dificultad técnica (escala MTB)', 'Technical difficulty (MTB scale)') : L('Dificultad (escala SAC)', 'Difficulty (SAC scale)')
+    const waiting = `<p class="muted small"><span class="spinner"></span>${L('Mirando los caminos en OpenStreetMap…', 'Checking the paths in OpenStreetMap…')}${this.slow ? ' ' + L('Overpass va lento ahora; sigue intentándolo.', 'Overpass is slow right now; still trying.') : ''}</p>`
     if (this.error) {
-      const err = `<p class="error small">No se pudieron mirar los caminos: ${this.error}</p><button type="button" class="btn small" data-retry>Reintentar</button>`
+      const err = `<p class="error small">${L('No se pudieron mirar los caminos', 'Could not check the paths')}: ${this.error}</p><button type="button" class="btn small" data-retry>${L('Reintentar', 'Retry')}</button>`
       this.diffEl.innerHTML = `<h3>${title}</h3>${err}`
       this.surfEl.innerHTML = ''
       this.diffEl.querySelector('[data-retry]')?.addEventListener('click', () => this.fetch())
@@ -83,37 +84,37 @@ export class OsmCard {
     }
     if (!this.ways) {
       this.diffEl.innerHTML = `<h3>${title}</h3>${waiting}`
-      this.surfEl.innerHTML = `<h3>Por dónde va</h3>${waiting}`
+      this.surfEl.innerHTML = `<h3>${L('Por dónde va', 'Surface')}</h3>${waiting}`
       return
     }
     this.diffEl.innerHTML = `<h3>${title}</h3>${this.difficulty(mtb)}`
-    this.surfEl.innerHTML = `<h3>Por dónde va</h3>${this.surface()}`
+    this.surfEl.innerHTML = `<h3>${L('Por dónde va', 'Surface')}</h3>${this.surface()}`
   }
 
   private difficulty(mtb: boolean): string {
     const s = summarizeDifficulty(this.segments, this.ways!, mtb)
-    if (s.mainGrade == null) return '<p class="small">Los caminos de esta ruta no tienen dificultad marcada en OpenStreetMap.</p>'
+    if (s.mainGrade == null) return `<p class="small">${L('Los caminos de esta ruta no tienen dificultad marcada en OpenStreetMap.', 'The paths on this route have no difficulty rating in OpenStreetMap.')}</p>`
     const [mainCode, mainText] = gradeLabel(s.mainGrade, mtb)
     const [hardCode, hardText] = gradeLabel(s.maxGrade!, mtb)
     const top = Math.max(...s.byGrade.map(([, m]) => m))
     const rows = s.byGrade.map(([g, m]) =>
       `<div class="bar-row"><b>${gradeLabel(g, mtb)[0]}</b><span class="bar"><i style="width:${(m / top) * 100}%;background:${gradeColor(g, mtb)}"></i></span><span>${km(m)}</span></div>`).join('')
-    return `<p class="small">Sobre todo ${mainCode} (${mainText})${s.maxGrade !== s.mainGrade ? `. Lo más difícil: ${hardCode}, ${hardText}.` : '.'}</p>
+    return `<p class="small">${L('Sobre todo', 'Mostly')} ${mainCode} (${mainText})${s.maxGrade !== s.mainGrade ? `. ${L('Lo más difícil', 'Hardest')}: ${hardCode}, ${hardText}.` : '.'}</p>
       <div class="bars">${rows}</div>
-      <p class="muted small">Marcada en ${km(s.ratedMeters)} de ${km(s.routeMeters)}. El resto de caminos no tiene dato.</p>`
+      <p class="muted small">${L(`Marcada en ${km(s.ratedMeters)} de ${km(s.routeMeters)}. El resto de caminos no tiene dato.`, `Rated on ${km(s.ratedMeters)} of ${km(s.routeMeters)}. The other paths have no data.`)}</p>`
   }
 
   private surface(): string {
     const s = summarizeSurface(this.segments, this.ways!)
-    if (s.knownMeters <= 0) return '<p class="small">La ruta no coincide con caminos de OpenStreetMap.</p>'
+    if (s.knownMeters <= 0) return `<p class="small">${L('La ruta no coincide con caminos de OpenStreetMap.', 'The route does not follow any OpenStreetMap paths.')}</p>`
     const kinds = (Object.keys(SURFACE) as SurfaceKind[]).filter((k) => s.meters[k])
     const share = (k: SurfaceKind) => (s.meters[k]! / s.knownMeters) * 100
     const strip = `<div class="strip">${kinds.map((k) => `<i style="width:${share(k)}%;background:${SURFACE[k].color}" title="${SURFACE[k].label}"></i>`).join('')}</div>`
     const rows = kinds.map((k) =>
-      `<span><i class="dot" style="background:${SURFACE[k].color}"></i>${SURFACE[k].label}</span><b>${km(s.meters[k]!)} · ${Math.round(share(k))} %</b>`).join('')
+      `<span><i class="dot" style="background:${SURFACE[k].color}"></i>${SURFACE[k].label}</span><b>${km(s.meters[k]!)} · ${percent(Math.round(share(k)))}</b>`).join('')
     const unknown = s.routeMeters - s.knownMeters
     return `${strip}<div class="rows">${rows}</div>` +
-      (unknown > 200 ? `<p class="muted small">Sin dato en ${km(unknown)}: por ahí no hay camino en OpenStreetMap.</p>` : '')
+      (unknown > 200 ? `<p class="muted small">${L(`Sin dato en ${km(unknown)}: por ahí no hay camino en OpenStreetMap.`, `No data for ${km(unknown)}: there is no path in OpenStreetMap there.`)}</p>` : '')
   }
 }
 

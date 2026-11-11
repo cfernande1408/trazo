@@ -1,4 +1,5 @@
 import type { GeoPoint, Segments, Waypoint } from './geo'
+import { L } from './i18n'
 
 export interface Gpx {
   name?: string
@@ -37,7 +38,7 @@ export function parseGpx(xml: string): Gpx {
   const doc = new DOMParser().parseFromString(xml, 'application/xml')
   const root = doc.documentElement
   if (!root || root.localName !== 'gpx' || doc.getElementsByTagName('parsererror').length > 0) {
-    throw new GpxError('No es un archivo GPX válido')
+    throw new GpxError(L('No es un archivo GPX válido', 'Not a valid GPX file'))
   }
   const segments: Segments = []
   for (const trk of children(root, 'trk')) {
@@ -62,7 +63,7 @@ export function parseGpx(xml: string): Gpx {
     .filter((e): e is Element => !!e)
     .flatMap((e) => children(e, 'link').map((l) => l.getAttribute('href') ?? ''))
     .filter((h) => h.startsWith('http'))
-  if (segments.every((s) => s.length < 2) && waypoints.length === 0) throw new GpxError('El GPX no tiene recorrido')
+  if (segments.every((s) => s.length < 2) && waypoints.length === 0) throw new GpxError(L('El GPX no tiene recorrido', 'The GPX has no track'))
   return { name: name?.replace(/^Wikiloc - /, ''), description, segments, waypoints, links }
 }
 
@@ -70,7 +71,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 /** GPX para pasar la ruta al móvil (con altitudes, si se completaron). */
 export function writeGpx(gpx: Gpx): string {
-  const name = gpx.name ?? 'Ruta'
+  const name = gpx.name ?? L('Ruta', 'Route')
   const wpts = gpx.waypoints
     .map((w) => `  <wpt lat="${w.lat.toFixed(7)}" lon="${w.lon.toFixed(7)}">${w.ele != null ? `<ele>${w.ele.toFixed(1)}</ele>` : ''}${w.name ? `<name>${esc(w.name)}</name>` : ''}${w.desc ? `<desc>${esc(w.desc)}</desc>` : ''}</wpt>\n`)
     .join('')

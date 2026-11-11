@@ -148,6 +148,7 @@ y por dónde va (asfalto, pista o sendero), la vista 3D
 con vuelo virtual, el tiempo por el camino a la hora de salida que elijas con qué llevarte puesto,
 las rampas más duras, el tiempo estimado en bici o a pie y los puntos del autor. Desde ahí descargas el GPX
 para abrirlo en el móvil. No es para navegar: para seguir la ruta en el monte está la app.
+Está en español y en inglés: sale en el idioma del navegador y se cambia con ES / EN.
 
 Los archivos no salen del navegador; a Open-Meteo solo se le piden las altitudes (si el GPX no las
 trae) y la previsión de unos puntos de la ruta.
@@ -234,6 +235,7 @@ web y lee los GPX que tú descargas: no copia rutas ni comentarios de forma auto
 - [x] Kcal gastadas y portada con tu semana
 - [x] Tarjetas de Descubre Trazo en Inicio
 - [x] Analizar o repetir las rutas realizadas
+- [x] Trazo web en español y en inglés
 - [x] Tiempos a tu ritmo y dificultad para ti según tu forma física
 - [x] Botón de pendiente a la vista en el mapa de la ruta
 - [ ] Comunidad: valoraciones y avisos de los usuarios (hielo, árbol caído…), a falta de activar el servidor

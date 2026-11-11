@@ -264,6 +264,7 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - **Explorar** como en la app: al mover el mapa salen las rutas señalizadas de OpenStreetMap (MTB y ciclistas en bici, senderos a pie), de Waymarked Trails con Overpass de respaldo
 - Lista de las rutas que se ven, de la más cercana al centro a la más lejana, y filtros *Solo MTB* y *Circular o lineal*
 - Desde lejos, el aviso *Acercar aquí* lleva al zoom en el que salen las rutas; y un botón para ir a donde estás
+- **En español y en inglés**: sale en el idioma del navegador (español si alguno de los suyos lo es) y se cambia con *ES / EN* arriba; se recuerda la elección
 - Al tocar una ruta se dibuja enseguida el trazado simplificado y luego el exacto de OSM, con su resumen completo y enlace a OpenStreetMap
 - **Buscador** de lugares (Nominatim) y de rutas por nombre o referencia («PR-M 13»), a la vez: primero los lugares, y solo las rutas que llevan lo buscado en el nombre
 - Abre o suelta uno o varios GPX; con varios, una lista para pasar de uno a otro
