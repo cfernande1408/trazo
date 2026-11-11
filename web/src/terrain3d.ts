@@ -68,13 +68,25 @@ export class Terrain3D {
       // la vista inclinada se va hacia la cámara: se vuelve a centrar con el relieve ya puesto
       // (se mira dónde cae el centro de la ruta, ya sobre el relieve, y se lleva al centro)
       const mid: [number, number] = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]
-      m.once('idle', () => {
-        if (!this.on || this.flying) return
+      // No se espera a 'idle' (con las casas y el mapa base puede tardar 15 s): basta con que
+      // haya llegado el relieve
+      let done = false
+      const recenter = () => {
+        if (done || !this.on || this.flying) return
+        done = true
         const p = m.project(mid)
         const c = m.getCanvas()
         const dx = p.x - c.clientWidth / 2, dy = p.y - c.clientHeight / 2
         if (Math.hypot(dx, dy) > 20) m.panBy([dx, dy], { duration: 700 })
+      }
+      m.once('moveend', () => {
+        let tries = 0
+        const poll = setInterval(() => {
+          if (done || !this.on || ++tries > 30) return clearInterval(poll)
+          if (m.isSourceLoaded('terrain3d')) { clearInterval(poll); recenter() }
+        }, 250)
       })
+      m.once('idle', recenter)
     } else m.easeTo({ pitch: 60, bearing: -20, duration: 800 })
   }
 
