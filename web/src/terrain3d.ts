@@ -58,7 +58,10 @@ export class Terrain3D {
     if (m.getLayer('building')) m.setLayoutProperty('building', 'visibility', 'none')
     this.on = true
     const b = segments && bounds(segments)
-    if (b) m.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 60, pitch: 60, bearing: -20, duration: 1200, maxZoom: 15 })
+    // Encuadre calculado en plano y luego inclinado: fitBounds con inclinación dejaba la
+    // ruta fuera, por arriba. Algo más lejos para que quepa la parte del fondo.
+    const cam = b && m.cameraForBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 60, bearing: -20, maxZoom: 15 })
+    if (cam?.center && cam.zoom != null) m.easeTo({ center: cam.center, zoom: cam.zoom - 0.4, bearing: -20, pitch: 60, duration: 1200 })
     else m.easeTo({ pitch: 60, bearing: -20, duration: 800 })
   }
 
