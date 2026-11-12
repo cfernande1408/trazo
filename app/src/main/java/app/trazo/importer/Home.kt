@@ -1,5 +1,6 @@
 package app.trazo.importer
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.geometry.Offset
@@ -121,8 +122,8 @@ internal fun Home(activity: Activity, season: Season, routes: List<SavedRoute>, 
         if (routes.isNotEmpty()) {
             item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Tus rutas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    TextButton(onClick = a.onLibrary) { Text("Ver todas") }
+                    Text(L("Tus rutas", "Your routes"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    TextButton(onClick = a.onLibrary) { Text(L("Ver todas", "See all")) }
                 }
             }
             item {
@@ -133,7 +134,7 @@ internal fun Home(activity: Activity, season: Season, routes: List<SavedRoute>, 
         }
         item {
             Text(
-                "Desde Wikiloc: en la ruta, Descargar → GPX y luego Compartir → Trazo. O ábrelo con «Importar GPX».",
+                L("Desde Wikiloc: en la ruta, Descargar → GPX y luego Compartir → Trazo. O ábrelo con «Importar GPX».", "From Wikiloc: on the route, Download → GPX and then Share → Trazo. Or open it with “Import GPX”."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 4.dp),
@@ -211,13 +212,13 @@ private fun Hero(activity: Activity, season: Season, a: HomeActions) {
                 ),
             )
             Column(Modifier.align(Alignment.BottomStart).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Bienvenido a Trazo", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(L("Bienvenido a Trazo", "Welcome to Trazo"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.White)
                 Text(season.tip, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.92f), maxLines = 3, overflow = TextOverflow.Ellipsis)
                 // Los dos a partes iguales, para que quepan con la letra grande
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Button(onClick = a.onRecord, modifier = Modifier.weight(1f).height(48.dp)) {
                         Icon(Icons.Filled.PlayArrow, contentDescription = null)
-                        Text(" Grabar", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(L(" Grabar", " Record"), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     OutlinedButton(
                         onClick = a.onExplore,
@@ -226,7 +227,7 @@ private fun Hero(activity: Activity, season: Season, a: HomeActions) {
                         colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                     ) {
                         Icon(Icons.Filled.Place, contentDescription = null)
-                        Text(" Explorar", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(L(" Explorar", " Explore"), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -241,23 +242,23 @@ private fun WeekCard(week: Week?, activity: Activity) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Tu semana", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(L("Tu semana", "Your week"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             val w = week
             when {
                 w == null -> Text("…", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 w.outings == 0 -> Text(
-                    if (activity == Activity.BIKE) "Aún no has salido esta semana. Hay rutas esperando." else "Aún no has salido esta semana. Hay senderos esperando.",
+                    if (activity == Activity.BIKE) L("Aún no has salido esta semana. Hay rutas esperando.", "You haven't been out this week yet. Routes are waiting.") else L("Aún no has salido esta semana. Hay senderos esperando.", "You haven't been out this week yet. Trails are waiting."),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 else -> {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        WeekStat(if (activity == Activity.BIKE) "Salidas" else "Excursiones", "${w.outings}", Modifier.weight(1f))
-                        WeekStat("Distancia", km(w.meters), Modifier.weight(1f))
-                        WeekStat("Desnivel +", metros(w.gain), Modifier.weight(1f))
+                        WeekStat(if (activity == Activity.BIKE) L("Salidas", "Rides") else L("Excursiones", "Hikes"), "${w.outings}", Modifier.weight(1f))
+                        WeekStat(L("Distancia", "Distance"), km(w.meters), Modifier.weight(1f))
+                        WeekStat(L("Desnivel +", "Ascent"), metros(w.gain), Modifier.weight(1f))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         val min = (w.movingMs / 60_000.0).roundToInt()
-                        WeekStat("En marcha", "${min / 60} h ${"%02d".format(min % 60)}", Modifier.weight(1f))
+                        WeekStat(L("En marcha", "Moving"), "${min / 60} h ${"%02d".format(min % 60)}", Modifier.weight(1f))
                         WeekStat("Kcal", Calories.format(w.kcal).removeSuffix(" kcal"), Modifier.weight(1f))
                         androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
                     }
@@ -278,8 +279,8 @@ private fun WeekStat(label: String, value: String, modifier: Modifier) {
 @Composable
 private fun Shortcuts(a: HomeActions) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Shortcut(Icons.Filled.FileOpen, "Importar GPX", a.onPickFile, Modifier.weight(1f))
-        Shortcut(Icons.Filled.Edit, "Crear ruta", a.onCreateRoute, Modifier.weight(1f))
+        Shortcut(Icons.Filled.FileOpen, L("Importar GPX", "Import GPX"), a.onPickFile, Modifier.weight(1f))
+        Shortcut(Icons.Filled.Edit, L("Crear ruta", "Create route"), a.onCreateRoute, Modifier.weight(1f))
         Shortcut(Icons.Filled.Search, "Wikiloc", a.onWikiloc, Modifier.weight(1f))
     }
 }
@@ -313,7 +314,7 @@ private fun RouteTile(r: SavedRoute, onClick: () -> Unit) {
             Text(r.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.height(40.dp))
             Text("${km(r.distanceMeters)} · +${metros(r.gainMeters)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Abrir", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text(L("Abrir", "Open"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp).padding(start = 2.dp))
             }
         }

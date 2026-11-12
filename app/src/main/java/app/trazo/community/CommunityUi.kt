@@ -255,7 +255,7 @@ fun ReviewsSection(gpx: Gpx, activity: Activity) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Stars(summary.average.roundToInt())
                             Text(
-                                "  " + "%.1f".format(java.util.Locale.forLanguageTag("es-ES"), summary.average) +
+                                "  " + "%.1f".format(app.trazo.gpx.i18n.I18n.locale, summary.average) +
                                     " · ${summary.count} ${if (summary.count == 1) "valoración" else "valoraciones"}",
                                 style = MaterialTheme.typography.titleSmall,
                             )

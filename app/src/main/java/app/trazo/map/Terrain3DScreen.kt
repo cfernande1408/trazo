@@ -141,7 +141,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
                     Icon(Icons.Filled.Add, contentDescription = "Más relieve")
                 }
                 Text(
-                    "×" + String.format(java.util.Locale.forLanguageTag("es-ES"), "%.1f", Relief.exaggeration(relief, level)),
+                    "×" + String.format(app.trazo.gpx.i18n.I18n.locale, "%.1f", Relief.exaggeration(relief, level)),
                     style = MaterialTheme.typography.labelLarge,
                 )
                 Text("relieve", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

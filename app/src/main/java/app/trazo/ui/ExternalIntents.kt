@@ -1,5 +1,6 @@
 package app.trazo.ui
 
+import app.trazo.gpx.i18n.L
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -11,7 +12,7 @@ fun Context.openUrl(url: String) {
     try {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(this, "No hay ninguna app para abrir el enlace", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, L("No hay ninguna app para abrir el enlace", "There is no app to open the link"), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -30,7 +31,7 @@ fun Context.openDirections(lat: Double, lon: Double, label: String) {
         try {
             startActivity(anyMaps)
         } catch (_: ActivityNotFoundException) {
-            Toast.makeText(this, "Instala una app de mapas para ver cómo llegar", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L("Instala una app de mapas para ver cómo llegar", "Install a maps app to get directions"), Toast.LENGTH_SHORT).show()
         }
     }
 }

@@ -1,5 +1,6 @@
 package app.trazo.ui
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -67,47 +68,47 @@ fun ProfileSheet(onDismiss: () -> Unit) {
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).navigationBarsPadding().padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text("Tu perfil", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(L("Tu perfil", "Your profile"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(
-                "Para calcular las kcal de tus salidas. Todo se queda en el móvil.",
+                L("Para calcular las kcal de tus salidas. Todo se queda en el móvil.", "To work out the kcal of your outings. It all stays on your phone."),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             fun digits(s: String) = s.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(5)
             OutlinedTextField(
                 weight, { weight = digits(it) },
-                label = { Text("Peso (kg)") }, singleLine = true, isError = w == null,
+                label = { Text(L("Peso (kg)", "Weight (kg)")) }, singleLine = true, isError = w == null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     height, { height = digits(it) },
-                    label = { Text("Altura (cm)") }, singleLine = true, isError = !heightOk,
+                    label = { Text(L("Altura (cm)", "Height (cm)")) }, singleLine = true, isError = !heightOk,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
                 )
                 OutlinedTextField(
                     age, { age = it.filter(Char::isDigit).take(3) },
-                    label = { Text("Edad") }, singleLine = true, isError = !ageOk,
+                    label = { Text(L("Edad", "Age")) }, singleLine = true, isError = !ageOk,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = sex == Calories.Sex.MALE, onClick = { sex = Calories.Sex.MALE }, label = { Text("Hombre") })
-                FilterChip(selected = sex == Calories.Sex.FEMALE, onClick = { sex = Calories.Sex.FEMALE }, label = { Text("Mujer") })
-                FilterChip(selected = sex == null, onClick = { sex = null }, label = { Text("Sin decir") })
+                FilterChip(selected = sex == Calories.Sex.MALE, onClick = { sex = Calories.Sex.MALE }, label = { Text(L("Hombre", "Male")) })
+                FilterChip(selected = sex == Calories.Sex.FEMALE, onClick = { sex = Calories.Sex.FEMALE }, label = { Text(L("Mujer", "Female")) })
+                FilterChip(selected = sex == null, onClick = { sex = null }, label = { Text(L("Sin decir", "Rather not say")) })
             }
             Text(
-                if (h != null && a != null) "Las kcal se calculan con tu metabolismo basal (peso, altura, edad y sexo)."
-                else "Con el peso basta. Si pones altura y edad, las kcal se ajustan a tu metabolismo basal, como en los relojes deportivos.",
+                if (h != null && a != null) L("Las kcal se calculan con tu metabolismo basal (peso, altura, edad y sexo).", "Kcal use your basal metabolic rate (weight, height, age and sex).")
+                else L("Con el peso basta. Si pones altura y edad, las kcal se ajustan a tu metabolismo basal, como en los relojes deportivos.", "Weight is enough. Add height and age and kcal follow your basal metabolic rate, like sports watches do."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text("Tu forma física", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(L("Tu forma física", "Your fitness"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(
-                "Ajusta el tiempo estimado de las rutas y lo duras que son para ti. Cuando tengas rutas " +
-                    "realizadas, pesa más tu ritmo real.",
+                L("Ajusta el tiempo estimado de las rutas y lo duras que son para ti. Cuando tengas rutas ", "It sets the estimated time of routes and how hard they are for you. Once you have completed ") +
+                    L("realizadas, pesa más tu ritmo real.", "routes, your real pace counts for more."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -135,7 +136,7 @@ fun ProfileSheet(onDismiss: () -> Unit) {
                     onDismiss()
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
-            ) { Text("Guardar") }
+            ) { Text(L("Guardar", "Save")) }
         }
     }
 }
@@ -146,13 +147,26 @@ private fun PaceLine(fitness: Fitness?) {
     val activity = AppMode.current
     val p = app.trazo.gpx.ride.PersonalPace.of(activity, fitness, UserProfile.done)
     val pct = ((p.factor - 1) * 100).roundToInt()
-    val what = if (activity == app.trazo.gpx.Activity.HIKE) "a pie" else "en bici"
+    val what = if (activity == app.trazo.gpx.Activity.HIKE) L("a pie", "on foot") else L("en bici", "by bike")
     Text(
         when {
-            p.rides == 0 -> "Aún no hay rutas realizadas $what: se usa lo que marques aquí."
-            abs(pct) < 3 -> "Con ${p.rides} ${if (p.rides == 1) "ruta realizada" else "rutas realizadas"} $what, vas al ritmo de la estimación de serie."
-            else -> "Con ${p.rides} ${if (p.rides == 1) "ruta realizada" else "rutas realizadas"} $what, tardas un ${abs(pct)} % " +
-                (if (pct > 0) "más" else "menos") + " que la estimación de serie."
+            p.rides == 0 -> L(
+                "Aún no hay rutas realizadas $what: se usa lo que marques aquí.",
+                "No completed routes $what yet: what you choose here is used.",
+            )
+            else -> {
+                val done = if (p.rides == 1) L("ruta realizada", "completed route") else L("rutas realizadas", "completed routes")
+                when {
+                    abs(pct) < 3 -> L(
+                        "Con ${p.rides} $done $what, vas al ritmo de la estimación de serie.",
+                        "With ${p.rides} $done $what, you match the standard estimate.",
+                    )
+                    else -> L(
+                        "Con ${p.rides} $done $what, tardas un ${abs(pct)} % " + (if (pct > 0) "más" else "menos") + " que la estimación de serie.",
+                        "With ${p.rides} $done $what, you take ${abs(pct)}% " + (if (pct > 0) "longer" else "less") + " than the standard estimate.",
+                    )
+                }
+            }
         },
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,

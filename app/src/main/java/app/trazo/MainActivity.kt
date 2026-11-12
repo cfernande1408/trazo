@@ -1,5 +1,6 @@
 package app.trazo
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.GpxParser
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
@@ -107,7 +108,7 @@ class MainActivity : ComponentActivity() {
                 uris.count { uri ->
                     runCatching {
                         val gpx = contentResolver.openInputStream(uri)!!.use(GpxParser::parse)
-                        check(gpx.segments.any { it.size >= 2 }) { "Sin recorrido" }
+                        check(gpx.segments.any { it.size >= 2 }) { L("Sin recorrido", "No track") }
                         RoutesLibrary.save(this@MainActivity, gpx)
                     }.isSuccess
                 }
@@ -117,9 +118,9 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(
                 this@MainActivity,
                 when {
-                    failed == 0 -> if (saved == 1) "Ruta guardada" else "$saved rutas guardadas"
-                    saved == 0 -> "No se pudo leer ningún GPX"
-                    else -> "$saved guardadas, $failed no se pudieron leer"
+                    failed == 0 -> if (saved == 1) L("Ruta guardada", "Route saved") else L("$saved rutas guardadas", "$saved routes saved")
+                    saved == 0 -> L("No se pudo leer ningún GPX", "Could not read any GPX")
+                    else -> L("$saved guardadas, $failed no se pudieron leer", "$saved saved, $failed could not be read")
                 },
                 Toast.LENGTH_SHORT,
             ).show()
@@ -243,8 +244,8 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         Text(
                                             String.format(
-                                                Locale.forLanguageTag("es-ES"), "%s %s · %.1f km · %s — toca para verla",
-                                                if (ride.paused) "En pausa" else "Grabando",
+                                                app.trazo.gpx.i18n.I18n.locale, L("%s %s · %.1f km · %s — toca para verla", "%s %s · %.1f km · %s — tap to view"),
+                                                if (ride.paused) L("En pausa", "Paused") else L("Grabando", "Recording"),
                                                 activity.outing,
                                                 ride.stats.distanceMeters / 1000, formatDuration(ride.stats.movingMs),
                                             ),
@@ -327,7 +328,7 @@ class MainActivity : ComponentActivity() {
                                             if (gpx != null) openRoute(gpx)
                                             else (m.region.definition as? org.maplibre.android.offline.OfflineTilePyramidRegionDefinition)?.bounds?.let {
                                                 if (!m.meta.routeKey.startsWith("zona-")) {
-                                                    Toast.makeText(context, "La ruta de este mapa no está guardada: te enseño su zona", Toast.LENGTH_LONG).show()
+                                                    Toast.makeText(context, L("La ruta de este mapa no está guardada: te enseño su zona", "The route for this map is not saved: showing its area"), Toast.LENGTH_LONG).show()
                                                 }
                                                 exploreFocus = it
                                                 tab = 1
@@ -375,11 +376,11 @@ private const val TAB_LIBRARY = 3
 private data class NavTab(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
 
 private val TABS = listOf(
-    NavTab("Inicio", Icons.Filled.Home),
-    NavTab("Explorar", Icons.Filled.Place),
+    NavTab(L("Inicio", "Home"), Icons.Filled.Home),
+    NavTab(L("Explorar", "Explore"), Icons.Filled.Place),
     NavTab("Wikiloc", Icons.Filled.Search),
-    NavTab("Guardadas", Icons.Filled.Bookmarks),
-    NavTab("Comunidad", Icons.Filled.Person),
+    NavTab(L("Guardadas", "Saved"), Icons.Filled.Bookmarks),
+    NavTab(L("Comunidad", "Community"), Icons.Filled.Person),
     NavTab("Info", Icons.Filled.Info),
 )
 

@@ -1,5 +1,6 @@
 package app.trazo.importer
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -82,74 +83,74 @@ internal fun tips(activity: Activity, a: HomeActions, openWeb: () -> Unit): List
     val bike = activity == Activity.BIKE
     return listOf(
         Tip(
-            "explore", Icons.Filled.Place, Color(0xFF2F9E44), "Explora rutas cerca",
-            if (bike) "Las rutas MTB señalizadas de tu zona en el mapa. Toca una y ves su recorrido, desnivel y perfil; filtra circulares o lineales."
-            else "Los senderos señalizados de tu zona en el mapa. Toca uno y ves su recorrido, desnivel y perfil; filtra circulares o lineales.",
-            "Explorar", a.onExplore,
+            "explore", Icons.Filled.Place, Color(0xFF2F9E44), L("Explora rutas cerca", "Explore routes nearby"),
+            if (bike) L("Las rutas MTB señalizadas de tu zona en el mapa. Toca una y ves su recorrido, desnivel y perfil; filtra circulares o lineales.", "The waymarked MTB routes around you on the map. Tap one to see its track, climbing and profile; filter loops or one-way routes.")
+            else L("Los senderos señalizados de tu zona en el mapa. Toca uno y ves su recorrido, desnivel y perfil; filtra circulares o lineales.", "The waymarked trails around you on the map. Tap one to see its track, climbing and profile; filter loops or one-way routes."),
+            L("Explorar", "Explore"), a.onExplore,
         ),
         Tip(
-            "for-you", Icons.Filled.AccountCircle, Color(0xFF099268), "Trazo a tu medida",
-            "Dinos cuánto sales y, con tus rutas realizadas, los tiempos van a tu ritmo y cada ruta te dice si es fácil, " +
-                "a tu medida o exigente para ti. Con tu peso y altura, también tus kcal.",
-            "Abrir perfil", a.onProfile,
+            "for-you", Icons.Filled.AccountCircle, Color(0xFF099268), L("Trazo a tu medida", "Trazo made for you"),
+            L("Dinos cuánto sales y, con tus rutas realizadas, los tiempos van a tu ritmo y cada ruta te dice si es fácil, ", "Tell us how often you go out and, with your completed routes, times follow your pace and each route tells you if it is easy, ") +
+                L("a tu medida o exigente para ti. Con tu peso y altura, también tus kcal.", "right for you or hard for you. With your weight and height, your kcal too."),
+            L("Abrir perfil", "Open profile"), a.onProfile,
         ),
         Tip(
-            "wikiloc", Icons.Filled.FileOpen, Color(0xFF1C7ED6), "Tus rutas de Wikiloc",
-            "Descarga el GPX en Wikiloc y dale a Compartir → Trazo, o búscala desde la pestaña Wikiloc. Sale con mapa, perfil y puntos del autor.",
-            "Abrir Wikiloc", a.onWikiloc,
+            "wikiloc", Icons.Filled.FileOpen, Color(0xFF1C7ED6), L("Tus rutas de Wikiloc", "Your Wikiloc routes"),
+            L("Descarga el GPX en Wikiloc y dale a Compartir → Trazo, o búscala desde la pestaña Wikiloc. Sale con mapa, perfil y puntos del autor.", "Download the GPX on Wikiloc and tap Share → Trazo, or search for it in the Wikiloc tab. It comes with map, profile and the author's waypoints."),
+            L("Abrir Wikiloc", "Open Wikiloc"), a.onWikiloc,
         ),
         Tip(
-            "create", Icons.Filled.Route, Color(0xFFE8590C), "Crea tu ruta",
-            "Toca puntos en el mapa y la ruta se ajusta sola a pistas y senderos. Circular, ida y vuelta, mover o borrar puntos.",
-            "Crear ruta", a.onCreateRoute,
+            "create", Icons.Filled.Route, Color(0xFFE8590C), L("Crea tu ruta", "Create your route"),
+            L("Toca puntos en el mapa y la ruta se ajusta sola a pistas y senderos. Circular, ida y vuelta, mover o borrar puntos.", "Tap points on the map and the route snaps to tracks and trails. Loop, out and back, move or delete points."),
+            L("Crear ruta", "Create route"), a.onCreateRoute,
         ),
         Tip(
-            "offline", Icons.Filled.CloudDownload, Color(0xFF0C8599), "Mapas sin cobertura",
-            "En el resumen de una ruta, Descargar mapa: la zona y 2 km alrededor. En la sierra, el mapa y la navegación siguen sin datos.",
+            "offline", Icons.Filled.CloudDownload, Color(0xFF0C8599), L("Mapas sin cobertura", "Maps without signal"),
+            L("En el resumen de una ruta, Descargar mapa: la zona y 2 km alrededor. En la sierra, el mapa y la navegación siguen sin datos.", "In a route summary, Download map: the area plus 2 km around it. Up in the hills, the map and navigation keep working without data."),
         ),
         Tip(
-            "weather", Icons.Filled.WbSunny, Color(0xFFF59F00), "El tiempo por el camino",
-            "En la pestaña Tiempo de cada ruta: qué hará en cada tramo cuando pases, cada 15 minutos, y qué llevarte puesto.",
+            "weather", Icons.Filled.WbSunny, Color(0xFFF59F00), L("El tiempo por el camino", "Weather along the way"),
+            L("En la pestaña Tiempo de cada ruta: qué hará en cada tramo cuando pases, cada 15 minutos, y qué llevarte puesto.", "In each route's Weather tab: the weather on every stretch when you pass, every 15 minutes, and what to wear."),
         ),
         Tip(
-            "terrain", Icons.Filled.Terrain, Color(0xFF8F5A2B), "Pendiente y tipo de suelo",
-            if (bike) "Rampas más duras, dificultad MTB (S0–S6) y cuánto va por asfalto, pista o sendero. En el mapa, la capa Pendiente."
-            else "Rampas más duras, dificultad SAC (T1–T6) y cuánto va por asfalto, pista o sendero. En el mapa, la capa Pendiente.",
+            "terrain", Icons.Filled.Terrain, Color(0xFF8F5A2B), L("Pendiente y tipo de suelo", "Gradient and surface"),
+            if (bike) L("Rampas más duras, dificultad MTB (S0–S6) y cuánto va por asfalto, pista o sendero. En el mapa, la capa Pendiente.", "Steepest ramps, MTB difficulty (S0–S6) and how much is paved, track or trail. On the map, the Gradient layer.")
+            else L("Rampas más duras, dificultad SAC (T1–T6) y cuánto va por asfalto, pista o sendero. En el mapa, la capa Pendiente.", "Steepest ramps, SAC difficulty (T1–T6) and how much is paved, track or trail. On the map, the Gradient layer."),
         ),
         Tip(
-            "3d", Icons.Filled.ViewInAr, Color(0xFF7048E8), "La ruta en 3D",
-            "Mírala sobre el relieve antes de salir, con un vuelo virtual que la recorre entera.",
+            "3d", Icons.Filled.ViewInAr, Color(0xFF7048E8), L("La ruta en 3D", "The route in 3D"),
+            L("Mírala sobre el relieve antes de salir, con un vuelo virtual que la recorre entera.", "See it over the terrain before you go, with a virtual flyover along the whole route."),
         ),
         Tip(
-            "voice", Icons.AutoMirrored.Filled.VolumeUp, Color(0xFF1971C2), "Te avisa por voz",
-            "Al seguir una ruta: «En 150 metros, gira a la derecha», las subidas que empiezan, las fuentes y si te sales.",
+            "voice", Icons.AutoMirrored.Filled.VolumeUp, Color(0xFF1971C2), L("Te avisa por voz", "Voice prompts"),
+            L("Al seguir una ruta: «En 150 metros, gira a la derecha», las subidas que empiezan, las fuentes y si te sales.", "When following a route: “In 150 metres, turn right”, climbs as they start, water points and when you go off route."),
         ),
         Tip(
-            "reroute", Icons.Filled.SyncAlt, Color(0xFF5C940D), "Si te sales, te devuelve",
-            "Tras 20 segundos fuera de la ruta, calcula el camino más corto para volver a ella y te lleva por voz.",
+            "reroute", Icons.Filled.SyncAlt, Color(0xFF5C940D), L("Si te sales, te devuelve", "Off route? It brings you back"),
+            L("Tras 20 segundos fuera de la ruta, calcula el camino más corto para volver a ella y te lleva por voz.", "After 20 seconds off the route, it works out the shortest way back and guides you by voice."),
         ),
         Tip(
-            "sos", Icons.Filled.Sos, Color(0xFFE03131), "SOS y caídas",
-            "Botón SOS con tu posición en UTM, llamar al 112 o mandar un SMS. Si te caes y no te mueves, avisa a tu contacto.",
+            "sos", Icons.Filled.Sos, Color(0xFFE03131), L("SOS y caídas", "SOS and falls"),
+            L("Botón SOS con tu posición en UTM, llamar al 112 o mandar un SMS. Si te caes y no te mueves, avisa a tu contacto.", "SOS button with your UTM position, call 112 or send a text. If you fall and don't move, it alerts your contact."),
         ),
         Tip(
-            "marks", Icons.Filled.AddLocationAlt, Color(0xFFC2255C), "Marca puntos con foto",
-            "Mientras grabas, la chincheta guarda una fuente, un mirador o un peligro con nota y foto. Van en el GPX.",
-            if (bike) "Grabar salida" else "Grabar excursión", a.onRecord,
+            "marks", Icons.Filled.AddLocationAlt, Color(0xFFC2255C), L("Marca puntos con foto", "Mark points with a photo"),
+            L("Mientras grabas, la chincheta guarda una fuente, un mirador o un peligro con nota y foto. Van en el GPX.", "While recording, the pin saves a water point, a viewpoint or a hazard with a note and photo. They go in the GPX."),
+            if (bike) L("Grabar salida", "Record ride") else L("Grabar excursión", "Record hike"), a.onRecord,
         ),
         Tip(
-            "library", Icons.Filled.Bookmarks, Color(0xFF495057), "Todo en Guardadas",
-            "Tus rutas, lo que has grabado y los mapas descargados, en una pestaña, como tu biblioteca de música.",
-            "Ver Guardadas", a.onLibrary,
+            "library", Icons.Filled.Bookmarks, Color(0xFF495057), L("Todo en Guardadas", "Everything in Saved"),
+            L("Tus rutas, lo que has grabado y los mapas descargados, en una pestaña, como tu biblioteca de música.", "Your routes, what you have recorded and your downloaded maps, in one tab, like your music library."),
+            L("Ver Guardadas", "Open Saved"), a.onLibrary,
         ),
         Tip(
-            "sensors", Icons.Filled.MonitorHeart, Color(0xFFD6336C), "Pulso y potencia (en pruebas)",
-            "Banda de pulso, sensor de cadencia o potenciómetro por Bluetooth, de cualquier marca. Se graban en el GPX para Strava.",
+            "sensors", Icons.Filled.MonitorHeart, Color(0xFFD6336C), L("Pulso y potencia (en pruebas)", "Heart rate and power (beta)"),
+            L("Banda de pulso, sensor de cadencia o potenciómetro por Bluetooth, de cualquier marca. Se graban en el GPX para Strava.", "Heart rate strap, cadence sensor or power meter over Bluetooth, any brand. They are saved in the GPX for Strava."),
         ),
         Tip(
-            "web", Icons.Filled.Language, Color(0xFF364FC7), "Trazo en el ordenador",
-            "Abre tus GPX en la web para revisarlos en pantalla grande antes de salir.",
-            "Abrir la web", openWeb,
+            "web", Icons.Filled.Language, Color(0xFF364FC7), L("Trazo en el ordenador", "Trazo on your computer"),
+            L("Abre tus GPX en la web para revisarlos en pantalla grande antes de salir.", "Open your GPX files on the web to review them on a big screen before you go."),
+            L("Abrir la web", "Open the website"), openWeb,
         ),
     )
 }
@@ -172,16 +173,16 @@ internal fun LazyListScope.discover(all: List<Tip>, expanded: Boolean, onExpand:
     item(key = "discover-head") {
         Column(Modifier.animateItem()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Descubre Trazo", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text(L("Descubre Trazo", "Discover Trazo"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 Text(
-                    "${all.count { it.id in Tips.seen || it.id in Tips.dismissed }} de ${all.size} vistas",
+                    L("${all.count { it.id in Tips.seen || it.id in Tips.dismissed }} de ${all.size} vistas", "${all.count { it.id in Tips.seen || it.id in Tips.dismissed }} of ${all.size} seen"),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
-                if (pending.isEmpty() && !expanded) "Ya las conoces todas."
-                else "Marca el círculo cuando la conozcas o desliza la tarjeta para quitarla.",
+                if (pending.isEmpty() && !expanded) L("Ya las conoces todas.", "You know them all.")
+                else L("Marca el círculo cuando la conozcas o desliza la tarjeta para quitarla.", "Tick the circle once you know it, or swipe the card away."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -193,7 +194,7 @@ internal fun LazyListScope.discover(all: List<Tip>, expanded: Boolean, onExpand:
     if (ordered.size > shown.size || expanded) {
         item(key = "discover-more") {
             TextButton(onClick = { onExpand(!expanded) }, modifier = Modifier.animateItem()) {
-                Text(if (expanded) "Ver menos" else if (pending.isEmpty()) "Verlas otra vez" else "Ver las ${ordered.size}")
+                Text(if (expanded) L("Ver menos", "Show less") else if (pending.isEmpty()) L("Verlas otra vez", "See them again") else L("Ver las ${ordered.size}", "See all ${ordered.size}"))
             }
         }
     }
@@ -229,7 +230,7 @@ private fun TipCard(tip: Tip, seen: Boolean, modifier: Modifier) {
                 horizontalArrangement = if (start) Arrangement.Start else Arrangement.End,
             ) {
                 Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
-                Text("  Quitar", color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.labelLarge)
+                Text(L("  Quitar", "  Remove"), color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.labelLarge)
             }
         },
     ) {
@@ -267,9 +268,9 @@ private fun TipCard(tip: Tip, seen: Boolean, modifier: Modifier) {
                 }
                 IconButton(onClick = { Tips.toggleSeen(context, tip.id) }) {
                     if (seen) {
-                        Icon(Icons.Filled.CheckCircle, contentDescription = "Vista", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Filled.CheckCircle, contentDescription = L("Vista", "Seen"), tint = MaterialTheme.colorScheme.primary)
                     } else {
-                        Icon(Icons.Filled.RadioButtonUnchecked, contentDescription = "Marcar como vista", tint = MaterialTheme.colorScheme.outline)
+                        Icon(Icons.Filled.RadioButtonUnchecked, contentDescription = L("Marcar como vista", "Mark as seen"), tint = MaterialTheme.colorScheme.outline)
                     }
                 }
             }

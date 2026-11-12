@@ -1,5 +1,6 @@
 package app.trazo.ui
 
+import app.trazo.gpx.i18n.L
 import android.content.Context
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBike
@@ -61,24 +62,24 @@ object AppMode {
 
 // Textos e iconos según la actividad
 
-val Activity.label: String get() = if (this == Activity.BIKE) "Bici de montaña" else "Senderismo"
-val Activity.who: String get() = if (this == Activity.BIKE) "Biker" else "Senderista"
+val Activity.label: String get() = if (this == Activity.BIKE) L("Bici de montaña", "Mountain biking") else L("Senderismo", "Hiking")
+val Activity.who: String get() = if (this == Activity.BIKE) "Biker" else L("Senderista", "Hiker")
 
 @Suppress("DEPRECATION")
 val Activity.icon: ImageVector get() = if (this == Activity.BIKE) Icons.Filled.DirectionsBike else Icons.Filled.Hiking
 
-/** "salida" / "excursión" */
-val Activity.outing: String get() = if (this == Activity.BIKE) "salida" else "excursión"
+/** L("salida", "ride") / L("excursión", "hike") */
+val Activity.outing: String get() = if (this == Activity.BIKE) L("salida", "ride") else L("excursión", "hike")
 /** Lo que has grabado, en bici o a pie. */
-val Activity.outingsTitle: String get() = "Rutas realizadas"
-val Activity.recordCta: String get() = if (this == Activity.BIKE) "Grabar salida" else "Grabar excursión"
+val Activity.outingsTitle: String get() = L("Rutas realizadas", "Completed routes")
+val Activity.recordCta: String get() = if (this == Activity.BIKE) L("Grabar salida", "Record ride") else L("Grabar excursión", "Record hike")
 val Activity.exploreHint: String get() =
-    if (this == Activity.BIKE) "Toca una bici para ver su recorrido" else "Toca un excursionista para ver el sendero"
-val Activity.routesWord: String get() = if (this == Activity.BIKE) "rutas" else "senderos"
+    if (this == Activity.BIKE) L("Toca una bici para ver su recorrido", "Tap a bike to see its route") else L("Toca un excursionista para ver el sendero", "Tap a hiker to see the trail")
+val Activity.routesWord: String get() = if (this == Activity.BIKE) L("rutas", "routes") else L("senderos", "trails")
 
 /** Etiqueta del tipo de ruta en Explorar. */
 fun Activity.badge(isMtb: Boolean): String = when {
-    this == Activity.HIKE -> "Sendero"
+    this == Activity.HIKE -> L("Sendero", "Trail")
     isMtb -> "MTB"
-    else -> "Bici"
+    else -> L("Bici", "Bike")
 }

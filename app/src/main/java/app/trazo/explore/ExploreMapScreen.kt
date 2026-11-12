@@ -354,7 +354,7 @@ fun ExploreMapScreen(
             ZoneDialog(zone, onDismiss = { askZone = false }) { topo ->
                 askZone = false
                 val name = "Zona del mapa · " + java.time.LocalDate.now()
-                    .format(java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.forLanguageTag("es-ES")))
+                    .format(java.time.format.DateTimeFormatter.ofPattern("d MMM", app.trazo.gpx.i18n.I18n.locale))
                 OfflineMaps.downloadArea(context, name, OfflineArea.areaKey(zone.toBounds()), zone.toBounds(), topo)
             }
         }

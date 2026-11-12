@@ -74,7 +74,7 @@ import app.trazo.ui.recordCta
 import app.trazo.ui.who
 import java.util.Locale
 
-internal val ES: Locale = Locale.forLanguageTag("es-ES")
+internal val ES: Locale get() = app.trazo.gpx.i18n.I18n.locale
 
 internal fun km(m: Double) = String.format(ES, "%.1f km", m / 1000)
 internal fun metros(m: Double) = String.format(ES, "%,.0f m", m)
@@ -441,7 +441,7 @@ internal fun EffortBadge(effort: app.trazo.gpx.ride.Effort) {
     }
 }
 
-private val DONE_DATE = java.text.SimpleDateFormat("EEEE d 'de' MMMM, HH:mm", java.util.Locale.forLanguageTag("es-ES"))
+private val DONE_DATE = java.text.SimpleDateFormat("EEEE d 'de' MMMM, HH:mm", app.trazo.gpx.i18n.I18n.locale)
 
 /**
  * Cómo te fue en una ruta realizada: cuándo, tiempo en marcha y total, media,
@@ -459,7 +459,7 @@ private fun DoneSummary(s: app.trazo.gpx.TrackStats, done: DoneRide, activity: A
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Stat("En marcha", formatDuration(r.movingMs), Modifier.weight(1f))
             Stat("Total", formatDuration(r.totalMs), Modifier.weight(1f))
-            Stat("Media", String.format(java.util.Locale.forLanguageTag("es-ES"), "%.1f km/h", r.avgMovingKmh), Modifier.weight(1f))
+            Stat("Media", String.format(app.trazo.gpx.i18n.I18n.locale, "%.1f km/h", r.avgMovingKmh), Modifier.weight(1f))
         }
         val base = activity.estimateMs(s.distanceMeters, s.elevationGainMeters, s.elevationLossMeters)
         if (base > 0 && r.movingMs > 0) {

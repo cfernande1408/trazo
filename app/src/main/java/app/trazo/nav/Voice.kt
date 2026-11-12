@@ -13,7 +13,7 @@ class Voice(context: Context) : TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) {
         if (status != TextToSpeech.SUCCESS) return
-        tts.language = Locale.forLanguageTag("es-ES")
+        tts.language = app.trazo.gpx.i18n.I18n.locale
         ready = true
         pending.forEach(::say)
         pending.clear()

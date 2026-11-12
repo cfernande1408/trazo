@@ -1,5 +1,6 @@
 package app.trazo.importer
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -69,16 +70,16 @@ fun LibraryScreen(
     var shelf by rememberSaveable { mutableStateOf(Shelf.ROUTES) }
     val maps by OfflineMaps.maps.collectAsStateWithLifecycle()
     // Junto al chip de Rutas, basta con «Realizadas»
-    val outings = "Realizadas"
+    val outings = L("Realizadas", "Completed")
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Guardadas") }) },
+        topBar = { TopAppBar(title = { Text(L("Guardadas", "Saved")) }) },
         floatingActionButton = {
             if (shelf == Shelf.ROUTES) {
                 ExtendedFloatingActionButton(
                     onClick = onImport,
                     icon = { Icon(Icons.Filled.FileOpen, contentDescription = null) },
-                    text = { Text("Importar GPX") },
+                    text = { Text(L("Importar GPX", "Import GPX")) },
                 )
             }
         },
@@ -88,16 +89,16 @@ fun LibraryScreen(
                 Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                FilterChip(selected = shelf == Shelf.ROUTES, onClick = { shelf = Shelf.ROUTES }, label = { Text("Rutas · ${routes.size}") })
+                FilterChip(selected = shelf == Shelf.ROUTES, onClick = { shelf = Shelf.ROUTES }, label = { Text(L("Rutas · ${routes.size}", "Routes · ${routes.size}")) })
                 FilterChip(selected = shelf == Shelf.RIDES, onClick = { shelf = Shelf.RIDES }, label = { Text(outings) })
-                FilterChip(selected = shelf == Shelf.MAPS, onClick = { shelf = Shelf.MAPS }, label = { Text("Mapas · ${maps.size}") })
+                FilterChip(selected = shelf == Shelf.MAPS, onClick = { shelf = Shelf.MAPS }, label = { Text(L("Mapas · ${maps.size}", "Maps · ${maps.size}")) })
             }
             when (shelf) {
                 Shelf.ROUTES ->
                     if (routes.isEmpty()) EmptyShelf(
-                        "Aún no has guardado ninguna ruta",
-                        "Pulsa «Importar GPX» para traer los que tengas en el móvil (puedes elegir varios), o abre una ruta " +
-                            "de Wikiloc o de Explorar y pulsa «Guardar en tus rutas». Las guardadas funcionan sin conexión.",
+                        L("Aún no has guardado ninguna ruta", "You haven't saved any routes yet"),
+                        L("Pulsa «Importar GPX» para traer los que tengas en el móvil (puedes elegir varios), o abre una ruta ", "Tap “Import GPX” to bring in the ones on your phone (you can pick several), or open a route ") +
+                            L("de Wikiloc o de Explorar y pulsa «Guardar en tus rutas». Las guardadas funcionan sin conexión.", "from Wikiloc or Explore and tap “Save to your routes”. Saved routes work offline."),
                     ) else LazyColumn(
                         contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 96.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -107,12 +108,12 @@ fun LibraryScreen(
                 Shelf.RIDES -> RidesList(onOpenRide, onRecord)
                 Shelf.MAPS ->
                     if (maps.isEmpty()) EmptyShelf(
-                        "No tienes mapas descargados",
-                        "En el resumen de una ruta, «Descargar mapa»; o en Explorar, el botón de la nube para la zona que ves.",
+                        L("No tienes mapas descargados", "You have no downloaded maps"),
+                        L("En el resumen de una ruta, «Descargar mapa»; o en Explorar, el botón de la nube para la zona que ves.", "In a route summary, “Download map”; or in Explore, the cloud button for the area on screen."),
                     ) else LazyColumn(contentPadding = PaddingValues(16.dp)) {
                         item {
                             Text(
-                                "Toca un mapa para ver su zona en Explorar.",
+                                L("Toca un mapa para ver su zona en Explorar.", "Tap a map to see its area in Explore."),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(bottom = 8.dp),
@@ -143,17 +144,17 @@ private fun SavedRouteRow(r: SavedRoute, onOpen: (SavedRoute) -> Unit, onDelete:
                 )
             }
             IconButton(onClick = { confirm = true }) {
-                Icon(Icons.Filled.Delete, contentDescription = "Borrar ruta")
+                Icon(Icons.Filled.Delete, contentDescription = L("Borrar ruta", "Delete route"))
             }
         }
     }
     if (confirm) {
         AlertDialog(
             onDismissRequest = { confirm = false },
-            title = { Text("¿Borrar «${r.name}»?") },
-            text = { Text("Se quita de tus rutas guardadas. Los mapas descargados de su zona se quedan.") },
-            confirmButton = { TextButton(onClick = { confirm = false; onDelete(r) }) { Text("Borrar") } },
-            dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancelar") } },
+            title = { Text(L("¿Borrar «${r.name}»?", "Delete “${r.name}”?")) },
+            text = { Text(L("Se quita de tus rutas guardadas. Los mapas descargados de su zona se quedan.", "It is removed from your saved routes. Downloaded maps of its area stay.")) },
+            confirmButton = { TextButton(onClick = { confirm = false; onDelete(r) }) { Text(L("Borrar", "Delete")) } },
+            dismissButton = { TextButton(onClick = { confirm = false }) { Text(L("Cancelar", "Cancel")) } },
         )
     }
 }

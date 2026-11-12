@@ -106,7 +106,7 @@ class RideService : Service() {
     private fun notification(): Notification {
         val s = RideSession.state.value
         val text = String.format(
-            Locale.forLanguageTag("es-ES"), "%.1f km · %s%s",
+            app.trazo.gpx.i18n.I18n.locale, "%.1f km · %s%s",
             s.stats.distanceMeters / 1000, formatDuration(s.stats.movingMs), if (s.paused) " · en pausa" else "",
         )
         val open = PendingIntent.getActivity(

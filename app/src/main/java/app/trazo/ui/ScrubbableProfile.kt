@@ -1,5 +1,6 @@
 package app.trazo.ui
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -39,7 +40,7 @@ fun ScrubbableProfile(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             val m = scrubMeters
             if (m == null) {
-                Text("Desliza el dedo por el perfil", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(L("Desliza el dedo por el perfil", "Slide your finger along the profile"), color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 Text("km ${String.format(ES, "%.1f", m / 1000)}", fontWeight = FontWeight.Bold)
                 ElevationProfile.eleAt(profile, m)?.let {

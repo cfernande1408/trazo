@@ -1,5 +1,6 @@
 package app.trazo.ui
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,20 +42,20 @@ fun OnboardingScreen(onChoose: (Activity) -> Unit) {
         ) {
             Spacer(Modifier.height(24.dp))
             Text("Trazo", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-            Text("¿Cómo sales al monte?", style = MaterialTheme.typography.headlineSmall)
+            Text(L("¿Cómo sales al monte?", "How do you head out?"), style = MaterialTheme.typography.headlineSmall)
             Text(
-                "La app se adapta: rutas, mapa, avisos y estadísticas. Puedes cambiarlo cuando quieras.",
+                L("La app se adapta: rutas, mapa, avisos y estadísticas. Puedes cambiarlo cuando quieras.", "The app adapts: routes, map, alerts and stats. You can change it any time."),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(8.dp))
             ChoiceCard(
                 Activity.BIKE,
-                "Rutas MTB, avisos de desvío a 40 m, velocidad media y máxima, enrutado por pistas y senderos ciclables.",
+                L("Rutas MTB, avisos de desvío a 40 m, velocidad media y máxima, enrutado por pistas y senderos ciclables.", "MTB routes, off-route alerts at 40 m, average and top speed, routing on rideable tracks and trails."),
                 onChoose,
             )
             ChoiceCard(
                 Activity.HIKE,
-                "Senderos GR/PR, tiempo estimado MIDE, avisos más finos, ritmo a pie y enrutado por caminos de montaña.",
+                L("Senderos GR/PR, tiempo estimado MIDE, avisos más finos, ritmo a pie y enrutado por caminos de montaña.", "GR/PR trails, MIDE time estimates, finer alerts, walking pace and routing on mountain paths."),
                 onChoose,
             )
         }
@@ -75,7 +76,7 @@ private fun ChoiceCard(activity: Activity, text: String, onChoose: (Activity) ->
                 Icon(activity.icon, contentDescription = null, modifier = Modifier.padding(14.dp).size(40.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
             }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Soy ${activity.who.lowercase()}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(L("Soy ${activity.who.lowercase()}", "I'm a ${activity.who.lowercase()}"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(activity.label, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
                 Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -100,21 +101,21 @@ fun ActivitySwitchDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(current.icon, contentDescription = null) },
-        title = { Text("¿Cómo sales hoy?") },
+        title = { Text(L("¿Cómo sales hoy?", "How are you heading out today?")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Ahora mismo: ${current.label}. Las rutas, avisos y estadísticas se adaptan.")
+                Text(L("Ahora mismo: ${current.label}. Las rutas, avisos y estadísticas se adaptan.", "Right now: ${current.label}. Routes, alerts and stats adapt."))
                 FilledTonalButton(onClick = { onChoose(other) }, modifier = Modifier.fillMaxWidth()) {
                     Icon(other.icon, contentDescription = null, Modifier.size(18.dp))
                     Spacer(Modifier.size(8.dp))
-                    Text("Cambiar a ${other.label.lowercase()}")
+                    Text(L("Cambiar a ${other.label.lowercase()}", "Switch to ${other.label.lowercase()}"))
                 }
-                Text("Estación del mapa", style = MaterialTheme.typography.titleSmall)
+                Text(L("Estación del mapa", "Map season"), style = MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = seasonOverride == null,
                         onClick = { onSeason(null) },
-                        label = { Text("Automática (${AppMode.todaySeason().label.lowercase()})") },
+                        label = { Text(L("Automática (${AppMode.todaySeason().label.lowercase()})", "Automatic (${AppMode.todaySeason().label.lowercase()})")) },
                     )
                     Season.entries.forEach { s ->
                         FilterChip(selected = seasonOverride == s, onClick = { onSeason(s) }, label = { Text(s.label) })
@@ -122,6 +123,6 @@ fun ActivitySwitchDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Listo") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(L("Listo", "Done")) } },
     )
 }
