@@ -1,5 +1,6 @@
 package app.trazo.gpx.nav
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.Gpx
 import app.trazo.gpx.TrackStatsCalculator
@@ -28,11 +29,11 @@ object RouteStart {
         val segs = gpx.segments
         val first = segs.firstOrNull()?.firstOrNull() ?: return emptyList()
         val matcher = TrackMatcher(segs)
-        val start = StartOption("Inicio de la ruta", first.lat, first.lon, 0.0, 0.0)
+        val start = StartOption(L("Inicio de la ruta", "Start of the route"), first.lat, first.lon, 0.0, 0.0)
         val wpts = gpx.waypoints.mapNotNull { w ->
             val pos = matcher.locate(w.lat, w.lon)
             if (pos.distanceToTrackMeters > MAX_WAYPOINT_DISTANCE) null
-            else StartOption(w.name ?: "Punto sin nombre", w.lat, w.lon, pos.alongMeters, pos.distanceToTrackMeters)
+            else StartOption(w.name ?: L("Punto sin nombre", "Unnamed point"), w.lat, w.lon, pos.alongMeters, pos.distanceToTrackMeters)
         }.sortedBy { it.alongMeters }
         return listOf(start) + wpts
     }

@@ -1,5 +1,6 @@
 package app.trazo.gpx.nav
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.TrackStatsCalculator
 
@@ -105,7 +106,10 @@ object Rejoin {
     }
 
     /** Lo que se dice al recalcular. */
-    fun phrase(r: Rerouted) = "Ruta recalculada. Vuelves a la ruta en ${spokenMeters(r.pathMeters)}."
+    fun phrase(r: Rerouted) = L(
+        "Ruta recalculada. Vuelves a la ruta en ${spokenMeters(r.pathMeters)}.",
+        "Route recalculated. You rejoin the route in ${spokenMeters(r.pathMeters)}.",
+    )
 
     /** La ruta desde [alongMeters] hasta el final, empezando justo en ese punto. */
     internal fun tail(segments: List<List<GeoPoint>>, alongMeters: Double): List<List<GeoPoint>> {

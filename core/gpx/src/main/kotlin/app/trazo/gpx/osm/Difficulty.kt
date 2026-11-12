@@ -1,5 +1,6 @@
 package app.trazo.gpx.osm
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.RouteGeometry
 import app.trazo.gpx.TrackStatsCalculator
@@ -28,24 +29,26 @@ data class DifficultySummary(
  */
 object Difficulty {
 
-    val MTB_LABELS = listOf(
-        "S0" to "pista o sendero fácil",
-        "S1" to "raíces y piedras pequeñas",
-        "S2" to "escalones bajos y piedra suelta",
-        "S3" to "bloques, escalones y curvas cerradas",
-        "S4" to "muy técnico, pasos de trial",
-        "S5" to "extremo",
-        "S6" to "no ciclable",
-    )
+    val MTB_LABELS: List<Pair<String, String>>
+        get() = listOf(
+            "S0" to L("pista o sendero fácil", "easy track or trail"),
+            "S1" to L("raíces y piedras pequeñas", "roots and small rocks"),
+            "S2" to L("escalones bajos y piedra suelta", "low steps and loose rock"),
+            "S3" to L("bloques, escalones y curvas cerradas", "boulders, steps and tight switchbacks"),
+            "S4" to L("muy técnico, pasos de trial", "very technical, trials moves"),
+            "S5" to L("extremo", "extreme"),
+            "S6" to L("no ciclable", "not rideable"),
+        )
     /** Índice 1–6 → T1–T6. */
-    val SAC_LABELS = listOf(
-        "T1" to "senderismo",
-        "T2" to "senderismo de montaña",
-        "T3" to "montaña exigente",
-        "T4" to "alpino",
-        "T5" to "alpino exigente",
-        "T6" to "alpino difícil",
-    )
+    val SAC_LABELS: List<Pair<String, String>>
+        get() = listOf(
+            "T1" to L("senderismo", "hiking"),
+            "T2" to L("senderismo de montaña", "mountain hiking"),
+            "T3" to L("montaña exigente", "demanding mountain hiking"),
+            "T4" to L("alpino", "alpine hiking"),
+            "T5" to L("alpino exigente", "demanding alpine hiking"),
+            "T6" to L("alpino difícil", "difficult alpine hiking"),
+        )
     private val SAC = mapOf(
         "hiking" to 1, "mountain_hiking" to 2, "demanding_mountain_hiking" to 3,
         "alpine_hiking" to 4, "demanding_alpine_hiking" to 5, "difficult_alpine_hiking" to 6,

@@ -1,5 +1,6 @@
 package app.trazo.gpx.osm
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.Gpx
 import app.trazo.gpx.GpxParseException
@@ -86,7 +87,7 @@ object Overpass {
             }
         }
         val segments = WayStitcher.stitch(ways)
-        if (segments.isEmpty()) throw GpxParseException("La ruta no tiene geometría en OpenStreetMap")
+        if (segments.isEmpty()) throw GpxParseException(L("La ruta no tiene geometría en OpenStreetMap", "The route has no geometry in OpenStreetMap"))
         val name = nameOf(tags, id)
         return Gpx(
             name = name,
@@ -103,7 +104,7 @@ object Overpass {
     }
 
     private fun nameOf(tags: Map<*, *>, id: Long): String =
-        (tags["name:es"] ?: tags["name"] ?: tags["ref"]) as? String ?: "Ruta MTB $id"
+        (tags["name:${app.trazo.gpx.i18n.I18n.lang.locale.language}"] ?: tags["name"] ?: tags["ref"]) as? String ?: L("Ruta MTB $id", "MTB route $id")
 
     /** "25", "25 km", "25,5km" → 25.0 / 25.5 */
     internal fun parseKm(s: String): Double? =

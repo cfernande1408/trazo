@@ -1,5 +1,6 @@
 package app.trazo.gpx.plan
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.Activity
 import app.trazo.gpx.GeoPoint
 import java.util.Locale
@@ -22,9 +23,9 @@ object BRouter {
     /** BRouter responde con texto plano cuando no encuentra ruta; esto lo traduce. */
     fun friendlyError(body: String): String = when {
         "not mapped" in body || "no track found" in body.lowercase() ->
-            "No hay camino por ahí. Pon el punto más cerca de una pista o un sendero."
+            L("No hay camino por ahí. Pon el punto más cerca de una pista o un sendero.", "There is no path there. Put the point closer to a track or trail.")
         "operation killed" in body.lowercase() || "timeout" in body.lowercase() ->
-            "La ruta es demasiado larga para calcularla de una vez. Añade puntos intermedios."
-        else -> "No se pudo calcular la ruta."
+            L("La ruta es demasiado larga para calcularla de una vez. Añade puntos intermedios.", "The route is too long to calculate in one go. Add points in between.")
+        else -> L("No se pudo calcular la ruta.", "Could not calculate the route.")
     }
 }

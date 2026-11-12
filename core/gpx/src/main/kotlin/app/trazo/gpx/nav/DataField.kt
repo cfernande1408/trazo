@@ -1,22 +1,25 @@
 package app.trazo.gpx.nav
 
+import app.trazo.gpx.i18n.L
 /** Cifras que puedes poner en la pantalla de navegación, como en un GPS de bici. */
-enum class DataField(val label: String) {
-    REMAINING("Quedan"),
-    REMAINING_GAIN("Por subir"),
-    DONE("Recorrido"),
-    SPEED("Velocidad"),
-    AVG_SPEED("Media"),
-    MOVING_TIME("En movimiento"),
-    ALTITUDE("Altitud"),
-    GRADE("Pendiente"),
-    ETA("Llegada"),
-    LIGHT("Luz"),
-    HEART_RATE("Pulso"),
-    CADENCE("Cadencia"),
-    POWER("Potencia"),
-    PARTNER("Vs. anterior"),
-    KCAL("Kcal");
+enum class DataField(private val es: String, private val en: String) {
+    REMAINING("Quedan", "To go"),
+    REMAINING_GAIN("Por subir", "Climb left"),
+    DONE("Recorrido", "Done"),
+    SPEED("Velocidad", "Speed"),
+    AVG_SPEED("Media", "Average"),
+    MOVING_TIME("En marcha", "Moving"),
+    ALTITUDE("Altitud", "Altitude"),
+    GRADE("Pendiente", "Gradient"),
+    ETA("Llegada", "Arrival"),
+    LIGHT("Luz", "Daylight"),
+    HEART_RATE("Pulso", "Heart rate"),
+    CADENCE("Cadencia", "Cadence"),
+    POWER("Potencia", "Power"),
+    PARTNER("Vs. anterior", "Vs. last time"),
+    KCAL("Kcal", "Kcal");
+
+    val label: String get() = L(es, en)
 
     companion object {
         val DEFAULT = listOf(REMAINING, REMAINING_GAIN, DONE, SPEED, MOVING_TIME, ETA)

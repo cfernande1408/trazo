@@ -1,16 +1,20 @@
 package app.trazo.gpx.osm
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.RouteGeometry
 import app.trazo.gpx.TrackStatsCalculator
 import java.util.Locale
 import kotlin.math.cos
 
-enum class PoiKind(val label: String, val emoji: String, val color: String) {
-    WATER("Fuente", "💧", "#1E88E5"),
-    SPRING("Manantial", "💧", "#4FC3F7"),
-    SHELTER("Refugio", "🛖", "#8D6E63"),
-    HUT("Refugio guardado", "🏠", "#6D4C41"),
+enum class PoiKind(private val es: String, private val en: String, val emoji: String, val color: String) {
+    WATER("Fuente", "Water", "💧", "#1E88E5"),
+    SPRING("Manantial", "Spring", "💧", "#4FC3F7"),
+    SHELTER("Refugio", "Shelter", "🛖", "#8D6E63"),
+    HUT("Refugio guardado", "Staffed hut", "🏠", "#6D4C41"),
+    ;
+
+    val label: String get() = L(es, en)
 }
 
 data class Poi(val kind: PoiKind, val name: String?, val lat: Double, val lon: Double)

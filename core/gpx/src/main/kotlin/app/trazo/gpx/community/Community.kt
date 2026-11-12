@@ -1,5 +1,6 @@
 package app.trazo.gpx.community
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.Gpx
 import app.trazo.gpx.GeoJson
 import app.trazo.gpx.offline.OfflineArea
@@ -9,16 +10,19 @@ import java.net.URLEncoder
 import java.util.Locale
 
 /** Avisos en el camino, con lo que suelen durar antes de caducar solos. */
-enum class HazardKind(val label: String, val days: Int) {
-    ICE("Hielo", 2),
-    SNOW("Nieve", 4),
-    MUD("Barro", 4),
-    FALLEN_TREE("Árbol caído", 21),
-    CLOSED("Camino cortado", 30),
-    WATER("Arroyo crecido", 3),
-    LIVESTOCK("Ganado o perros", 1),
-    HUNTING("Batida de caza", 1),
-    OTHER("Otro", 3),
+enum class HazardKind(private val es: String, private val en: String, val days: Int) {
+    ICE("Hielo", "Ice", 2),
+    SNOW("Nieve", "Snow", 4),
+    MUD("Barro", "Mud", 4),
+    FALLEN_TREE("Árbol caído", "Fallen tree", 21),
+    CLOSED("Camino cortado", "Path closed", 30),
+    WATER("Arroyo crecido", "Swollen stream", 3),
+    LIVESTOCK("Ganado o perros", "Livestock or dogs", 1),
+    HUNTING("Batida de caza", "Hunting", 1),
+    OTHER("Otro", "Other", 3),
+    ;
+
+    val label: String get() = L(es, en)
 }
 
 data class Hazard(

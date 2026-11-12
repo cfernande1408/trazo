@@ -1,29 +1,39 @@
 package app.trazo.gpx.ride
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.Activity
 import kotlin.math.roundToLong
 
 /** Cuánto sales, según tú: ajusta el ritmo mientras Trazo no tenga rutas tuyas. */
 enum class Fitness(
-    val label: String,
-    val hint: String,
+    private val labelEs: String,
+    private val labelEn: String,
+    private val hintEs: String,
+    private val hintEn: String,
     /** Tu tiempo frente al estimado de serie (MIDE a pie, 14 km/h y 600 m/h en bici). */
     val paceFactor: Double,
     /** Horas en marcha que se te hacen cómodas. */
     val comfortHours: Double,
 ) {
-    LOW("Salgo poco", "Menos de una vez al mes", 1.3, 2.0),
-    CASUAL("De vez en cuando", "Una o dos veces al mes", 1.1, 3.0),
-    REGULAR("Cada semana", "Una o dos salidas a la semana", 1.0, 4.0),
-    TRAINED("Entreno en serio", "Varias veces por semana", 0.85, 5.5),
+    LOW("Salgo poco", "Rarely", "Menos de una vez al mes", "Less than once a month", 1.3, 2.0),
+    CASUAL("De vez en cuando", "Now and then", "Una o dos veces al mes", "Once or twice a month", 1.1, 3.0),
+    REGULAR("Cada semana", "Every week", "Una o dos salidas a la semana", "One or two outings a week", 1.0, 4.0),
+    TRAINED("Entreno en serio", "I train seriously", "Varias veces por semana", "Several times a week", 0.85, 5.5),
+    ;
+
+    val label: String get() = L(labelEs, labelEn)
+    val hint: String get() = L(hintEs, hintEn)
 }
 
 /** Lo que pesa una ruta para ti, según lo que se te hace cómodo. */
-enum class Effort(val label: String) {
-    EASY("Fácil para ti"),
-    MODERATE("A tu medida"),
-    HARD("Exigente para ti"),
-    VERY_HARD("Muy dura para ti"),
+enum class Effort(private val es: String, private val en: String) {
+    EASY("Fácil para ti", "Easy for you"),
+    MODERATE("A tu medida", "Right for you"),
+    HARD("Exigente para ti", "Hard for you"),
+    VERY_HARD("Muy dura para ti", "Very hard for you"),
+    ;
+
+    val label: String get() = L(es, en)
 }
 
 /** Una ruta que has hecho: lo que hiciste y lo que tardaste en marcha. */

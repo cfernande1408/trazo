@@ -1,18 +1,22 @@
 package app.trazo.gpx.nav
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.TrackStatsCalculator
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 
-enum class TurnKind(val phrase: String) {
-    LEFT("gira a la izquierda"),
-    RIGHT("gira a la derecha"),
-    SHARP_LEFT("giro cerrado a la izquierda"),
-    SHARP_RIGHT("giro cerrado a la derecha"),
-    U_TURN("media vuelta"),
-    SWITCHBACKS("zona de curvas cerradas"),
+enum class TurnKind(private val es: String, private val en: String) {
+    LEFT("gira a la izquierda", "turn left"),
+    RIGHT("gira a la derecha", "turn right"),
+    SHARP_LEFT("giro cerrado a la izquierda", "sharp left"),
+    SHARP_RIGHT("giro cerrado a la derecha", "sharp right"),
+    U_TURN("media vuelta", "make a U-turn"),
+    SWITCHBACKS("zona de curvas cerradas", "switchbacks ahead"),
+    ;
+
+    val phrase: String get() = L(es, en)
 }
 
 data class Turn(val alongMeters: Double, val kind: TurnKind, val angleDegrees: Double)

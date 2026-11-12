@@ -62,5 +62,5 @@ object Calories {
     }
 
     /** "1.240 kcal" */
-    fun format(kcal: Int): String = String.format(java.util.Locale.forLanguageTag("es-ES"), "%,d kcal", kcal)
+    fun format(kcal: Int): String = String.format(app.trazo.gpx.i18n.I18n.locale, "%,d kcal", kcal)
 }

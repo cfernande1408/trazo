@@ -1,5 +1,6 @@
 package app.trazo.gpx
 
+import app.trazo.gpx.i18n.L
 /**
  * Estación del año (hemisferio norte). Cambia los colores del mapa, cómo se
  * dibujan los árboles y el consejo que da la app antes de salir.
@@ -8,7 +9,7 @@ package app.trazo.gpx
  * a la vista 3D.
  */
 enum class Season(
-    val label: String,
+    private val labelEs: String,
     val background: String,
     val grass: String,
     val wood: String,
@@ -25,7 +26,7 @@ enum class Season(
     val snow: Boolean,
     /** Parte de los árboles del bosque que se dibujan de hoja ancha (0–1). */
     val broadleafShare: Double,
-    val tip: String,
+    private val tipEs: String,
 ) {
     SPRING(
         "Primavera", "#EEF0DF", "#D2E7AE", "#B3D78B", "#C9E3A6",
@@ -47,6 +48,21 @@ enum class Season(
         "#5D8A5A", "#3D6B44", "#9C7E62", "#7A5F48", null, true, 0.0,
         "Invierno: hielo en las umbrías y nieve en las cumbres. Mira el parte antes de salir.",
     );
+
+    val label: String
+        get() = L(labelEs, when (this) { SPRING -> "Spring"; SUMMER -> "Summer"; AUTUMN -> "Autumn"; WINTER -> "Winter" })
+
+    /** Consejo de la estación para salir. */
+    val tip: String
+        get() = L(
+            tipEs,
+            when (this) {
+                SPRING -> "Spring: mud after the rain and swollen streams. Take care at fords."
+                SUMMER -> "Summer: start early, carry plenty of water and respect fire-risk restrictions."
+                AUTUMN -> "Autumn: wet leaves and roots are slippery and it gets dark early. Bring a light."
+                WINTER -> "Winter: ice on shady slopes and snow on the peaks. Check the forecast before you go."
+            },
+        )
 
     companion object {
         /** Por fecha: equinoccios y solsticios redondeados al día. */

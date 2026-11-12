@@ -1,5 +1,6 @@
 package app.trazo.gpx.osm
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.RouteGeometry
 import app.trazo.gpx.TrackStatsCalculator
@@ -8,11 +9,14 @@ import kotlin.math.cos
 import kotlin.math.floor
 
 /** Por dónde va la ruta: lo que de verdad cambia la salida en bici o a pie. */
-enum class SurfaceKind(val label: String, val color: String) {
-    PAVED("Asfalto", "#8A8F98"),
-    TRACK("Pista", "#C8963E"),
-    PATH("Sendero", "#4E8A2E"),
-    STEPS("Escaleras", "#B5532A"),
+enum class SurfaceKind(private val es: String, private val en: String, val color: String) {
+    PAVED("Asfalto", "Paved", "#8A8F98"),
+    TRACK("Pista", "Track", "#C8963E"),
+    PATH("Sendero", "Trail", "#4E8A2E"),
+    STEPS("Escaleras", "Steps", "#B5532A"),
+    ;
+
+    val label: String get() = L(es, en)
 }
 
 data class SurfaceSummary(

@@ -1,5 +1,6 @@
 package app.trazo.gpx.layers
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.Activity
 
 /** Teselas raster de un servicio WMTS/XYZ, con {z}/{x}/{y} en la URL. */
@@ -12,9 +13,10 @@ data class RasterSpec(
 )
 
 /** Tipo de mapa, como en Google Maps: el de Trazo, el topográfico oficial o satélite. */
-enum class BaseMap(val label: String, val raster: RasterSpec?, val note: String?) {
-    TRAZO("Trazo", null, null),
+enum class BaseMap(private val labelEs: String, private val labelEn: String, val raster: RasterSpec?, private val noteEs: String?, private val noteEn: String?) {
+    TRAZO("Trazo", "Trazo", null, null, null),
     IGN_TOPO(
+        "Topo IGN",
         "Topo IGN",
         RasterSpec(
             "base-ign-topo",
@@ -23,9 +25,11 @@ enum class BaseMap(val label: String, val raster: RasterSpec?, val note: String?
             17,
         ),
         "Solo España",
+        "Spain only",
     ),
     SATELLITE(
         "Satélite",
+        "Satellite",
         RasterSpec(
             "base-pnoa",
             wmts("pnoa-ma", "OI.OrthoimageCoverage", "image/jpeg"),
@@ -33,7 +37,12 @@ enum class BaseMap(val label: String, val raster: RasterSpec?, val note: String?
             19,
         ),
         "Solo España",
+        "Spain only",
     ),
+    ;
+
+    val label: String get() = L(labelEs, labelEn)
+    val note: String? get() = noteEs?.let { L(it, noteEn ?: it) }
 }
 
 /**
@@ -114,7 +123,7 @@ object MapLayers {
         return RasterSpec(
             "overlay-routes",
             "https://tile.waymarkedtrails.org/$flavour/{z}/{x}/{y}.png",
-            "Rutas © waymarkedtrails.org, © colaboradores de OpenStreetMap",
+            L("Rutas © waymarkedtrails.org, © colaboradores de OpenStreetMap", "Routes © waymarkedtrails.org, © OpenStreetMap contributors"),
             17,
             0.9f,
         )

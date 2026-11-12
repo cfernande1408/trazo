@@ -1,5 +1,6 @@
 package app.trazo.gpx
 
+import app.trazo.gpx.i18n.L
 import java.io.InputStream
 
 object GpxParser {
@@ -26,8 +27,8 @@ object GpxParser {
             when (e) {
                 is XmlEvent.Start -> {
                     if (stack.isEmpty()) {
-                        if (sawRoot) throw GpxParseException("Contenido tras el final del GPX")
-                        if (e.name != "gpx") throw GpxParseException("El archivo no es un GPX")
+                        if (sawRoot) throw GpxParseException(L("Contenido tras el final del GPX", "Content after the end of the GPX"))
+                        if (e.name != "gpx") throw GpxParseException(L("El archivo no es un GPX", "The file is not a GPX"))
                         sawRoot = true
                     }
                     val startParent = stack.lastOrNull()
@@ -84,8 +85,8 @@ object GpxParser {
             }
         }
 
-        if (!sawRoot) throw GpxParseException("El archivo no es un GPX")
-        if (stack.isNotEmpty()) throw GpxParseException("GPX incompleto: falta cerrar <${stack.last()}>")
+        if (!sawRoot) throw GpxParseException(L("El archivo no es un GPX", "The file is not a GPX"))
+        if (stack.isNotEmpty()) throw GpxParseException(L("GPX incompleto: falta cerrar <${stack.last()}>", "Incomplete GPX: <${stack.last()}> is not closed"))
 
         return Gpx(
             name = gpxName ?: tracks.firstNotNullOfOrNull { it.name },

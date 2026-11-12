@@ -1,5 +1,6 @@
 package app.trazo.gpx.safety
 
+import app.trazo.gpx.i18n.L
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.cos
@@ -73,11 +74,11 @@ object Coordinates {
     /** Texto del SMS de ayuda: corto, que quepa en uno o dos mensajes y se entienda sin la app. */
     fun sosMessage(lat: Double, lon: Double, eleMeters: Double?, accuracyMeters: Double?, hhmm: String, reason: String? = null): String =
         buildString {
-            append(reason ?: "Necesito ayuda.")
-            append(" Mi posición a las ").append(hhmm).append(": ")
+            append(reason ?: L("Necesito ayuda.", "I need help."))
+            append(L(" Mi posición a las ", " My position at ")).append(hhmm).append(": ")
             append(decimal(lat, lon))
             append(" (UTM ").append(toUtm(lat, lon)).append(')')
-            eleMeters?.let { append(", ").append(it.roundToInt()).append(" m de altitud") }
+            eleMeters?.let { append(", ").append(it.roundToInt()).append(L(" m de altitud", " m altitude")) }
             accuracyMeters?.let { append(", ±").append(it.roundToInt()).append(" m") }
             append(". ")
             append(String.format(Locale.ROOT, "https://www.openstreetmap.org/?mlat=%.5f&mlon=%.5f#map=16/%.5f/%.5f", lat, lon, lat, lon))

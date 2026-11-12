@@ -1,15 +1,19 @@
 package app.trazo.gpx.osm
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.TrackStatsCalculator
 import kotlin.math.cos
 
 /** Si una ruta acaba donde empieza o no, como el filtro de Wikiloc. */
-enum class RouteShape(val label: String) {
-    LOOP("Circular"),
-    LINEAR("Lineal"),
+enum class RouteShape(private val es: String, private val en: String) {
+    LOOP("Circular", "Loop"),
+    LINEAR("Lineal", "One way"),
     /** Se sale de la zona que se ha cargado y no se puede saber. */
-    UNKNOWN(""),
+    UNKNOWN("", ""),
+    ;
+
+    val label: String get() = L(es, en)
 }
 
 object RouteShapes {

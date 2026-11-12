@@ -1,5 +1,6 @@
 package app.trazo.gpx.weather
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.Activity
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.RouteGeometry
@@ -124,33 +125,36 @@ object RouteWeather {
 
     /** Código WMO del tiempo → texto y emoji. */
     fun describe(code: Int): Pair<String, String> = when (code) {
-        0 -> "Despejado" to "☀️"
-        1, 2 -> "Poco nuboso" to "🌤️"
-        3 -> "Nublado" to "☁️"
-        45, 48 -> "Niebla" to "🌫️"
-        in 51..57 -> "Llovizna" to "🌦️"
-        in 61..67 -> "Lluvia" to "🌧️"
-        in 71..77 -> "Nieve" to "🌨️"
-        in 80..82 -> "Chubascos" to "🌦️"
-        85, 86 -> "Chubascos de nieve" to "🌨️"
-        in 95..99 -> "Tormenta" to "⛈️"
+        0 -> L("Despejado", "Clear") to "☀️"
+        1, 2 -> L("Poco nuboso", "Partly cloudy") to "🌤️"
+        3 -> L("Nublado", "Cloudy") to "☁️"
+        45, 48 -> L("Niebla", "Fog") to "🌫️"
+        in 51..57 -> L("Llovizna", "Drizzle") to "🌦️"
+        in 61..67 -> L("Lluvia", "Rain") to "🌧️"
+        in 71..77 -> L("Nieve", "Snow") to "🌨️"
+        in 80..82 -> L("Chubascos", "Showers") to "🌦️"
+        85, 86 -> L("Chubascos de nieve", "Snow showers") to "🌨️"
+        in 95..99 -> L("Tormenta", "Thunderstorm") to "⛈️"
         else -> "—" to "🌡️"
     }
 
     /** Avisos para la salida: tormenta, hielo, viento o lluvia probable, con el km donde empieza. */
     fun warnings(points: List<WeatherAt>): List<String> {
-        fun km(w: WeatherAt) = String.format(Locale.forLanguageTag("es-ES"), "km %.0f", w.sample.distanceMeters / 1000)
+        fun km(w: WeatherAt) = String.format(Locale.ROOT, "km %.0f", w.sample.distanceMeters / 1000)
         val out = mutableListOf<String>()
-        points.firstOrNull { it.code in 95..99 }?.let { out += "⛈️ Tormenta prevista desde el ${km(it)}. Mejor otro día." }
-        points.firstOrNull { it.code in 71..77 || it.code in 85..86 }?.let { out += "🌨️ Nieve desde el ${km(it)}." }
-        points.firstOrNull { it.tempC <= 0.0 }?.let { out += "🧊 Bajo cero en el ${km(it)}: puede haber hielo." }
+        points.firstOrNull { it.code in 95..99 }?.let { out += L("⛈️ Tormenta prevista desde el ${km(it)}. Mejor otro día.", "⛈️ Thunderstorm forecast from ${km(it)}. Better another day.") }
+        points.firstOrNull { it.code in 71..77 || it.code in 85..86 }?.let { out += L("🌨️ Nieve desde el ${km(it)}.", "🌨️ Snow from ${km(it)}.") }
+        points.firstOrNull { it.tempC <= 0.0 }?.let { out += L("🧊 Bajo cero en el ${km(it)}: puede haber hielo.", "🧊 Below zero at ${km(it)}: there may be ice.") }
         points.firstOrNull { it.gustKmh >= 50 }?.let {
-            out += "💨 Rachas de ${it.gustKmh.roundToInt()} km/h en el ${km(it)}. Cuidado en crestas y collados."
+            out += L(
+                "💨 Rachas de ${it.gustKmh.roundToInt()} km/h en el ${km(it)}. Cuidado en crestas y collados.",
+                "💨 Gusts of ${it.gustKmh.roundToInt()} km/h at ${km(it)}. Take care on ridges and passes.",
+            )
         }
         points.firstOrNull { (it.precipProbability ?: 0) >= 60 && it.code !in 95..99 }?.let {
-            out += "🌧️ Lluvia probable (${it.precipProbability} %) desde el ${km(it)}."
+            out += L("🌧️ Lluvia probable (${it.precipProbability} %) desde el ${km(it)}.", "🌧️ Rain likely (${it.precipProbability}%) from ${km(it)}.")
         }
-        points.firstOrNull { it.tempC >= 32 }?.let { out += "🥵 ${it.tempC.roundToInt()} °C en el ${km(it)}: lleva agua de sobra." }
+        points.firstOrNull { it.tempC >= 32 }?.let { out += L("🥵 ${it.tempC.roundToInt()} °C en el ${km(it)}: lleva agua de sobra.", "🥵 ${it.tempC.roundToInt()} °C at ${km(it)}: carry plenty of water.") }
         return out
     }
 }
