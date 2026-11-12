@@ -1,5 +1,6 @@
 package app.trazo.ride
 
+import app.trazo.gpx.i18n.L
 import android.content.Context
 import android.content.Intent
 import android.location.Location

@@ -1,5 +1,6 @@
 package app.trazo.plan
 
+import app.trazo.gpx.i18n.L
 import android.content.Context
 import app.trazo.gpx.GeoPoint
 import app.trazo.gpx.Gpx
