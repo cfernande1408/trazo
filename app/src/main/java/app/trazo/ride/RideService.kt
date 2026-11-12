@@ -1,5 +1,6 @@
 package app.trazo.ride
 
+import app.trazo.gpx.i18n.L
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
@@ -64,8 +65,8 @@ class RideService : Service() {
         super.onCreate()
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Salida en curso", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Mientras grabas o navegas una ruta"
+            NotificationChannel(CHANNEL, L("Salida en curso", "Outing in progress"), NotificationManager.IMPORTANCE_LOW).apply {
+                description = L("Mientras grabas o navegas una ruta", "While you record or navigate a route")
             }
         )
         ServiceCompat.startForeground(
@@ -107,7 +108,7 @@ class RideService : Service() {
         val s = RideSession.state.value
         val text = String.format(
             app.trazo.gpx.i18n.I18n.locale, "%.1f km · %s%s",
-            s.stats.distanceMeters / 1000, formatDuration(s.stats.movingMs), if (s.paused) " · en pausa" else "",
+            s.stats.distanceMeters / 1000, formatDuration(s.stats.movingMs), if (s.paused) L(" · en pausa", " · paused") else "",
         )
         val open = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
@@ -115,7 +116,7 @@ class RideService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_ride)
-            .setContentTitle(s.routeName?.let { "Navegando · $it" } ?: if (s.activity == app.trazo.gpx.Activity.HIKE) "Grabando excursión" else "Grabando salida")
+            .setContentTitle(s.routeName?.let { L("Navegando · $it", "Navigating · $it") } ?: if (s.activity == app.trazo.gpx.Activity.HIKE) L("Grabando excursión", "Recording hike") else L("Grabando salida", "Recording ride"))
             .setContentText(text)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

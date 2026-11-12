@@ -1,5 +1,6 @@
 package app.trazo.explore
 
+import app.trazo.gpx.i18n.L
 import android.annotation.SuppressLint
 import android.view.ViewGroup
 import android.webkit.CookieManager
@@ -105,7 +106,7 @@ fun WikilocBrowser(onGpx: (Gpx) -> Unit, onClose: (() -> Unit)? = null) {
                 navigationIcon = {
                     if (canGoBack || onClose != null) {
                         IconButton(onClick = { if (webView.canGoBack()) webView.goBack() else onClose?.invoke() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = L("Atrás", "Back"))
                         }
                     }
                 },
@@ -123,13 +124,13 @@ fun WikilocBrowser(onGpx: (Gpx) -> Unit, onClose: (() -> Unit)? = null) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         if (busy) {
                             CircularProgressIndicator(Modifier.size(24.dp))
-                            Text("Importando la ruta…")
+                            Text(L("Importando la ruta…", "Importing the route…"))
                         } else {
                             Column(Modifier.weight(1f)) {
-                                Text("No se pudo importar", style = MaterialTheme.typography.titleSmall)
+                                Text(L("No se pudo importar", "Could not import"), style = MaterialTheme.typography.titleSmall)
                                 Text(error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            TextButton(onClick = { error = null }) { Text("Vale") }
+                            TextButton(onClick = { error = null }) { Text(L("Vale", "OK")) }
                         }
                     }
                 }
@@ -141,7 +142,7 @@ fun WikilocBrowser(onGpx: (Gpx) -> Unit, onClose: (() -> Unit)? = null) {
 /** Descarga el archivo con las cookies de tu sesión, como haría el navegador. */
 private suspend fun downloadGpx(url: String, userAgent: String): Gpx {
     if (!url.startsWith("http")) {
-        throw IOException("Esta descarga no se puede recoger desde aquí. Descárgala en el navegador y usa Compartir → Trazo.")
+        throw IOException(L("Esta descarga no se puede recoger desde aquí. Descárgala en el navegador y usa Compartir → Trazo.", "This download can't be picked up from here. Download it in the browser and use Share → Trazo."))
     }
     val headers = buildMap {
         put("User-Agent", userAgent)
@@ -151,6 +152,6 @@ private suspend fun downloadGpx(url: String, userAgent: String): Gpx {
     return try {
         GpxParser.parse(text)
     } catch (e: GpxParseException) {
-        throw IOException("Lo descargado no es un GPX. Elige el formato GPX al descargar.")
+        throw IOException(L("Lo descargado no es un GPX. Elige el formato GPX al descargar.", "The download is not a GPX. Choose the GPX format when downloading."))
     }
 }

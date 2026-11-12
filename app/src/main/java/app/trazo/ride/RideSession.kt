@@ -96,7 +96,7 @@ object RideSession {
         context.stopService(Intent(context, RideService::class.java))
         val points = recorder.points
         val activity = _state.value.activity
-        val name = _state.value.routeName ?: if (activity == Activity.HIKE) "Excursión" else "Salida"
+        val name = _state.value.routeName ?: if (activity == Activity.HIKE) L("Excursión", "Hike") else L("Salida", "Ride")
         val marks = _state.value.marks
         _state.value = RideState()
         if (points.sumOf { it.size } < 2) {

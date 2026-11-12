@@ -1,5 +1,6 @@
 package app.trazo.ride
 
+import app.trazo.gpx.i18n.L
 import android.widget.Toast
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
@@ -93,7 +94,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 
-private val DATE = SimpleDateFormat("EEEE d 'de' MMMM, HH:mm", app.trazo.importer.ES)
+private val DATE = SimpleDateFormat(L("EEEE d 'de' MMMM, HH:mm", "EEEE d MMMM, HH:mm"), app.trazo.importer.ES)
 
 /** Lista de salidas guardadas, como pantalla aparte. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,7 +105,7 @@ fun RidesScreen(onBack: () -> Unit, onOpen: (File) -> Unit, onRecord: () -> Unit
         topBar = {
             TopAppBar(
                 title = { Text(AppMode.current.outingsTitle) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, L("Volver", "Back")) } },
             )
         },
     ) { padding -> RidesList(onOpen, onRecord, Modifier.padding(padding)) }
@@ -125,8 +126,8 @@ fun RidesList(onOpen: (File) -> Unit, onRecord: () -> Unit, modifier: Modifier =
             modifier.fillMaxSize().padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Aún no has grabado ninguna ${AppMode.current.outing}.", style = MaterialTheme.typography.titleMedium)
-            Text("Graba una suelta o empieza a navegar una ruta: se guarda sola al terminar.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(L("Aún no has grabado ninguna ${AppMode.current.outing}.", "You haven't recorded any ${AppMode.current.outing} yet."), style = MaterialTheme.typography.titleMedium)
+            Text(L("Graba una suelta o empieza a navegar una ruta: se guarda sola al terminar.", "Record one on its own or start navigating a route: it saves itself when you finish."), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Button(onClick = onRecord) { Text(AppMode.current.recordCta) }
         }
         else -> LazyColumn(
@@ -143,7 +144,7 @@ fun RidesList(onOpen: (File) -> Unit, onRecord: () -> Unit, modifier: Modifier =
                         }
                         Text(DATE.format(Date(r.startedAtMs)).replaceFirstChar { it.uppercase() }, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
-                            "${kmStr(r.stats.distanceMeters)} · ${formatDuration(r.stats.movingMs)} · ${kmh(r.stats.avgMovingKmh)} de media",
+                            L("${kmStr(r.stats.distanceMeters)} · ${formatDuration(r.stats.movingMs)} · ${kmh(r.stats.avgMovingKmh)} de media", "${kmStr(r.stats.distanceMeters)} · ${formatDuration(r.stats.movingMs)} · ${kmh(r.stats.avgMovingKmh)} average"),
                             style = MaterialTheme.typography.titleSmall,
                         )
                     }
@@ -184,8 +185,8 @@ fun RideDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(ride?.name ?: "Salida") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } },
+                title = { Text(ride?.name ?: L("Salida", "Ride")) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, L("Volver", "Back")) } },
             )
         },
     ) { padding ->
@@ -210,14 +211,14 @@ fun RideDetailScreen(
                         modifier = Modifier.weight(1f).height(52.dp),
                     ) {
                         Icon(Icons.Filled.Insights, contentDescription = null)
-                        Text("  Analizar", maxLines = 1)
+                        Text(L("  Analizar", "  Analyse"), maxLines = 1)
                     }
                     FilledTonalButton(
                         onClick = { parse(r.file)?.let(onRepeat) },
                         modifier = Modifier.weight(1f).height(52.dp),
                     ) {
                         Icon(Icons.Filled.Replay, contentDescription = null)
-                        Text("  Repetir", maxLines = 1)
+                        Text(L("  Repetir", "  Repeat"), maxLines = 1)
                     }
                 }
             }
@@ -235,12 +236,12 @@ fun RideDetailScreen(
                 }
             }
             if (r.marks.isNotEmpty()) {
-                item { Text("Puntos marcados", style = MaterialTheme.typography.titleMedium) }
+                item { Text(L("Puntos marcados", "Marked points"), style = MaterialTheme.typography.titleMedium) }
                 items(r.marks) { MarkRow(it) }
             }
             item {
                 Button(onClick = { context.shareGpx(r.file) }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                    Text("Exportar GPX (Strava, Wikiloc…)", style = MaterialTheme.typography.titleMedium)
+                    Text(L("Exportar GPX (Strava, Wikiloc…)", "Export GPX (Strava, Wikiloc…)"), style = MaterialTheme.typography.titleMedium)
                 }
             }
             item {
@@ -253,17 +254,17 @@ fun RideDetailScreen(
                                 runCatching { app.trazo.plan.RoutesLibrary.save(context, GpxParser.parse(r.file.readText())) }.isSuccess
                             }
                             inLibrary = ok
-                            Toast.makeText(context, if (ok) "Guardada en Guardadas → Rutas" else "No se pudo guardar", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, if (ok) L("Guardada en Guardadas → Rutas", "Saved in Saved → Routes") else L("No se pudo guardar", "Could not save"), Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                 ) {
-                    Text(if (inLibrary) "Ya está en tus rutas" else "Guardar en mis rutas")
+                    Text(if (inLibrary) L("Ya está en tus rutas", "Already in your routes") else L("Guardar en mis rutas", "Save to my routes"))
                 }
             }
             item {
                 TextButton(onClick = { confirmDelete = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Borrar", color = MaterialTheme.colorScheme.error)
+                    Text(L("Borrar", "Delete"), color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -272,12 +273,12 @@ fun RideDetailScreen(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("¿Borrar esta salida?") },
-            text = { Text("No se puede deshacer.") },
+            title = { Text(L("¿Borrar esta salida?", "Delete this outing?")) },
+            text = { Text(L("No se puede deshacer.", "This can't be undone.")) },
             confirmButton = {
-                TextButton(onClick = { ride?.let { RideStore.delete(context, it) }; confirmDelete = false; onDeleted() }) { Text("Borrar") }
+                TextButton(onClick = { ride?.let { RideStore.delete(context, it) }; confirmDelete = false; onDeleted() }) { Text(L("Borrar", "Delete")) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancelar") } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(L("Cancelar", "Cancel")) } },
         )
     }
 }
@@ -359,13 +360,13 @@ private fun MarkRow(mark: Waypoint) {
         Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             if (photo != null && bitmap != null) {
                 Image(
-                    bitmap.asImageBitmap(), contentDescription = "Foto de ${mark.name ?: "el punto"}",
+                    bitmap.asImageBitmap(), contentDescription = L("Foto de ${mark.name ?: "el punto"}", "Photo of ${mark.name ?: "the point"}"),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.size(72.dp).clip(RoundedCornerShape(12.dp)).clickable { context.viewPhoto(photo) },
                 )
             }
             Column(Modifier.weight(1f).padding(start = if (bitmap != null) 12.dp else 0.dp)) {
-                Text(mark.name ?: "Punto", style = MaterialTheme.typography.titleSmall)
+                Text(mark.name ?: L("Punto", "Point"), style = MaterialTheme.typography.titleSmall)
                 mark.desc?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                 mark.ele?.let {
                     Text("${it.toInt()} m", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -390,5 +391,5 @@ private fun Context.shareGpx(file: File) {
         .setType("application/gpx+xml")
         .putExtra(Intent.EXTRA_STREAM, uri)
         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    startActivity(Intent.createChooser(send, "Exportar salida"))
+    startActivity(Intent.createChooser(send, L("Exportar salida", "Export outing")))
 }

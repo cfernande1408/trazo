@@ -1,5 +1,6 @@
 package app.trazo.importer
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -80,7 +81,7 @@ internal fun km(m: Double) = String.format(ES, "%.1f km", m / 1000)
 internal fun metros(m: Double) = String.format(ES, "%,.0f m", m)
 
 /** Wikiloc antepone "Wikiloc - " al nombre de la ruta en el GPX. */
-internal fun ImportState.Loaded.title() = gpx.name?.removePrefix("Wikiloc - ") ?: "Ruta sin nombre"
+internal fun ImportState.Loaded.title() = gpx.name?.removePrefix("Wikiloc - ") ?: L("Ruta sin nombre", "Unnamed route")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,13 +119,13 @@ fun ImportScreen(
                 title = { Text("Trazo", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     if (state !is ImportState.Empty) {
-                        IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver") }
+                        IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = L("Volver", "Back")) }
                     }
                 },
                 actions = {
                     // Tu perfil (peso, altura, edad: para las kcal)
                     IconButton(onClick = { profile = true }) {
-                        Icon(Icons.Filled.AccountCircle, contentDescription = "Tu perfil")
+                        Icon(Icons.Filled.AccountCircle, contentDescription = L("Tu perfil", "Your profile"))
                     }
                     // Chip con tu actividad: tocándolo cambias de biker a senderista y viceversa
                     AssistChip(
@@ -184,9 +185,9 @@ private fun ErrorState(message: String, onPickFile: () -> Unit) {
         Modifier.fillMaxWidth().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("No he podido leer la ruta", style = MaterialTheme.typography.titleLarge)
+        Text(L("No he podido leer la ruta", "I couldn't read the route"), style = MaterialTheme.typography.titleLarge)
         Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        FilledTonalButton(onClick = onPickFile) { Text("Probar con otro archivo") }
+        FilledTonalButton(onClick = onPickFile) { Text(L("Probar con otro archivo", "Try another file")) }
     }
 }
 
@@ -233,9 +234,9 @@ private fun Loaded(
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Stat("Distancia", km(s.distanceMeters), Modifier.weight(1f))
-                Stat("Desnivel +", metros(s.elevationGainMeters), Modifier.weight(1f))
-                Stat("Desnivel −", metros(s.elevationLossMeters), Modifier.weight(1f))
+                Stat(L("Distancia", "Distance"), km(s.distanceMeters), Modifier.weight(1f))
+                Stat(L("Desnivel +", "Ascent"), metros(s.elevationGainMeters), Modifier.weight(1f))
+                Stat(L("Desnivel −", "Descent"), metros(s.elevationLossMeters), Modifier.weight(1f))
             }
         }
         if (done != null) {
@@ -250,13 +251,13 @@ private fun Loaded(
         }
         item {
             Button(onClick = onOpenMap, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                Text(if (done != null) "Analizar en el mapa" else "Ver en el mapa", style = MaterialTheme.typography.titleMedium)
+                Text(if (done != null) L("Analizar en el mapa", "Analyse on the map") else L("Ver en el mapa", "View on the map"), style = MaterialTheme.typography.titleMedium)
             }
         }
         item {
             PrimaryScrollableTabRow(selectedTabIndex = tab, containerColor = Color.Transparent, edgePadding = 0.dp) {
                 val n = state.gpx.waypoints.size
-                val tabs = listOf("Perfil", if (n > 0) "Puntos ($n)" else "Puntos", "Tiempo", "Comentarios")
+                val tabs = listOf(L("Perfil", "Profile"), if (n > 0) L("Puntos ($n)", "Points ($n)") else L("Puntos", "Points"), L("Tiempo", "Weather"), L("Comentarios", "Comments"))
                 (if (done != null) tabs.take(2) else tabs).forEachIndexed { i, label ->
                     Tab(selected = tab == i, onClick = { tab = i }, text = { Text(label, maxLines = 1) })
                 }
@@ -272,7 +273,7 @@ private fun Loaded(
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Altitud", style = MaterialTheme.typography.titleMedium)
+                                Text(L("Altitud", "Altitude"), style = MaterialTheme.typography.titleMedium)
                                 Text(
                                     "${metros(s.minElevation ?: 0.0)} – ${metros(s.maxElevation ?: 0.0)}",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -283,13 +284,13 @@ private fun Loaded(
                     }
                 }
             } else {
-                item { Hint("El GPX no trae altitudes, así que no hay perfil.") }
+                item { Hint(L("El GPX no trae altitudes, así que no hay perfil.", "The GPX has no altitudes, so there is no profile.")) }
             }
             }
             1 -> {
                 item { PoisSection(state) }
                 if (state.gpx.waypoints.isEmpty()) {
-                    item { Hint(if (done != null) "No marcaste puntos en esta ruta." else "El autor no marcó puntos en esta ruta.") }
+                    item { Hint(if (done != null) L("No marcaste puntos en esta ruta.", "You didn't mark any points on this route.") else L("El autor no marcó puntos en esta ruta.", "The author didn't mark any points on this route.")) }
                 } else {
                     items(state.gpx.waypoints) { WaypointRow(it) }
                 }
@@ -304,12 +305,12 @@ private fun Loaded(
             item {
                 Button(onClick = onPlan, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                     Icon(Icons.Filled.Replay, contentDescription = null)
-                    Text("  Repetir esta ruta", style = MaterialTheme.typography.titleMedium)
+                    Text(L("  Repetir esta ruta", "  Repeat this route"), style = MaterialTheme.typography.titleMedium)
                 }
             }
             item {
                 Text(
-                    "Para planear la salida: tiempo a tu ritmo, previsión, luz, mapa sin conexión y navegación.",
+                    L("Para planear la salida: tiempo a tu ritmo, previsión, luz, mapa sin conexión y navegación.", "To plan the outing: time at your pace, forecast, daylight, offline map and navigation."),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -318,16 +319,16 @@ private fun Loaded(
         item {
             val saved = lib.routes.any { it.name == state.title() && kotlin.math.abs(it.distanceMeters - s.distanceMeters) < 1.0 }
             OutlinedButton(onClick = onSaveCurrent, enabled = !saved, modifier = Modifier.fillMaxWidth().height(48.dp)) {
-                Text(if (saved) "Guardada en tus rutas" else "Guardar en tus rutas")
+                Text(if (saved) L("Guardada en tus rutas", "Saved to your routes") else L("Guardar en tus rutas", "Save to your routes"))
             }
         }
         if (done == null) item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton(onClick = onPickFile, modifier = Modifier.weight(1f).height(48.dp)) {
-                    Text("Importar otra")
+                    Text(L("Importar otra", "Import another"))
                 }
                 FilledTonalButton(onClick = onCreateRoute, modifier = Modifier.weight(1f).height(48.dp)) {
-                    Text("Crear ruta")
+                    Text(L("Crear ruta", "Create route"))
                 }
             }
         }
@@ -341,26 +342,26 @@ private fun CommentsTab(state: ImportState.Loaded) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Descripción del autor", style = MaterialTheme.typography.titleMedium)
+                Text(L("Descripción del autor", "Author's description"), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    state.gpx.description ?: "El autor no incluyó descripción en el GPX.",
+                    state.gpx.description ?: L("El autor no incluyó descripción en el GPX.", "The author didn't include a description in the GPX."),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
         if (url != null) {
             Button(onClick = { context.openUrl(url) }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                Text("Ver comentarios en Wikiloc", style = MaterialTheme.typography.titleMedium)
+                Text(L("Ver comentarios en Wikiloc", "See comments on Wikiloc"), style = MaterialTheme.typography.titleMedium)
             }
         } else {
             FilledTonalButton(
                 onClick = { context.openUrl("https://www.google.com/search?q=" + Uri.encode("wikiloc ${state.title()}")) },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
             ) {
-                Text("Buscar la ruta en Wikiloc")
+                Text(L("Buscar la ruta en Wikiloc", "Search for the route on Wikiloc"))
             }
         }
-        Hint("Los comentarios se leen en Wikiloc: Trazo no los copia.")
+        Hint(L("Los comentarios se leen en Wikiloc: Trazo no los copia.", "Comments are read on Wikiloc: Trazo doesn't copy them."))
     }
 }
 
@@ -397,7 +398,7 @@ internal fun Stat(label: String, value: String, modifier: Modifier = Modifier) {
 private fun WaypointRow(w: Waypoint) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
-            Text(w.name ?: "Punto sin nombre", style = MaterialTheme.typography.titleSmall)
+            Text(w.name ?: L("Punto sin nombre", "Unnamed point"), style = MaterialTheme.typography.titleSmall)
             w.desc?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
@@ -415,12 +416,13 @@ private fun ForYou(s: app.trazo.gpx.TrackStats, activity: Activity) {
     val effort = pace.effort(mine)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("A tu ritmo: ${formatDuration(mine)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(L("A tu ritmo: ${formatDuration(mine)}", "At your pace: ${formatDuration(mine)}"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             EffortBadge(effort)
         }
         Text(
-            (if (activity == Activity.HIKE) "MIDE: " else "De serie en bici: ") + formatDuration(base) + " · " +
-                if (pace.rides > 0) "ajustado con tus ${pace.rides} rutas realizadas" else "ajustado con tu forma física (tu perfil)",
+            (if (activity == Activity.HIKE) "MIDE: " else L("De serie en bici: ", "Standard by bike: ")) + formatDuration(base) + " · " +
+                if (pace.rides > 0) L("ajustado con tus ${pace.rides} rutas realizadas", "adjusted with your ${pace.rides} completed routes")
+                else L("ajustado con tu forma física (tu perfil)", "adjusted with your fitness (your profile)"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -441,7 +443,7 @@ internal fun EffortBadge(effort: app.trazo.gpx.ride.Effort) {
     }
 }
 
-private val DONE_DATE = java.text.SimpleDateFormat("EEEE d 'de' MMMM, HH:mm", app.trazo.gpx.i18n.I18n.locale)
+private val DONE_DATE = java.text.SimpleDateFormat(L("EEEE d 'de' MMMM, HH:mm", "EEEE d MMMM, HH:mm"), app.trazo.gpx.i18n.I18n.locale)
 
 /**
  * Cómo te fue en una ruta realizada: cuándo, tiempo en marcha y total, media,
@@ -452,25 +454,25 @@ private fun DoneSummary(s: app.trazo.gpx.TrackStats, done: DoneRide, activity: A
     val r = done.stats
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            "Realizada el " + DONE_DATE.format(java.util.Date(done.startedAtMs)),
+            L("Realizada el ", "Completed on ") + DONE_DATE.format(java.util.Date(done.startedAtMs)),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Stat("En marcha", formatDuration(r.movingMs), Modifier.weight(1f))
-            Stat("Total", formatDuration(r.totalMs), Modifier.weight(1f))
-            Stat("Media", String.format(app.trazo.gpx.i18n.I18n.locale, "%.1f km/h", r.avgMovingKmh), Modifier.weight(1f))
+            Stat(L("En marcha", "Moving"), formatDuration(r.movingMs), Modifier.weight(1f))
+            Stat(L("Total", "Total"), formatDuration(r.totalMs), Modifier.weight(1f))
+            Stat(L("Media", "Average"), String.format(app.trazo.gpx.i18n.I18n.locale, "%.1f km/h", r.avgMovingKmh), Modifier.weight(1f))
         }
         val base = activity.estimateMs(s.distanceMeters, s.elevationGainMeters, s.elevationLossMeters)
         if (base > 0 && r.movingMs > 0) {
             val pct = ((r.movingMs.toDouble() / base - 1) * 100).roundToInt()
-            val ref = if (activity == Activity.HIKE) "MIDE" else "La estimación de serie"
+            val ref = if (activity == Activity.HIKE) "MIDE" else L("La estimación de serie", "The standard estimate")
             Text(
-                "$ref la daba en ${formatDuration(base)}: " + when {
-                    kotlin.math.abs(pct) < 5 -> "fuiste justo a ese ritmo."
-                    pct < 0 -> "fuiste un ${-pct} % más rápido."
-                    else -> "tardaste un $pct % más."
-                } + " Las paradas no cuentan.",
+                L("$ref la daba en ${formatDuration(base)}: ", "$ref gave ${formatDuration(base)}: ") + when {
+                    kotlin.math.abs(pct) < 5 -> L("fuiste justo a ese ritmo.", "you matched that pace.")
+                    pct < 0 -> L("fuiste un ${-pct} % más rápido.", "you were ${-pct}% faster.")
+                    else -> L("tardaste un $pct % más.", "you took $pct% longer.")
+                } + L(" Las paradas no cuentan.", " Stops don't count."),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }

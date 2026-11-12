@@ -1,5 +1,6 @@
 package app.trazo.ride
 
+import app.trazo.gpx.i18n.L
 import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -135,7 +136,7 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
     Box(Modifier.fillMaxSize()) {
         AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
         FilledTonalIconButton(onClick = onClose, modifier = Modifier.statusBarsPadding().padding(16.dp).size(56.dp)) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = L("Volver", "Back"))
         }
         var showSos by remember { mutableStateOf(false) }
         var showSensors by remember { mutableStateOf(false) }
@@ -159,29 +160,29 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (state.active) {
                     Text(
-                        if (state.paused) "En pausa" else state.routeName?.let { "Navegando · $it" } ?: "Grabando",
+                        if (state.paused) L("En pausa", "Paused") else state.routeName?.let { L("Navegando · $it", "Navigating · $it") } ?: L("Grabando", "Recording"),
                         style = MaterialTheme.typography.titleMedium,
                         color = if (state.paused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                     )
                     RideStatsGrid(state.stats, currentKmh = state.currentKmh ?: 0.0, kcal = app.trazo.ui.UserProfile.kcal(state.stats, state.activity))
                     Text(
-                        "Total ${formatDuration(now - state.startedAtMs)}" + if (state.barometer) " · desnivel con barómetro" else "",
+                        "Total ${formatDuration(now - state.startedAtMs)}" + if (state.barometer) L(" · desnivel con barómetro", " · barometric ascent") else "",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         FilledTonalButton(
                             onClick = { if (state.paused) RideSession.resume() else RideSession.pause() },
                             modifier = Modifier.weight(1f).height(56.dp),
-                        ) { Text(if (state.paused) "Reanudar" else "Pausa", style = MaterialTheme.typography.titleMedium) }
+                        ) { Text(if (state.paused) L("Reanudar", "Resume") else L("Pausa", "Pause"), style = MaterialTheme.typography.titleMedium) }
                         Button(
                             onClick = { RideSession.stop(context)?.let(onSaved) ?: onClose() },
                             modifier = Modifier.weight(1f).height(56.dp),
-                        ) { Text("Terminar", style = MaterialTheme.typography.titleMedium) }
+                        ) { Text(L("Terminar", "Finish"), style = MaterialTheme.typography.titleMedium) }
                     }
                 } else {
-                    Text("Graba tu ${AppMode.current.outing} aunque no sigas ninguna ruta.", style = MaterialTheme.typography.titleMedium)
+                    Text(L("Graba tu ${AppMode.current.outing} aunque no sigas ninguna ruta.", "Record your ${AppMode.current.outing} even if you're not following a route."), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Sigue grabando con la pantalla apagada. Al terminar verás distancia, tiempo y velocidades, y se guarda en Guardadas → Realizadas.",
+                        L("Sigue grabando con la pantalla apagada. Al terminar verás distancia, tiempo y velocidades, y se guarda en Guardadas → Realizadas.", "It keeps recording with the screen off. When you finish you'll see distance, time and speeds, and it's saved in Saved → Completed."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Button(
@@ -190,7 +191,7 @@ fun RecordScreen(onClose: () -> Unit, onSaved: (File) -> Unit) {
                             else { startWhenGranted = true; ask.launch(ridePermissions()) }
                         },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
-                    ) { Text("Empezar a grabar", style = MaterialTheme.typography.titleMedium) }
+                    ) { Text(L("Empezar a grabar", "Start recording"), style = MaterialTheme.typography.titleMedium) }
                 }
             }
         }

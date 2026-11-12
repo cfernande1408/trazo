@@ -37,7 +37,7 @@ object RoutesLibrary {
     }
 
     fun save(context: Context, gpx: Gpx): File =
-        save(context, gpx.name?.removePrefix("Wikiloc - ") ?: "Ruta", gpx.segments, gpx.description)
+        save(context, gpx.name?.removePrefix("Wikiloc - ") ?: L("Ruta", "Route"), gpx.segments, gpx.description)
 
     fun open(file: File): Gpx = GpxParser.parse(file.readText())
 

@@ -1,5 +1,6 @@
 package app.trazo.importer
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import app.trazo.gpx.weather.WeatherDetail
@@ -77,7 +78,7 @@ private suspend fun loadForecast(state: ImportState.Loaded, activity: Activity, 
     val samples = withContext(Dispatchers.Default) { RouteWeather.samples(state.gpx.segments, activity, paceFactor = factor) }
     val json = Http.get(RouteWeather.url(samples))
     val points = RouteWeather.parse(json, samples, startMs)
-    if (points.isEmpty()) Forecast.Failed("No hay previsión para ese día todavía (solo ${RouteWeather.FORECAST_DAYS} días).")
+    if (points.isEmpty()) Forecast.Failed(L("No hay previsión para ese día todavía (solo ${RouteWeather.FORECAST_DAYS} días).", "No forecast for that day yet (only ${RouteWeather.FORECAST_DAYS} days)."))
     else {
         val rows = withContext(Dispatchers.Default) { WeatherDetail.rows(json, samples, startMs) }
         Forecast.Ready(points, RouteWeather.warnings(points), rows, WeatherDetail.whatToWear(rows, activity))
@@ -104,13 +105,13 @@ internal fun WeatherPeek(state: ImportState.Loaded, activity: Activity, onOpen: 
         ),
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            val whenLabel = (if (day == 0) "Hoy" else "Mañana") + " a las %02d:00".format(hour)
+            val whenLabel = (if (day == 0) L("Hoy", "Today") else L("Mañana", "Tomorrow")) + L(" a las %02d:00", " at %02d:00").format(hour)
             when (f) {
                 Forecast.Loading -> {
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text("  Mirando el tiempo en la ruta…", style = MaterialTheme.typography.bodyMedium)
+                    Text(L("  Mirando el tiempo en la ruta…", "  Checking the weather on the route…"), style = MaterialTheme.typography.bodyMedium)
                 }
-                is Forecast.Failed -> Text("🌡️  Tiempo en la ruta: toca para elegir día", style = MaterialTheme.typography.bodyMedium)
+                is Forecast.Failed -> Text(L("🌡️  Tiempo en la ruta: toca para elegir día", "🌡️  Weather on the route: tap to pick a day"), style = MaterialTheme.typography.bodyMedium)
                 is Forecast.Ready -> {
                     val worst = f.points.maxBy { severity(it.code) }
                     Text(RouteWeather.describe(worst.code).second, style = MaterialTheme.typography.titleLarge)
@@ -120,12 +121,12 @@ internal fun WeatherPeek(state: ImportState.Loaded, activity: Activity, onOpen: 
                             style = MaterialTheme.typography.titleSmall,
                         )
                         Text(
-                            if (warn.isEmpty()) "Sin avisos en la ruta" else warn.first() + if (warn.size > 1) " (+${warn.size - 1})" else "",
+                            if (warn.isEmpty()) L("Sin avisos en la ruta", "No warnings on the route") else warn.first() + if (warn.size > 1) " (+${warn.size - 1})" else "",
                             style = MaterialTheme.typography.bodySmall,
                             maxLines = 2,
                         )
                     }
-                    Text("Ver ›", style = MaterialTheme.typography.labelLarge)
+                    Text(L("Ver ›", "View ›"), style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
@@ -172,15 +173,15 @@ internal fun WeatherTab(state: ImportState.Loaded, activity: Activity) {
             (0 until RouteWeather.FORECAST_DAYS).forEach { d ->
                 val date = LocalDate.now().plusDays(d.toLong())
                 val label = when (d) {
-                    0 -> "Hoy"
-                    1 -> "Mañana"
+                    0 -> L("Hoy", "Today")
+                    1 -> L("Mañana", "Tomorrow")
                     else -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, ES).removeSuffix(".") + " ${date.dayOfMonth}"
                 }
                 FilterChip(selected = dayOffset == d, onClick = { dayOffset = d }, label = { Text(label) })
             }
         }
         Column {
-            Text("Salida a las %02d:00".format(sliding.roundToInt()), style = MaterialTheme.typography.titleSmall)
+            Text(L("Salida a las %02d:00", "Start at %02d:00").format(sliding.roundToInt()), style = MaterialTheme.typography.titleSmall)
             Slider(
                 value = sliding,
                 onValueChange = { sliding = it },
@@ -193,7 +194,7 @@ internal fun WeatherTab(state: ImportState.Loaded, activity: Activity) {
         when (val f = forecast) {
             Forecast.Loading -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                Text("Mirando el tiempo a lo largo de la ruta…")
+                Text(L("Mirando el tiempo a lo largo de la ruta…", "Checking the weather along the route…"))
             }
             is Forecast.Failed -> Text(f.message, color = MaterialTheme.colorScheme.error)
             is Forecast.Ready -> {
@@ -208,18 +209,18 @@ internal fun WeatherTab(state: ImportState.Loaded, activity: Activity) {
                     }
                 } else {
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
-                        Text("Sin avisos: buen día para salir.", Modifier.fillMaxWidth().padding(14.dp))
+                        Text(L("Sin avisos: buen día para salir.", "No warnings: a good day to go."), Modifier.fillMaxWidth().padding(14.dp))
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = !detail, onClick = { detail = false }, label = { Text("Resumen") })
-                    FilterChip(selected = detail, onClick = { detail = true }, label = { Text("Detalle cada 15 min") })
+                    FilterChip(selected = !detail, onClick = { detail = false }, label = { Text(L("Resumen", "Summary")) })
+                    FilterChip(selected = detail, onClick = { detail = true }, label = { Text(L("Detalle cada 15 min", "Every 15 min")) })
                 }
                 if (!detail) f.points.forEach { WeatherRow(it, zone) }
                 else WeatherDetailView(f.rows, f.wear, zone)
                 Text(
-                    "Previsión de Open-Meteo a la altitud de cada punto. Las horas de paso son a tu ritmo " +
-                        "(tu forma física y tus rutas realizadas).",
+                    L("Previsión de Open-Meteo a la altitud de cada punto. Las horas de paso son a tu ritmo ", "Open-Meteo forecast at the altitude of each point. Passing times are at your pace ") +
+                        L("(tu forma física y tus rutas realizadas).", "(your fitness and your completed routes)."),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -247,8 +248,8 @@ private fun WeatherRow(w: WeatherAt, zone: ZoneId) {
                 Text(text, style = MaterialTheme.typography.titleSmall)
                 Text(
                     listOfNotNull(
-                        w.precipProbability?.let { "💧 $it %" },
-                        "💨 ${w.windKmh.roundToInt()} km/h" + if (w.gustKmh >= w.windKmh + 10) " (rachas ${w.gustKmh.roundToInt()})" else "",
+                        w.precipProbability?.let { "💧 " + app.trazo.gpx.i18n.percent(it) },
+                        "💨 ${w.windKmh.roundToInt()} km/h" + if (w.gustKmh >= w.windKmh + 10) L(" (rachas ${w.gustKmh.roundToInt()})", " (gusts ${w.gustKmh.roundToInt()})") else "",
                     ).joinToString("   "),
                     style = MaterialTheme.typography.bodySmall,
                 )
@@ -270,7 +271,7 @@ private fun WeatherDetailView(rows: List<DetailRow>, wear: List<String>, zone: Z
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         )) {
             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Qué llevarte puesto", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(L("Qué llevarte puesto", "What to wear"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 wear.forEach { line ->
                     Row {
                         Text("•", modifier = Modifier.width(14.dp))
@@ -283,7 +284,7 @@ private fun WeatherDetailView(rows: List<DetailRow>, wear: List<String>, zone: Z
     if (rows.isEmpty()) return
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
-            DetailLine(listOf("Hora", "", "Temp. (sens.)", "Viento", "Lluvia"), header = true)
+            DetailLine(listOf(L("Hora", "Time"), "", L("Temp. (sens.)", "Temp. (feels)"), L("Viento", "Wind"), L("Lluvia", "Rain")), header = true)
             rows.forEach { r ->
                 val (text, emoji) = RouteWeather.describe(r.code)
                 // De noche, la luna en vez del sol
@@ -294,14 +295,14 @@ private fun WeatherDetailView(rows: List<DetailRow>, wear: List<String>, zone: Z
                         icon,
                         "${r.tempC.roundToInt()}° (${r.feelsC.roundToInt()}°)",
                         "${r.windKmh.roundToInt()}" + if (r.gustKmh >= r.windKmh + 10) "/${r.gustKmh.roundToInt()}" else "",
-                        if (r.precipMm >= 0.1) "%.1f mm".format(ES, r.precipMm) else "${r.precipProbability ?: 0} %",
+                        if (r.precipMm >= 0.1) "%.1f mm".format(ES, r.precipMm) else app.trazo.gpx.i18n.percent(r.precipProbability ?: 0),
                     ),
-                    description = "$text, ${r.tempC.roundToInt()} grados, sensación ${r.feelsC.roundToInt()}",
+                    description = L("$text, ${r.tempC.roundToInt()} grados, sensación ${r.feelsC.roundToInt()}", "$text, ${r.tempC.roundToInt()} degrees, feels like ${r.feelsC.roundToInt()}"),
                 )
             }
             Text(
-                "Viento en km/h (con rachas si son fuertes). Lluvia: mm en esa hora o, si no llueve, la probabilidad. " +
-                    "Entre horas y entre puntos de la ruta, los valores se interpolan.",
+                L("Viento en km/h (con rachas si son fuertes). Lluvia: mm en esa hora o, si no llueve, la probabilidad. ", "Wind in km/h (with gusts when strong). Rain: mm in that hour or, if it doesn't rain, the probability. ") +
+                    L("Entre horas y entre puntos de la ruta, los valores se interpolan.", "Between hours and between route points, values are interpolated."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp),

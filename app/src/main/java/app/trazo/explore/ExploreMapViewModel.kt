@@ -1,5 +1,6 @@
 package app.trazo.explore
 
+import app.trazo.gpx.i18n.L
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -113,12 +114,12 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
         loadJob = viewModelScope.launch {
             delay(350) // por si sigues moviendo el mapa
             _canRetry.value = false
-            _status.value = "Buscando rutas en esta zona…"
+            _status.value = L("Buscando rutas en esta zona…", "Looking for routes in this area…")
             val area = view.expand(0.15)
             // Cortes de red sueltos (cambio wifi/datos, la app un momento en segundo plano): reintento solo
             for ((attempt, wait) in listOf(0L, 2_000L, 5_000L).withIndex()) {
                 if (wait > 0) {
-                    _status.value = "Se cortó la conexión, reintentando…"
+                    _status.value = L("Se cortó la conexión, reintentando…", "The connection dropped, retrying…")
                     delay(wait)
                 }
                 try {
@@ -130,13 +131,13 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
                         r.id to if (r.shape == RouteShape.UNKNOWN && known != null) r.copy(shape = known) else r
                     }
                     covered += area
-                    _status.value = if (_routes.value.isEmpty()) "No hay rutas mapeadas en esta zona" else null
+                    _status.value = if (_routes.value.isEmpty()) L("No hay rutas mapeadas en esta zona", "No mapped routes in this area") else null
                     return@launch
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     if (attempt == 2) {
-                        _status.value = Http.friendly(e) + " Toca para reintentar."
+                        _status.value = Http.friendly(e) + L(" Toca para reintentar.", " Tap to retry.")
                         _canRetry.value = true
                     }
                 }
@@ -201,7 +202,7 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
                 val exact = withTimeoutOrNull(if (quick != null) 8_000L else 30_000L) {
                     runCatching { Overpass.parseRoute(Http.overpass(Overpass.routeQuery(id)), id) }.getOrNull()
                 }
-                val gpx = exact ?: quick ?: throw java.io.IOException("No se pudo descargar el recorrido")
+                val gpx = exact ?: quick ?: throw java.io.IOException(L("No se pudo descargar el recorrido", "Could not download the track"))
                 _selected.value = SelectedRoute(summary, gpx)
                 val withEle = Http.withElevation(gpx)
                 val loaded = withContext(Dispatchers.Default) { loadedFrom(withEle) }

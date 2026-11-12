@@ -1,5 +1,6 @@
 package app.trazo.plan
 
+import app.trazo.gpx.i18n.L
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -251,15 +252,15 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
             modifier = Modifier.statusBarsPadding().padding(12.dp).fillMaxWidth(),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(4.dp)) {
-                IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver") }
+                IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = L("Volver", "Back")) }
                 Column(Modifier.weight(1f)) {
-                    Text("Crear ruta", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(L("Crear ruta", "Create route"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(
                         when {
-                            moving -> "Toca dónde quieres poner el punto ${(selected ?: 0) + 1}"
-                            points.isEmpty() -> "Toca el mapa para poner la salida"
-                            points.size < 3 -> "Toca para añadir puntos · ${activity.label}"
-                            else -> "Toca un punto para moverlo o borrarlo, o la ruta para añadir uno en medio"
+                            moving -> L("Toca dónde quieres poner el punto ${(selected ?: 0) + 1}", "Tap where you want point ${(selected ?: 0) + 1}")
+                            points.isEmpty() -> L("Toca el mapa para poner la salida", "Tap the map to set the start")
+                            points.size < 3 -> L("Toca para añadir puntos · ${activity.label}", "Tap to add points · ${activity.label}")
+                            else -> L("Toca un punto para moverlo o borrarlo, o la ruta para añadir uno en medio", "Tap a point to move or delete it, or the route to add one in between")
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -285,13 +286,13 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
                 modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 92.dp),
             ) {
                 Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("  Punto ${sel + 1}", style = MaterialTheme.typography.titleSmall)
-                    TextButton(onClick = { moving = true }) { Text("Mover") }
+                    Text(L("  Punto ${sel + 1}", "  Point ${sel + 1}"), style = MaterialTheme.typography.titleSmall)
+                    TextButton(onClick = { moving = true }) { Text(L("Mover", "Move")) }
                     TextButton(onClick = {
                         if (sel < points.size) points.removeAt(sel)
                         selected = null
-                    }) { Text("Borrar") }
-                    TextButton(onClick = { selected = null }) { Text("Cancelar") }
+                    }) { Text(L("Borrar", "Delete")) }
+                    TextButton(onClick = { selected = null }) { Text(L("Cancelar", "Cancel")) }
                 }
             }
         }
@@ -304,10 +305,10 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (stats != null) {
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Figure("Distancia", km(stats.distanceMeters))
-                        Figure("Desnivel +", metros(stats.elevationGainMeters))
+                        Figure(L("Distancia", "Distance"), km(stats.distanceMeters))
+                        Figure(L("Desnivel +", "Ascent"), metros(stats.elevationGainMeters))
                         Figure(
-                            "A tu ritmo",
+                            L("A tu ritmo", "At your pace"),
                             formatDuration(app.trazo.ui.UserProfile.pace(activity).estimateMs(activity, stats.distanceMeters, stats.elevationGainMeters, stats.elevationLossMeters)),
                         )
                     }
@@ -315,9 +316,9 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
                 } else {
                     Text(
                         error ?: when (points.size) {
-                            0 -> "Pon el primer punto donde empiezas."
-                            1 -> "Ahora toca donde quieres ir. La ruta irá por caminos."
-                            else -> "Calculando la ruta…"
+                            0 -> L("Pon el primer punto donde empiezas.", "Put the first point where you start.")
+                            1 -> L("Ahora toca donde quieres ir. La ruta irá por caminos.", "Now tap where you want to go. The route will follow paths.")
+                            else -> L("Calculando la ruta…", "Working out the route…")
                         },
                         color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -327,25 +328,25 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     FilledTonalIconButton(onClick = { points.removeLastOrNull() }, enabled = points.isNotEmpty()) {
-                        Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Deshacer")
+                        Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = L("Deshacer", "Undo"))
                     }
                     FilledTonalIconButton(
                         onClick = { points += points.first() },
                         enabled = points.size >= 2 && points.first() != points.last(),
                     ) {
-                        Icon(Icons.Filled.Loop, contentDescription = "Cerrar circular")
+                        Icon(Icons.Filled.Loop, contentDescription = L("Cerrar circular", "Close the loop"))
                     }
                     FilledTonalIconButton(
                         onClick = { val ob = PlanEdit.outAndBack(points.toList()); points.clear(); points.addAll(ob) },
                         enabled = points.size >= 2 && points.first() != points.last(),
                     ) {
-                        Icon(Icons.Filled.SyncAlt, contentDescription = "Ida y vuelta")
+                        Icon(Icons.Filled.SyncAlt, contentDescription = L("Ida y vuelta", "Out and back"))
                     }
                     FilledTonalIconButton(onClick = { points.clear(); selected = null; moving = false }, enabled = points.isNotEmpty()) {
-                        Icon(Icons.Filled.Delete, contentDescription = "Borrar todo")
+                        Icon(Icons.Filled.Delete, contentDescription = L("Borrar todo", "Clear all"))
                     }
                     Box(Modifier.weight(1f))
-                    Button(onClick = { askName = true }, enabled = route != null && !loading) { Text("Guardar") }
+                    Button(onClick = { askName = true }, enabled = route != null && !loading) { Text(L("Guardar", "Save")) }
                 }
             }
         }
@@ -355,23 +356,23 @@ fun PlannerScreen(onClose: () -> Unit, onSaved: (Gpx) -> Unit) {
         var name by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { askName = false },
-            title = { Text("Nombre de la ruta") },
+            title = { Text(L("Nombre de la ruta", "Route name")) },
             text = {
                 OutlinedTextField(
                     value = name, onValueChange = { name = it },
-                    singleLine = true, placeholder = { Text("Mi ruta") },
+                    singleLine = true, placeholder = { Text(L("Mi ruta", "My route")) },
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     val r = route ?: return@TextButton
-                    val finalName = name.trim().ifEmpty { "Mi ruta" }
-                    RoutesLibrary.save(context, finalName, r.segments, "Creada con Trazo")
+                    val finalName = name.trim().ifEmpty { L("Mi ruta", "My route") }
+                    RoutesLibrary.save(context, finalName, r.segments, L("Creada con Trazo", "Created with Trazo"))
                     askName = false
-                    onSaved(r.copy(name = finalName, tracks = listOf(Track(finalName, r.segments)), description = "Creada con Trazo"))
-                }) { Text("Guardar") }
+                    onSaved(r.copy(name = finalName, tracks = listOf(Track(finalName, r.segments)), description = L("Creada con Trazo", "Created with Trazo")))
+                }) { Text(L("Guardar", "Save")) }
             },
-            dismissButton = { TextButton(onClick = { askName = false }) { Text("Cancelar") } },
+            dismissButton = { TextButton(onClick = { askName = false }) { Text(L("Cancelar", "Cancel")) } },
         )
     }
 }

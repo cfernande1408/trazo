@@ -1,5 +1,6 @@
 package app.trazo.explore
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.foundation.layout.widthIn
 import app.trazo.gpx.nav.RouteStart
 import app.trazo.gpx.osm.RouteShape
@@ -291,7 +292,7 @@ fun ExploreMapScreen(
             SearchField(
                 query = query,
                 onQuery = { query = it },
-                placeholder = if (activity == Activity.HIKE) "Busca un pico, un pueblo o un sendero" else "Busca un sitio o una ruta",
+                placeholder = if (activity == Activity.HIKE) L("Busca un pico, un pueblo o un sendero", "Search for a peak, a village or a trail") else L("Busca un sitio o una ruta", "Search for a place or a route"),
                 onSearch = {
                     focus.clearFocus()
                     keyboard?.hide()
@@ -313,7 +314,7 @@ fun ExploreMapScreen(
                         FilterChip(
                             selected = onlyMtb,
                             onClick = vm::toggleOnlyMtb,
-                            label = { Text("Solo MTB") },
+                            label = { Text(L("Solo MTB", "MTB only")) },
                             colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                         )
                     }
@@ -326,7 +327,7 @@ fun ExploreMapScreen(
                             color = MaterialTheme.colorScheme.surfaceContainerHigh,
                         ) {
                             Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                if (s.startsWith("Buscando") || s.endsWith("reintentando…")) {
+                                if (s.startsWith(L("Buscando", "Searching")) || s.endsWith("reintentando…")) {
                                     CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
                                     Box(Modifier.size(8.dp))
                                 }
@@ -353,7 +354,7 @@ fun ExploreMapScreen(
         if (askZone && zone != null) {
             ZoneDialog(zone, onDismiss = { askZone = false }) { topo ->
                 askZone = false
-                val name = "Zona del mapa · " + java.time.LocalDate.now()
+                val name = L("Zona del mapa · ", "Map area · ") + java.time.LocalDate.now()
                     .format(java.time.format.DateTimeFormatter.ofPattern("d MMM", app.trazo.gpx.i18n.I18n.locale))
                 OfflineMaps.downloadArea(context, name, OfflineArea.areaKey(zone.toBounds()), zone.toBounds(), topo)
             }
@@ -366,7 +367,7 @@ fun ExploreMapScreen(
                 modifier = Modifier.align(Alignment.Center),
             ) {
                 Text(
-                    d.error ?: "Descargando zona… ${(d.progress * 100).toInt()} %",
+                    d.error ?: L("Descargando zona… ${(d.progress * 100).toInt()} %", "Downloading area… ${(d.progress * 100).toInt()}%"),
                     Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                     style = MaterialTheme.typography.labelLarge,
                 )
@@ -399,20 +400,20 @@ fun ExploreMapScreen(
             } else if (sel == null) {
                 Row(Modifier.padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        if (routes.isEmpty()) "Mueve el mapa o busca la zona donde quieras salir"
+                        if (routes.isEmpty()) L("Mueve el mapa o busca la zona donde quieras salir", "Move the map or search for where you want to go")
                         else activity.exploreHint,
                         modifier = Modifier.weight(1f).padding(vertical = 12.dp),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     // Descargar lo que se ve para usarlo sin conexión
                     IconButton(onClick = { askZone = true }, enabled = view != null) {
-                        Icon(Icons.Filled.CloudDownload, contentDescription = "Descargar esta zona")
+                        Icon(Icons.Filled.CloudDownload, contentDescription = L("Descargar esta zona", "Download this area"))
                     }
                     if (visible.isNotEmpty()) {
                         FilledTonalButton(onClick = { showList = true }) {
                             Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, Modifier.size(18.dp))
                             Box(Modifier.size(6.dp))
-                            Text("Lista (${visible.size})")
+                            Text(L("Lista (${visible.size})", "List (${visible.size})"))
                         }
                     }
                 }
@@ -444,7 +445,7 @@ private fun SearchField(
             singleLine = true,
             leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             trailingIcon = {
-                if (query.isNotEmpty()) IconButton(onClick = onClear) { Icon(Icons.Filled.Close, contentDescription = "Borrar") }
+                if (query.isNotEmpty()) IconButton(onClick = onClear) { Icon(Icons.Filled.Close, contentDescription = L("Borrar", "Delete")) }
             },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { onSearch() }),
@@ -476,23 +477,23 @@ private fun SearchResultsCard(
                 item {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                        Text("Buscando «${results.query}»…")
+                        Text(L("Buscando «${results.query}»…", "Searching for “${results.query}”…"))
                     }
                 }
                 return@LazyColumn
             }
             results.error?.let { e -> item { Text(e, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error) } }
             if (results.error == null && results.places.isEmpty() && results.routes.isEmpty()) {
-                item { Text("No he encontrado nada para «${results.query}».", Modifier.padding(16.dp)) }
+                item { Text(L("No he encontrado nada para «${results.query}».", "Nothing found for “${results.query}”."), Modifier.padding(16.dp)) }
             }
             if (results.routes.isNotEmpty()) {
-                item { SectionTitle(if (activity == Activity.HIKE) "Senderos" else "Rutas") }
+                item { SectionTitle(if (activity == Activity.HIKE) L("Senderos", "Trails") else L("Rutas", "Routes")) }
                 items(results.routes, key = { "r${it.id}" }) { r ->
                     ResultRow(activity.icon, r.name, listOfNotNull(activity.badge(r.isMtb), r.ref).joinToString(" · ")) { onRoute(r) }
                 }
             }
             if (results.places.isNotEmpty()) {
-                item { SectionTitle("Lugares") }
+                item { SectionTitle(L("Lugares", "Places")) }
                 items(results.places) { p -> ResultRow(Icons.Filled.LocationOn, p.name, p.detail) { onPlace(p) } }
             }
         }
@@ -504,11 +505,11 @@ private fun RouteList(routes: List<OsmRouteSummary>, activity: Activity, onPick:
     Column {
         Row(Modifier.padding(start = 20.dp, end = 4.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "${routes.size} ${activity.routesWord} en esta zona",
+                L("${routes.size} ${activity.routesWord} en esta zona", "${routes.size} ${activity.routesWord} in this area"),
                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f),
             )
-            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Cerrar lista") }
+            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = L("Cerrar lista", "Close list")) }
         }
         LazyColumn(Modifier.heightIn(max = 340.dp), contentPadding = PaddingValues(bottom = 8.dp)) {
             items(routes, key = { it.id }) { r ->
@@ -567,7 +568,7 @@ private fun SelectedCard(sel: SelectedRoute, activity: Activity, onClose: () -> 
                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                 maxLines = 2, overflow = TextOverflow.Ellipsis,
             )
-            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Cerrar") }
+            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = L("Cerrar", "Close")) }
         }
 
         val gpx = sel.gpx
@@ -576,15 +577,15 @@ private fun SelectedCard(sel: SelectedRoute, activity: Activity, onClose: () -> 
             sel.error != null -> Text(sel.error, color = MaterialTheme.colorScheme.error)
             gpx == null -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                Text("Cargando el recorrido…")
+                Text(L("Cargando el recorrido…", "Loading the track…"))
             }
             else -> {
                 val dist = loaded?.stats?.distanceMeters ?: TrackStatsCalculator.compute(gpx.segments).distanceMeters
                 // Con el trazado entero ya se sabe seguro si acaba donde empieza
-                val form = if (RouteStart.isLoop(gpx.segments)) "Circular" else "Lineal"
+                val form = if (RouteStart.isLoop(gpx.segments)) L("Circular", "Loop") else L("Lineal", "One way")
                 Text(
                     if (loaded != null) "${km(dist)} · +${metros(loaded.stats.elevationGainMeters)} · −${metros(loaded.stats.elevationLossMeters)} · $form"
-                    else "${km(dist)} · $form · calculando desnivel…",
+                    else L("${km(dist)} · $form · calculando desnivel…", "${km(dist)} · $form · working out the climbing…"),
                     style = MaterialTheme.typography.titleSmall,
                 )
                 if (loaded != null) {
@@ -594,7 +595,7 @@ private fun SelectedCard(sel: SelectedRoute, activity: Activity, onClose: () -> 
                     val mine = pace.estimateMs(activity, st.distanceMeters, st.elevationGainMeters, st.elevationLossMeters)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         app.trazo.importer.EffortBadge(pace.effort(mine))
-                        Text("${app.trazo.ride.formatDuration(mine)} a tu ritmo", style = MaterialTheme.typography.bodyMedium)
+                        Text(L("${app.trazo.ride.formatDuration(mine)} a tu ritmo", "${app.trazo.ride.formatDuration(mine)} at your pace"), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 if (loaded != null && loaded.profile.size >= 2) {
@@ -608,7 +609,7 @@ private fun SelectedCard(sel: SelectedRoute, activity: Activity, onClose: () -> 
                 onClick = { (loaded?.gpx ?: gpx)?.let(onOpen) },
                 enabled = gpx != null,
                 modifier = Modifier.weight(1f).height(48.dp),
-            ) { Text("Abrir en Trazo") }
+            ) { Text(L("Abrir en Trazo", "Open in Trazo")) }
             FilledTonalButton(onClick = onOsm, modifier = Modifier.height(48.dp)) { Text("OSM") }
         }
     }
@@ -641,24 +642,24 @@ private fun ZoneDialog(zone: Bbox, onDismiss: () -> Unit, onDownload: (Boolean) 
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Filled.CloudDownload, contentDescription = null) },
-        title = { Text("Descargar esta zona") },
+        title = { Text(L("Descargar esta zona", "Download this area")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Mapa y relieve de lo que ves ahora, para usarlo sin conexión en cualquier ruta que pase por aquí.")
+                Text(L("Mapa y relieve de lo que ves ahora, para usarlo sin conexión en cualquier ruta que pase por aquí.", "Map and terrain of what you see now, for offline use on any route that passes through here."))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = topo, onCheckedChange = { topo = it })
-                    Text("Incluir topo IGN (solo España)")
+                    Text(L("Incluir topo IGN (solo España)", "Include IGN topo (Spain only)"))
                 }
                 Text(
-                    if (tooBig) "Es demasiado grande (unos $mb MB). Acerca el mapa."
-                    else "Ocupará unos ${mb.coerceAtLeast(1)} MB. Mejor con wifi.",
+                    if (tooBig) L("Es demasiado grande (unos $mb MB). Acerca el mapa.", "It's too big (about $mb MB). Zoom in.")
+                    else L("Ocupará unos ${mb.coerceAtLeast(1)} MB. Mejor con wifi.", "It will take about ${mb.coerceAtLeast(1)} MB. Wi-Fi recommended."),
                     color = if (tooBig) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
         },
-        confirmButton = { TextButton(onClick = { onDownload(topo) }, enabled = !tooBig) { Text("Descargar") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        confirmButton = { TextButton(onClick = { onDownload(topo) }, enabled = !tooBig) { Text(L("Descargar", "Download")) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(L("Cancelar", "Cancel")) } },
     )
 }
 
@@ -670,16 +671,16 @@ private fun ShapeChip(shape: RouteShape?, onPick: (RouteShape?) -> Unit) {
         FilterChip(
             selected = shape != null,
             onClick = { open = true },
-            label = { Text(shape?.let { if (it == RouteShape.LOOP) "Circulares" else "Lineales" } ?: "Circular o lineal") },
+            label = { Text(shape?.let { if (it == RouteShape.LOOP) L("Circulares", "Loops") else L("Lineales", "One way") } ?: L("Circular o lineal", "Loop or one way")) },
             trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null, Modifier.size(18.dp)) },
             colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         )
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            listOf(null to "Todas", RouteShape.LOOP to "Solo circulares", RouteShape.LINEAR to "Solo lineales").forEach { (s, label) ->
+            listOf(null to L("Todas", "All"), RouteShape.LOOP to L("Solo circulares", "Loops only"), RouteShape.LINEAR to L("Solo lineales", "One way only")).forEach { (s, label) ->
                 DropdownMenuItem(text = { Text(label) }, onClick = { onPick(s); open = false })
             }
             Text(
-                "Las que se salen de la pantalla no se saben hasta que alejas el mapa.",
+                L("Las que se salen de la pantalla no se saben hasta que alejas el mapa.", "Routes that run off the screen are unknown until you zoom out."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 240.dp),

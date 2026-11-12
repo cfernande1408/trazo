@@ -1,5 +1,6 @@
 package app.trazo.importer
 
+import app.trazo.gpx.i18n.L
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
@@ -51,9 +52,9 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
                     val gpx = getApplication<Application>().contentResolver
                         .openInputStream(uri)
                         ?.use(GpxParser::parse)
-                        ?: error("No se pudo abrir el archivo")
+                        ?: error(L("No se pudo abrir el archivo", "Could not open the file"))
                     loaded(gpx)
-                }.getOrElse { ImportState.Error(it.message ?: "Archivo no válido") }
+                }.getOrElse { ImportState.Error(it.message ?: L("Archivo no válido", "Invalid file")) }
             }
             fillElevation()
         }
@@ -64,7 +65,7 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
         _state.value = ImportState.Loading
         viewModelScope.launch {
             _state.value = withContext(Dispatchers.Default) {
-                runCatching { loaded(gpx).copy(done = done) }.getOrElse { ImportState.Error(it.message ?: "Ruta no válida") }
+                runCatching { loaded(gpx).copy(done = done) }.getOrElse { ImportState.Error(it.message ?: L("Ruta no válida", "Invalid route")) }
             }
             fillElevation()
         }
@@ -98,7 +99,7 @@ class ImportViewModel(app: Application) : AndroidViewModel(app) {
 
 /** Todo lo que necesitan el resumen, el mapa y las vistas previas a partir de un Gpx. */
 fun loadedFrom(gpx: Gpx): ImportState.Loaded {
-    if (gpx.segments.isEmpty()) error("El GPX no tiene ningún track")
+    if (gpx.segments.isEmpty()) error(L("El GPX no tiene ningún track", "The GPX has no track"))
     return ImportState.Loaded(
         gpx = gpx,
         stats = TrackStatsCalculator.compute(gpx.segments),

@@ -1,5 +1,6 @@
 package app.trazo.ride
 
+import app.trazo.gpx.i18n.L
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
@@ -46,7 +47,7 @@ import app.trazo.gpx.Waypoint
 import java.io.File
 
 /** Tipos de punto que se marcan con un toque; el nombre del punto es el tipo. */
-private val KINDS = listOf("Fuente", "Mirador", "Peligro", "Desvío", "Refugio", "Foto", "Otro")
+private val KINDS = listOf(L("Fuente", "Water"), L("Mirador", "Viewpoint"), L("Peligro", "Hazard"), L("Desvío", "Turn-off"), L("Refugio", "Shelter"), L("Foto", "Photo"), L("Otro", "Other"))
 
 /** Botón para marcar un punto mientras grabas. */
 @Composable
@@ -57,7 +58,7 @@ fun MarkButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
-        Icon(Icons.Filled.AddLocationAlt, contentDescription = "Marcar un punto aquí")
+        Icon(Icons.Filled.AddLocationAlt, contentDescription = L("Marcar un punto aquí", "Mark a point here"))
     }
 }
 
@@ -89,7 +90,7 @@ fun MarkDialog(onDismiss: () -> Unit) {
         if (ok && f != null && f.length() > 0) {
             photo?.delete()
             photoPath = f.path
-            if (kind == null) kind = "Foto"
+            if (kind == null) kind = L("Foto", "Photo")
         } else f?.delete()
     }
     fun cancel() {
@@ -99,9 +100,9 @@ fun MarkDialog(onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = ::cancel,
-        title = { Text("Marcar un punto") },
+        title = { Text(L("Marcar un punto", "Mark a point")) },
         text = {
-            if (here == null) Text("Aún no hay posición del GPS. Espera unos segundos y vuelve a probar.")
+            if (here == null) Text(L("Aún no hay posición del GPS. Espera unos segundos y vuelve a probar.", "No GPS position yet. Wait a few seconds and try again."))
             else Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     KINDS.forEach { k ->
@@ -110,7 +111,7 @@ fun MarkDialog(onDismiss: () -> Unit) {
                 }
                 OutlinedTextField(
                     note, { note = it },
-                    label = { Text("Nota (opcional)") },
+                    label = { Text(L("Nota (opcional)", "Note (optional)")) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
                 )
@@ -118,7 +119,7 @@ fun MarkDialog(onDismiss: () -> Unit) {
                     val bitmap = remember(f) { thumbnail(f, 640) }
                     bitmap?.let {
                         Image(
-                            it.asImageBitmap(), contentDescription = "Foto del punto",
+                            it.asImageBitmap(), contentDescription = L("Foto del punto", "Photo of the point"),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(12.dp)),
                         )
@@ -131,11 +132,11 @@ fun MarkDialog(onDismiss: () -> Unit) {
                     runCatching { camera.launch(uri) }.onFailure {
                         pendingPath = null
                         f.delete()
-                        Toast.makeText(context, "No hay ninguna app de cámara", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, L("No hay ninguna app de cámara", "There is no camera app"), Toast.LENGTH_SHORT).show()
                     }
                 }) {
                     Icon(Icons.Filled.PhotoCamera, contentDescription = null)
-                    Text(if (photo == null) "  Hacer una foto" else "  Repetir la foto")
+                    Text(if (photo == null) L("  Hacer una foto", "  Take a photo") else L("  Repetir la foto", "  Retake the photo"))
                 }
             }
         },
@@ -145,16 +146,16 @@ fun MarkDialog(onDismiss: () -> Unit) {
                 RideSession.mark(
                     Waypoint(
                         h[0], h[1], h[2].takeUnless { it.isNaN() },
-                        name = kind ?: "Punto",
+                        name = kind ?: L("Punto", "Point"),
                         desc = note.trim().ifEmpty { null },
                         link = photo?.let(RideStore::photoLink),
                     )
                 )
-                Toast.makeText(context, "Punto guardado", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, L("Punto guardado", "Point saved"), Toast.LENGTH_SHORT).show()
                 onDismiss()
-            }) { Text("Guardar") }
+            }) { Text(L("Guardar", "Save")) }
         },
-        dismissButton = { TextButton(onClick = ::cancel) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = ::cancel) { Text(L("Cancelar", "Cancel")) } },
     )
 }
 

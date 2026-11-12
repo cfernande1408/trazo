@@ -1,5 +1,6 @@
 package app.trazo.ride
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.foundation.layout.Spacer
 import android.Manifest
 import android.content.Context
@@ -42,23 +43,23 @@ internal fun Context.hasLocation() =
 fun RideStatsGrid(stats: RideStats, currentKmh: Double? = null, elapsedMs: Long? = null, kcal: Int? = null) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Big("En marcha", formatDuration(stats.movingMs), Modifier.weight(1f))
-            Big("Distancia", kmStr(stats.distanceMeters), Modifier.weight(1f))
-            if (currentKmh != null) Big("Ahora", kmh(currentKmh), Modifier.weight(1f))
+            Big(L("En marcha", "Moving"), formatDuration(stats.movingMs), Modifier.weight(1f))
+            Big(L("Distancia", "Distance"), kmStr(stats.distanceMeters), Modifier.weight(1f))
+            if (currentKmh != null) Big(L("Ahora", "Now"), kmh(currentKmh), Modifier.weight(1f))
             else Big("Total", formatDuration(elapsedMs ?: stats.totalMs), Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Big("Media", kmh(stats.avgMovingKmh), Modifier.weight(1f))
-            Big("Máxima", kmh(stats.maxKmh), Modifier.weight(1f))
-            Big("Desnivel +", String.format(ES, "%.0f m", stats.gainMeters), Modifier.weight(1f))
+            Big(L("Media", "Average"), kmh(stats.avgMovingKmh), Modifier.weight(1f))
+            Big(L("Máxima", "Max"), kmh(stats.maxKmh), Modifier.weight(1f))
+            Big(L("Desnivel +", "Ascent"), String.format(ES, "%.0f m", stats.gainMeters), Modifier.weight(1f))
         }
         // Kcal y, si llevabas sensores, pulso, cadencia y potencia
         val sensors = listOfNotNull(
             kcal?.takeIf { it > 0 }?.let { "Kcal" to String.format(ES, "%,d", it) },
-            stats.avgHr?.let { "Pulso medio" to "$it ppm" },
-            stats.maxHr?.let { "Pulso máx." to "$it ppm" },
-            stats.avgCadence?.let { "Cadencia" to "$it rpm" },
-            stats.avgPower?.let { "Potencia" to "$it W" },
+            stats.avgHr?.let { L("Pulso medio", "Avg heart rate") to L("$it ppm", "$it bpm") },
+            stats.maxHr?.let { L("Pulso máx.", "Max heart rate") to L("$it ppm", "$it bpm") },
+            stats.avgCadence?.let { L("Cadencia", "Cadence") to "$it rpm" },
+            stats.avgPower?.let { L("Potencia", "Power") to "$it W" },
         )
         // De tres en tres; la última fila con huecos vacíos para que no se estiren
         sensors.chunked(3).forEach { row ->

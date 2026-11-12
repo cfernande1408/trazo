@@ -70,7 +70,7 @@ object RideStore {
         val gpx = GpxParser.parse(file.readText())
         val points = RideCalculator.fromGpx(gpx)
         SavedRide(
-            file, gpx.name ?: "Salida", points.first().first().timeMs,
+            file, gpx.name ?: L("Salida", "Ride"), points.first().first().timeMs,
             RideCalculator.compute(points, activity), points, activity, gpx.waypoints,
         )
     }.getOrNull()
