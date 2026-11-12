@@ -1,5 +1,6 @@
 package app.trazo.map
 
+import app.trazo.gpx.i18n.L
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.MoreVert
@@ -277,10 +278,10 @@ fun MapScreen(
     if (confirmStop) {
         AlertDialog(
             onDismissRequest = { confirmStop = false },
-            title = { Text("¿Terminar la ruta?") },
-            text = { Text("Se para la navegación y se guarda lo que llevas grabado.") },
-            confirmButton = { TextButton(onClick = { confirmStop = false; stopNav() }) { Text("Terminar y guardar") } },
-            dismissButton = { TextButton(onClick = { confirmStop = false }) { Text("Seguir") } },
+            title = { Text(L("¿Terminar la ruta?", "Finish the route?")) },
+            text = { Text(L("Se para la navegación y se guarda lo que llevas grabado.", "Navigation stops and what you've recorded so far is saved.")) },
+            confirmButton = { TextButton(onClick = { confirmStop = false; stopNav() }) { Text(L("Terminar y guardar", "Finish and save")) } },
+            dismissButton = { TextButton(onClick = { confirmStop = false }) { Text(L("Seguir", "Continue")) } },
         )
     }
 
@@ -566,14 +567,14 @@ fun MapScreen(
                             runCatching {
                                 val (code, body) = Http.getWithStatus(BRouter.url(listOf(here, target.point), activity))
                                 check(code in 200..299) { BRouter.friendlyError(body) }
-                                GpxParser.parse(body).segments.flatten().also { check(it.size >= 2) { "No hay camino" } }
+                                GpxParser.parse(body).segments.flatten().also { check(it.size >= 2) { L("No hay camino", "No path") } }
                             }.onSuccess { path ->
                                 val r = Rejoin.reroute(path, segsNow, target, leftAt, previous)
                                 rejoin = r
                                 rerouteNote = null
                                 if (voiceOn) voice.say(Rejoin.phrase(r))
                             }.onFailure {
-                                rerouteNote = "No se pudo recalcular: ${Http.friendly(it)}. Vuelve hacia la ruta o usa «Volver al inicio»."
+                                rerouteNote = L("No se pudo recalcular: ${Http.friendly(it)}. Vuelve hacia la ruta o usa «Volver al inicio».", "Could not recalculate: ${Http.friendly(it)}. Head back to the route or use “Back to start”.")
                             }
                             rerouting = false
                         }
@@ -614,7 +615,7 @@ fun MapScreen(
                 onClick = onBack,
                 modifier = Modifier.statusBarsPadding().padding(16.dp).size(56.dp),
             ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = L("Volver", "Back"))
             }
             FilledTonalButton(
                 onClick = onOpen3D,
@@ -633,12 +634,12 @@ fun MapScreen(
             if (slopeOn) {
                 Button(onClick = toggleSlope, modifier = slopeMod) {
                     Icon(Icons.Filled.Terrain, contentDescription = null)
-                    Text(" Pendiente", style = MaterialTheme.typography.titleSmall)
+                    Text(L(" Pendiente", " Gradient"), style = MaterialTheme.typography.titleSmall)
                 }
             } else {
                 FilledTonalButton(onClick = toggleSlope, modifier = slopeMod) {
                     Icon(Icons.Filled.Terrain, contentDescription = null)
-                    Text(" Pendiente", style = MaterialTheme.typography.titleSmall)
+                    Text(L(" Pendiente", " Gradient"), style = MaterialTheme.typography.titleSmall)
                 }
             }
         }
@@ -663,7 +664,7 @@ fun MapScreen(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                 ) {
-                    Icon(if (moreOpen) Icons.Filled.Close else Icons.Filled.MoreVert, contentDescription = if (moreOpen) "Recoger botones" else "Más botones")
+                    Icon(if (moreOpen) Icons.Filled.Close else Icons.Filled.MoreVert, contentDescription = if (moreOpen) L("Recoger botones", "Hide buttons") else L("Más botones", "More buttons"))
                 }
                 SosButton(onClick = { showSos = true })
             }
@@ -717,7 +718,7 @@ fun MapScreen(
                                 check(code in 200..299) { BRouter.friendlyError(body) }
                                 GpxParser.parse(body).segments
                             }.onSuccess { returnSegs = it; rejoin = null }
-                                .onFailure { returnError = it.message ?: "No se pudo calcular. Prueba «por donde he venido»." }
+                                .onFailure { returnError = it.message ?: L("No se pudo calcular. Prueba «por donde he venido».", "Could not calculate. Try “the way I came”.") }
                         }
                     }
                 },
@@ -761,7 +762,7 @@ fun MapScreen(
                                 }) {
                                     Icon(
                                         if (navExpanded) Icons.Filled.ExpandMore else Icons.Filled.ExpandLess,
-                                        contentDescription = if (navExpanded) "Recoger la tarjeta" else "Ver más datos, perfil y terminar",
+                                        contentDescription = if (navExpanded) L("Recoger la tarjeta", "Collapse the card") else L("Ver más datos, perfil y terminar", "More data, profile and finish"),
                                     )
                                 }
                             }
@@ -780,10 +781,10 @@ fun MapScreen(
                             onClick = { if (returnSegs != null) returnSegs = null else showReturn = true },
                             modifier = Modifier.weight(1f).height(56.dp),
                         ) {
-                            Text(if (returnSegs != null) "Seguir la ruta" else "Volver al inicio")
+                            Text(if (returnSegs != null) L("Seguir la ruta", "Follow the route") else L("Volver al inicio", "Back to start"))
                         }
                         FilledTonalButton(onClick = stopNav, modifier = Modifier.weight(1f).height(56.dp)) {
-                            Text("Terminar y guardar")
+                            Text(L("Terminar y guardar", "Finish and save"))
                         }
                     }
                 } else {
@@ -795,15 +796,15 @@ fun MapScreen(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Stat("Distancia", km(state.stats.distanceMeters), Modifier.weight(1f))
-                        Stat("Desnivel +", metros(state.stats.elevationGainMeters), Modifier.weight(1f))
+                        Stat(L("Distancia", "Distance"), km(state.stats.distanceMeters), Modifier.weight(1f))
+                        Stat(L("Desnivel +", "Ascent"), metros(state.stats.elevationGainMeters), Modifier.weight(1f))
                     }
                     if (state.profile.size >= 2) {
                         ScrubbableProfile(state.profile, scrub, onScrub = { scrub = it }, chartHeight = 72.dp)
                     }
                     navError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                     returnError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    if (returnSegs != null) Text("Volviendo al inicio", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    if (returnSegs != null) Text(L("Volviendo al inicio", "Heading back to start"), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                     // Una ruta realizada se mira; para hacerla otra vez, «Repetir esta ruta»
                     if (!analysis) Button(
                         onClick = { showStartSheet = true },
@@ -811,7 +812,7 @@ fun MapScreen(
                     ) {
                         Icon(Icons.Filled.PlayArrow, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Empezar ruta", style = MaterialTheme.typography.titleMedium)
+                        Text(L("Empezar ruta", "Start route"), style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
@@ -846,10 +847,10 @@ private fun StartSheet(
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("¿Desde dónde empiezas?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(L("¿Desde dónde empiezas?", "Where are you starting from?"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(
-                if (isLoop) "Es circular: acabarás en el mismo sitio donde empieces."
-                else "No es circular: lo anterior al punto elegido se salta.",
+                if (isLoop) L("Es circular: acabarás en el mismo sitio donde empieces.", "It's a loop: you'll finish where you start.")
+                else L("No es circular: lo anterior al punto elegido se salta.", "It's not a loop: anything before the chosen point is skipped."),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             options.forEach { o ->
@@ -861,7 +862,7 @@ private fun StartSheet(
                         Column(Modifier.weight(1f)) {
                             Text(o.label, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(
-                                if (o.alongMeters == 0.0) "Punto de salida del GPX" else "En el km ${km(o.alongMeters).removeSuffix(" km")} de la ruta",
+                                if (o.alongMeters == 0.0) L("Punto de salida del GPX", "Start point of the GPX") else L("En el km ${km(o.alongMeters).removeSuffix(" km")} de la ruta", "At km ${km(o.alongMeters).removeSuffix(" km")} of the route"),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -869,7 +870,7 @@ private fun StartSheet(
                         FilledTonalButton(onClick = { onDirections(o) }) {
                             Icon(Icons.Filled.Place, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("Cómo llegar")
+                            Text(L("Cómo llegar", "Directions"))
                         }
                     }
                 }
@@ -906,18 +907,18 @@ private fun NavBanner(
     }
     val climb = extras.climb.takeIf { s?.offRoute != true }
     val (title, subtitle) = when {
-        s == null -> "Buscando GPS…" to "Sal a cielo abierto si tarda"
-        s.offRoute -> "Fuera de ruta" to "A ${corta(s.distanceToTrackMeters)} del track"
+        s == null -> L("Buscando GPS…", "Looking for GPS…") to L("Sal a cielo abierto si tarda", "Move to open sky if it takes long")
+        s.offRoute -> L("Fuera de ruta", "Off route") to L("A ${corta(s.distanceToTrackMeters)} del track", "${corta(s.distanceToTrackMeters)} from the track")
         // Subida en directo, como el ClimbPro de los Garmin
         climb != null ->
-            "Subida ${climb.number} de ${climb.total} · ${String.format(ES, "%.0f", climb.gradePercent)} %" to
-                "Quedan ${corta(climb.remainingMeters)} y +${metros(climb.remainingGainMeters)}"
+            L("Subida ${climb.number} de ${climb.total} · ", "Climb ${climb.number} of ${climb.total} · ") + app.trazo.gpx.i18n.percent(String.format(ES, "%.0f", climb.gradePercent)) to
+                L("Quedan ${corta(climb.remainingMeters)} y +${metros(climb.remainingGainMeters)}", "${corta(climb.remainingMeters)} and +${metros(climb.remainingGainMeters)} to go")
         s.nextClimb != null -> {
             val c = s.nextClimb!!
-            "Próxima subida en ${corta(s.metersToNextClimb ?: 0.0)}" to
-                "${corta(c.lengthMeters)} al ${String.format(ES, "%.0f", c.avgGradePercent)} % · +${metros(c.gainMeters)}"
+            L("Próxima subida en ${corta(s.metersToNextClimb ?: 0.0)}", "Next climb in ${corta(s.metersToNextClimb ?: 0.0)}") to
+                "${corta(c.lengthMeters)} " + L("al", "at") + " " + app.trazo.gpx.i18n.percent(String.format(ES, "%.0f", c.avgGradePercent)) + " · +${metros(c.gainMeters)}"
         }
-        else -> "Sin más subidas" to "Quedan ${km(s.remainingMeters)}"
+        else -> L("Sin más subidas", "No more climbs") to L("Quedan ${km(s.remainingMeters)}", "${km(s.remainingMeters)} to go")
     }
     Card(
         modifier = modifier,
@@ -934,7 +935,7 @@ private fun NavBanner(
                 IconButton(onClick = onToggleVoice) {
                     Icon(
                         if (voiceOn) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-                        contentDescription = if (voiceOn) "Silenciar avisos de voz" else "Activar avisos de voz",
+                        contentDescription = if (voiceOn) L("Silenciar avisos de voz", "Mute voice prompts") else L("Activar avisos de voz", "Turn on voice prompts"),
                     )
                 }
             }
@@ -961,7 +962,7 @@ private fun NavChips(extras: NavExtras) {
         poi?.let { (p, ahead) ->
             Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
                 Text(
-                    "${p.poi.kind.emoji} ${p.poi.kind.label} en ${corta(ahead.coerceAtLeast(0.0))}",
+                    "${p.poi.kind.emoji} ${p.poi.kind.label} " + L("en", "in") + " ${corta(ahead.coerceAtLeast(0.0))}",
                     Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelLarge,
                 )
@@ -975,7 +976,7 @@ private fun NavChips(extras: NavExtras) {
                 contentColor = if (late) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface,
             ) {
                 Text(
-                    if (late) "🌙 Anochece ${durationText(-m)} antes de terminar" else "☀️ Te sobran ${durationText(m)} de luz",
+                    if (late) L("🌙 Anochece ${durationText(-m)} antes de terminar", "🌙 Dark ${durationText(-m)} before you finish") else L("☀️ Te sobran ${durationText(m)} de luz", "☀️ ${durationText(m)} of daylight to spare"),
                     Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelLarge,
                 )
@@ -1020,7 +1021,7 @@ private const val SLOPE = "slope"
 private fun SlopeLegend(modifier: Modifier = Modifier) {
     Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = modifier) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("Pendiente", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            Text(L("Pendiente", "Gradient"), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             // De más empinado a menos, como se lee una leyenda de mapa
             Slope.COLORS.zip(Slope.LABELS).reversed().forEach { (c, l) ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1041,16 +1042,16 @@ private const val RETURN = "return"
 private fun ReturnDialog(onDismiss: () -> Unit, onRetrace: () -> Unit, onShortest: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Volver al inicio") },
+        title = { Text(L("Volver al inicio", "Back to start")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledTonalButton(onClick = onRetrace, modifier = Modifier.fillMaxWidth()) { Text("Por donde he venido") }
-                Text("La ruta al revés hasta el inicio. Funciona sin conexión.", style = MaterialTheme.typography.bodySmall)
-                FilledTonalButton(onClick = onShortest, modifier = Modifier.fillMaxWidth()) { Text("Por el camino más corto") }
-                Text("Calculado por pistas y senderos desde donde estás. Necesita conexión.", style = MaterialTheme.typography.bodySmall)
+                FilledTonalButton(onClick = onRetrace, modifier = Modifier.fillMaxWidth()) { Text(L("Por donde he venido", "The way I came")) }
+                Text(L("La ruta al revés hasta el inicio. Funciona sin conexión.", "The route in reverse back to the start. Works offline."), style = MaterialTheme.typography.bodySmall)
+                FilledTonalButton(onClick = onShortest, modifier = Modifier.fillMaxWidth()) { Text(L("Por el camino más corto", "The shortest way")) }
+                Text(L("Calculado por pistas y senderos desde donde estás. Necesita conexión.", "Worked out along tracks and trails from where you are. Needs a connection."), style = MaterialTheme.typography.bodySmall)
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(L("Cancelar", "Cancel")) } },
     )
 }
 
@@ -1079,7 +1080,7 @@ private class NavValues(
                 java.time.format.DateTimeFormatter.ofPattern("HH:mm").format(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()))
             }
             DataField.LIGHT -> extras.lightMarginMinutes?.let { (if (it < 0) "−" else "+") + durationText(kotlin.math.abs(it)) }
-            DataField.HEART_RATE -> sensors?.hr?.let { "$it ppm" }
+            DataField.HEART_RATE -> sensors?.hr?.let { L("$it ppm", "$it bpm") }
             DataField.CADENCE -> sensors?.cadence?.let { "$it rpm" }
             DataField.POWER -> sensors?.power?.let { "$it W" }
             DataField.PARTNER -> partnerGapMs?.let { g ->
@@ -1097,7 +1098,7 @@ private class NavValues(
 private fun FieldPicker(current: DataField, onDismiss: () -> Unit, onPick: (DataField) -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("¿Qué quieres ver aquí?") },
+        title = { Text(L("¿Qué quieres ver aquí?", "What do you want to see here?")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 DataField.entries.forEach { f ->
@@ -1108,14 +1109,14 @@ private fun FieldPicker(current: DataField, onDismiss: () -> Unit, onPick: (Data
                         RadioButton(selected = f == current, onClick = { onPick(f) })
                         Text(f.label + when (f) {
                             DataField.HEART_RATE, DataField.CADENCE, DataField.POWER -> " (sensor)"
-                            DataField.PARTNER -> " (tu salida anterior)"
+                            DataField.PARTNER -> L(" (tu salida anterior)", " (your last outing)")
                             else -> ""
                         })
                     }
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Cerrar") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(L("Cerrar", "Close")) } },
     )
 }
 
@@ -1123,9 +1124,9 @@ private fun FieldPicker(current: DataField, onDismiss: () -> Unit, onPick: (Data
 @Composable
 private fun RerouteStatus(rerouting: Boolean, toRouteMeters: Double?, note: String?, onDismiss: () -> Unit) {
     val text = when {
-        rerouting -> "Calculando cómo volver a la ruta…"
+        rerouting -> L("Calculando cómo volver a la ruta…", "Working out how to rejoin the route…")
         note != null -> note
-        toRouteMeters != null && toRouteMeters > 15 -> "Ruta recalculada: vuelves a ella en ${corta(toRouteMeters)} (en azul)"
+        toRouteMeters != null && toRouteMeters > 15 -> L("Ruta recalculada: vuelves a ella en ${corta(toRouteMeters)} (en azul)", "Route recalculated: you rejoin it in ${corta(toRouteMeters)} (in blue)")
         else -> return
     }
     Surface(
@@ -1140,7 +1141,7 @@ private fun RerouteStatus(rerouting: Boolean, toRouteMeters: Double?, note: Stri
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f).padding(start = if (rerouting) 10.dp else 0.dp, top = 8.dp, bottom = 8.dp),
             )
-            if (!rerouting) TextButton(onClick = onDismiss) { Text(if (note != null) "Vale" else "Quitar") }
+            if (!rerouting) TextButton(onClick = onDismiss) { Text(if (note != null) L("Vale", "OK") else L("Quitar", "Dismiss")) }
         }
     }
 }

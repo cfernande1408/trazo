@@ -28,10 +28,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
-enum class SensorKind(val label: String, val service: String) {
-    HEART_RATE("Pulso", Ble.HEART_RATE_SERVICE),
-    CADENCE("Cadencia", Ble.CSC_SERVICE),
-    POWER("Potencia", Ble.POWER_SERVICE),
+enum class SensorKind(private val es: String, private val en: String, val service: String) {
+    HEART_RATE("Pulso", "Heart rate", Ble.HEART_RATE_SERVICE),
+    CADENCE("Cadencia", "Cadence", Ble.CSC_SERVICE),
+    POWER("Potencia", "Power", Ble.POWER_SERVICE),
+    ;
+
+    val label: String get() = app.trazo.gpx.i18n.L(es, en)
 }
 
 data class FoundSensor(val address: String, val name: String, val kinds: Set<SensorKind>)

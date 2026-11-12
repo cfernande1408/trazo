@@ -1,5 +1,6 @@
 package app.trazo.map
 
+import app.trazo.gpx.i18n.L
 import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -121,7 +122,7 @@ fun LayersButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
-        Icon(Icons.Filled.Layers, contentDescription = "Capas del mapa")
+        Icon(Icons.Filled.Layers, contentDescription = L("Capas del mapa", "Map layers"))
     }
 }
 
@@ -140,7 +141,7 @@ fun LayersSheet(
             Modifier.fillMaxWidth().padding(horizontal = 24.dp).navigationBarsPadding().padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Tipo de mapa", style = MaterialTheme.typography.titleLarge)
+            Text(L("Tipo de mapa", "Map type"), style = MaterialTheme.typography.titleLarge)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BaseMap.entries.forEach { b ->
                     LayerTile(b.label, b.note, selected = prefs.base == b, onClick = { onChange(prefs.copy(base = b)) }, modifier = Modifier.weight(1f)) {
@@ -149,37 +150,37 @@ fun LayersSheet(
                 }
             }
             HorizontalDivider()
-            Text("Detalles del mapa", style = MaterialTheme.typography.titleLarge)
+            Text(L("Detalles del mapa", "Map details"), style = MaterialTheme.typography.titleLarge)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // El topo del IGN ya trae su relieve y sus bosques, y en satélite los árboles son los de verdad
                 LayerTile(
-                    "Relieve", null, selected = prefs.hillshade && prefs.base != BaseMap.IGN_TOPO,
+                    L("Relieve", "Relief"), null, selected = prefs.hillshade && prefs.base != BaseMap.IGN_TOPO,
                     enabled = prefs.base != BaseMap.IGN_TOPO,
                     onClick = { onChange(prefs.copy(hillshade = !prefs.hillshade)) },
                     modifier = Modifier.weight(1f),
                 ) { IconThumb(Icons.Filled.Terrain) }
                 LayerTile(
-                    "Árboles", null, selected = prefs.trees && prefs.base == BaseMap.TRAZO,
+                    L("Árboles", "Trees"), null, selected = prefs.trees && prefs.base == BaseMap.TRAZO,
                     enabled = prefs.base == BaseMap.TRAZO,
                     onClick = { onChange(prefs.copy(trees = !prefs.trees)) },
                     modifier = Modifier.weight(1f),
                 ) { IconThumb(Icons.Filled.Park) }
                 LayerTile(
-                    if (activity == Activity.HIKE) "Senderos" else "Rutas MTB", "señalizados", selected = prefs.routes,
+                    if (activity == Activity.HIKE) L("Senderos", "Trails") else L("Rutas MTB", "MTB routes"), L("señalizados", "waymarked"), selected = prefs.routes,
                     onClick = { onChange(prefs.copy(routes = !prefs.routes)) },
                     modifier = Modifier.weight(1f),
                 ) { IconThumb(Icons.Filled.Route) }
                 if (showSlope) {
                     LayerTile(
-                        "Pendiente", "de la ruta", selected = prefs.slope,
+                        L("Pendiente", "Gradient"), L("de la ruta", "of the route"), selected = prefs.slope,
                         onClick = { onChange(prefs.copy(slope = !prefs.slope)) },
                         modifier = Modifier.weight(1f),
                     ) { SlopeThumb() }
                 }
             }
             Text(
-                "Topo y satélite: © Instituto Geográfico Nacional (CC BY 4.0). " +
-                    "Rutas: © waymarkedtrails.org. Mapa base: © colaboradores de OpenStreetMap.",
+                L("Topo y satélite: © Instituto Geográfico Nacional (CC BY 4.0). ", "Topo and satellite: © Instituto Geográfico Nacional (CC BY 4.0). ") +
+                    L("Rutas: © waymarkedtrails.org. Mapa base: © colaboradores de OpenStreetMap.", "Routes: © waymarkedtrails.org. Base map: © OpenStreetMap contributors."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

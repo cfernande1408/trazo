@@ -1,5 +1,6 @@
 package app.trazo.safety
 
+import app.trazo.gpx.i18n.L
 import android.Manifest
 import android.content.Intent
 import android.location.Location
@@ -67,7 +68,7 @@ fun SosButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         containerColor = MaterialTheme.colorScheme.errorContainer,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
     ) {
-        Icon(Icons.Filled.Sos, contentDescription = "Emergencia: mi posición")
+        Icon(Icons.Filled.Sos, contentDescription = L("Emergencia: mi posición", "Emergency: my position"))
     }
 }
 
@@ -96,12 +97,12 @@ fun SosSheet(onDismiss: () -> Unit) {
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).navigationBarsPadding().padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text("Mi posición", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(L("Mi posición", "My position"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             val l = loc
             if (l == null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                    Text("Buscando señal GPS… sal a cielo abierto si tarda.")
+                    Text(L("Buscando señal GPS… sal a cielo abierto si tarda.", "Looking for GPS signal… move to open sky if it takes long."))
                 }
             } else {
                 PositionCard(l)
@@ -113,7 +114,7 @@ fun SosSheet(onDismiss: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(Icons.Filled.Call, contentDescription = null)
-                Text("  Llamar al 112", style = MaterialTheme.typography.titleMedium)
+                Text(L("  Llamar al 112", "  Call 112"), style = MaterialTheme.typography.titleMedium)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton(
@@ -127,40 +128,40 @@ fun SosSheet(onDismiss: () -> Unit) {
                     modifier = Modifier.weight(1f),
                 ) {
                     Icon(Icons.Filled.Sms, contentDescription = null, Modifier.size(18.dp))
-                    Text(if (settings.hasContact) "  SMS a ${settings.contactName.ifBlank { "contacto" }}" else "  Por SMS")
+                    Text(if (settings.hasContact) L("  SMS a ${settings.contactName.ifBlank { "contacto" }}", "  Text ${settings.contactName.ifBlank { "contact" }}") else L("  Por SMS", "  By text"))
                 }
                 FilledTonalButton(
                     onClick = {
                         val text = l?.let { Safety.message(it) } ?: return@FilledTonalButton
-                        context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), "Mandar mi posición"))
+                        context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), L("Mandar mi posición", "Send my position")))
                     },
                     enabled = l != null,
                     modifier = Modifier.weight(1f),
                 ) {
                     Icon(Icons.Filled.Share, contentDescription = null, Modifier.size(18.dp))
-                    Text("  Compartir")
+                    Text(L("  Compartir", "  Share"))
                 }
             }
 
             HorizontalDivider()
-            Text("Contacto de emergencia", style = MaterialTheme.typography.titleMedium)
+            Text(L("Contacto de emergencia", "Emergency contact"), style = MaterialTheme.typography.titleMedium)
             var name by remember { mutableStateOf(settings.contactName) }
             var phone by remember { mutableStateOf(settings.contactPhone) }
             OutlinedTextField(
                 value = name, onValueChange = { name = it; Safety.set(context, settings.copy(contactName = it)) },
-                label = { Text("Nombre") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                label = { Text(L("Nombre", "Name")) }, singleLine = true, modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = phone, onValueChange = { phone = it; Safety.set(context, settings.copy(contactPhone = it)) },
-                label = { Text("Teléfono") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                label = { Text(L("Teléfono", "Phone")) }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Detección de caídas", style = MaterialTheme.typography.titleSmall)
+                    Text(L("Detección de caídas", "Fall detection"), style = MaterialTheme.typography.titleSmall)
                     Text(
-                        "Mientras grabas o navegas: si te caes y no te mueves, suena una alarma y, si no respondes en " +
-                            "${FallMonitor.COUNTDOWN_S} s, manda tu posición por SMS a tu contacto.",
+                        L("Mientras grabas o navegas: si te caes y no te mueves, suena una alarma y, si no respondes en ", "While you record or navigate: if you fall and don't move, an alarm sounds and, if you don't respond within ") +
+                            L("${FallMonitor.COUNTDOWN_S} s, manda tu posición por SMS a tu contacto.", "${FallMonitor.COUNTDOWN_S} s, it texts your position to your contact."),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -176,7 +177,7 @@ fun SosSheet(onDismiss: () -> Unit) {
             }
             if (!settings.hasContact) {
                 Text(
-                    "Pon un teléfono de contacto para activar la detección de caídas.",
+                    L("Pon un teléfono de contacto para activar la detección de caídas.", "Add a contact phone to turn on fall detection."),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -191,19 +192,19 @@ private fun PositionCard(l: Location) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             utm?.let {
-                Text("UTM (huso ${it.zone}${it.band})", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(L("UTM (huso ${it.zone}${it.band})", "UTM (zone ${it.zone}${it.band})"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(
                     "X ${it.easting.roundToInt()}   Y ${it.northing.roundToInt()}",
                     style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold,
                 )
             }
-            Text("Grados", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(L("Grados", "Degrees"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(Coordinates.decimal(l.latitude, l.longitude), style = MaterialTheme.typography.titleLarge, fontFamily = FontFamily.Monospace)
             Text(Coordinates.dms(l.latitude, l.longitude), style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace)
             Text(
                 listOfNotNull(
-                    if (l.hasAltitude()) "Altitud ${l.altitude.roundToInt()} m" else null,
-                    if (l.hasAccuracy()) "precisión ±${l.accuracy.roundToInt()} m" else null,
+                    if (l.hasAltitude()) L("Altitud ${l.altitude.roundToInt()} m", "Altitude ${l.altitude.roundToInt()} m") else null,
+                    if (l.hasAccuracy()) L("precisión ±${l.accuracy.roundToInt()} m", "accuracy ±${l.accuracy.roundToInt()} m") else null,
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -273,6 +273,6 @@ class ExploreMapViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         /** Más alejado que esto la zona es enorme y la consulta tardaría demasiado. */
         const val MIN_ZOOM = 10.0
-        const val ZOOM_HINT = "Acerca el mapa para ver las rutas"
+        val ZOOM_HINT: String get() = L("Acerca el mapa para ver las rutas", "Zoom in to see the routes")
     }
 }

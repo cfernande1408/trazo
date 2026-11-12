@@ -1,5 +1,6 @@
 package app.trazo.map
 
+import app.trazo.gpx.i18n.L
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -59,7 +60,7 @@ fun TopoPreview(state: ImportState.Loaded, modifier: Modifier = Modifier) {
         val bmp = bitmap
         if (bmp != null) {
             // La foto ya incluye los créditos del mapa
-            Image(bmp.asImageBitmap(), contentDescription = "Mapa de la ruta", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            Image(bmp.asImageBitmap(), contentDescription = L("Mapa de la ruta", "Route map"), modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         } else {
             RouteShape(state.preview, Modifier.fillMaxSize())
         }

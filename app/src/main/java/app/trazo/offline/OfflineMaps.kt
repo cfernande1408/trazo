@@ -1,5 +1,6 @@
 package app.trazo.offline
 
+import app.trazo.gpx.i18n.L
 import android.content.Context
 import android.util.Log
 import app.trazo.gpx.Bounds
@@ -130,19 +131,19 @@ object OfflineMaps {
                             Log.w(TAG, "Error descargando: ${error.reason} ${error.message}")
                             // Cortes sueltos los reintenta MapLibre solo; solo se avisa
                             val d = _downloads.value[key] ?: Download(0f)
-                            _downloads.value = _downloads.value + (key to d.copy(error = "Conexión inestable, sigo intentándolo…"))
+                            _downloads.value = _downloads.value + (key to d.copy(error = L("Conexión inestable, sigo intentándolo…", "Unstable connection, still trying…")))
                         }
 
                         override fun mapboxTileCountLimitExceeded(limit: Long) {
                             offlineRegion.setDownloadState(OfflineRegion.STATE_INACTIVE)
-                            _downloads.value = _downloads.value + (key to Download(0f, "La zona es demasiado grande para descargarla."))
+                            _downloads.value = _downloads.value + (key to Download(0f, L("La zona es demasiado grande para descargarla.", "The area is too big to download.")))
                         }
                     })
                     offlineRegion.setDownloadState(OfflineRegion.STATE_ACTIVE)
                 }
 
                 override fun onError(error: String) {
-                    _downloads.value = _downloads.value + (key to Download(0f, "No se pudo empezar la descarga: $error"))
+                    _downloads.value = _downloads.value + (key to Download(0f, L("No se pudo empezar la descarga: $error", "Could not start the download: $error")))
                 }
             })
     }

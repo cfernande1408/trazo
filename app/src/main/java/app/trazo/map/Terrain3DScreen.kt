@@ -1,5 +1,6 @@
 package app.trazo.map
 
+import app.trazo.gpx.i18n.L
 import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
@@ -122,7 +123,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
             onClick = onBack,
             modifier = Modifier.statusBarsPadding().padding(16.dp).size(56.dp),
         ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = L("Volver", "Back"))
         }
 
         // Relieve: más o menos exagerado, se recuerda para la próxima vez
@@ -138,7 +139,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(vertical = 4.dp)) {
                 IconButton(onClick = { setLevel(level + 1) }, enabled = level < Relief.LEVELS.lastIndex) {
-                    Icon(Icons.Filled.Add, contentDescription = "Más relieve")
+                    Icon(Icons.Filled.Add, contentDescription = L("Más relieve", "More relief"))
                 }
                 Text(
                     "×" + String.format(app.trazo.gpx.i18n.I18n.locale, "%.1f", Relief.exaggeration(relief, level)),
@@ -146,7 +147,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
                 )
                 Text("relieve", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 IconButton(onClick = { setLevel(level - 1) }, enabled = level > 0) {
-                    Icon(Icons.Filled.Remove, contentDescription = "Menos relieve")
+                    Icon(Icons.Filled.Remove, contentDescription = L("Menos relieve", "Less relief"))
                 }
             }
         }
@@ -156,7 +157,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
             FilledTonalButton(
                 onClick = { webView.evaluateJavascript("overview();", null); flying = false },
                 modifier = controls,
-            ) { Text("Parar y ver toda la ruta", style = MaterialTheme.typography.titleMedium) }
+            ) { Text(L("Parar y ver toda la ruta", "Stop and see the whole route"), style = MaterialTheme.typography.titleMedium) }
         } else {
             Button(
                 onClick = { webView.evaluateJavascript("fly();", null); flying = true },
@@ -164,7 +165,7 @@ fun Terrain3DScreen(state: ImportState.Loaded, onBack: () -> Unit) {
             ) {
                 Icon(Icons.Filled.PlayArrow, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Recorrido virtual", style = MaterialTheme.typography.titleMedium)
+                Text(L("Recorrido virtual", "Virtual flyover"), style = MaterialTheme.typography.titleMedium)
             }
         }
     }

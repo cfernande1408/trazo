@@ -1,5 +1,6 @@
 package app.trazo.community
 
+import app.trazo.gpx.i18n.L
 import android.content.Context
 import app.trazo.BuildConfig
 import app.trazo.gpx.osm.Json
@@ -40,7 +41,7 @@ object Supabase {
         }
         if (code !in 200..299) {
             prefs.edit().remove("sb_refresh").apply()
-            throw Error(if (refresh != null) "La sesión ha caducado, vuelve a intentarlo." else "No se pudo entrar en la comunidad ($code).")
+            throw Error(if (refresh != null) L("La sesión ha caducado, vuelve a intentarlo.", "The session expired, try again.") else L("No se pudo entrar en la comunidad ($code).", "Could not sign in to the community ($code)."))
         }
         val m = Json.parse(body) as Map<*, *>
         val t = m["access_token"] as String
@@ -52,7 +53,7 @@ object Supabase {
 
     /** Petición autenticada; devuelve el cuerpo o lanza [Error] con un mensaje para el usuario. */
     suspend fun request(context: Context, method: String, path: String, body: String? = null): String {
-        if (!configured) throw Error("La comunidad no está configurada en esta versión.")
+        if (!configured) throw Error(L("La comunidad no está configurada en esta versión.", "The community is not set up in this version."))
         val (code, text) = raw(method, path, body, token(context))
         if (code == 401) { access = null; return raw(method, path, body, token(context)).second }
         if (code !in 200..299) throw Error(friendly(code, text))
@@ -60,10 +61,10 @@ object Supabase {
     }
 
     private fun friendly(code: Int, body: String) = when {
-        code == 409 || body.contains("duplicate key") -> "Ya habías valorado esta ruta."
-        code == 429 -> "Demasiadas peticiones seguidas. Espera un poco."
-        code >= 500 -> "El servidor de la comunidad no responde. Inténtalo luego."
-        else -> "No se pudo guardar ($code)."
+        code == 409 || body.contains("duplicate key") -> L("Ya habías valorado esta ruta.", "You had already rated this route.")
+        code == 429 -> L("Demasiadas peticiones seguidas. Espera un poco.", "Too many requests in a row. Wait a moment.")
+        code >= 500 -> L("El servidor de la comunidad no responde. Inténtalo luego.", "The community server is not responding. Try later.")
+        else -> L("No se pudo guardar ($code).", "Could not save ($code).")
     }
 
     private suspend fun raw(method: String, path: String, body: String?, bearer: String?): Pair<Int, String> =

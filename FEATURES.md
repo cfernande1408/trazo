@@ -249,6 +249,13 @@ El código está listo, pero aún no hay servidor: en la app sale como «Falta c
 - Desde el análisis o al repetirla se puede **guardar en tus rutas** para repetirla (sale en *Guardadas → Rutas*)
 - Borrar salidas
 
+## Idioma
+
+- **En español y en inglés**: la app sale en el idioma del móvil (español si lo es; si no, inglés)
+- En Info se elige *Sistema*, *Español* o *English*; al cambiarlo la app se reinicia (no se puede mientras grabas)
+- Todo pasa al idioma elegido: pantallas, avisos del tiempo y qué ponerse, dificultad, notificaciones, el SMS de SOS y la **voz de navegación**, que habla en ese idioma
+- Números, fechas y porcentajes siguen el idioma
+
 ## Info
 
 - Pestaña **Info** con el icono de la estación, la versión, el canal (estable, beta o debug) y el commit

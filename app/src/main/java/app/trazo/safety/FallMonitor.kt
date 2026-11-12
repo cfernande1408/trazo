@@ -1,5 +1,6 @@
 package app.trazo.safety
 
+import app.trazo.gpx.i18n.L
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -25,8 +26,8 @@ import kotlin.math.sqrt
 /**
  * Vigila el acelerómetro mientras grabas o navegas (vive dentro del
  * servicio de grabación). Si detecta una caída, suena y vibra con una
- * notificación "¿Estás bien?"; si en [COUNTDOWN_S] segundos no tocas
- * "Estoy bien", manda tu posición por SMS al contacto de emergencia.
+ * notificación L("¿Estás bien?", "Are you OK?"); si en [COUNTDOWN_S] segundos no tocas
+ * L("Estoy bien", "I'm OK"), manda tu posición por SMS al contacto de emergencia.
  */
 class FallMonitor(private val context: Context) : SensorEventListener {
 
@@ -67,7 +68,7 @@ class FallMonitor(private val context: Context) : SensorEventListener {
 
     private fun tick() {
         if (countdown <= 0) return
-        notify("¿Estás bien?", "Has podido caerte. Aviso a tu contacto en $countdown s si no respondes.", ongoing = true)
+        notify(L("¿Estás bien?", "Are you OK?"), L("Has podido caerte. Aviso a tu contacto en $countdown s si no respondes.", "You may have fallen. I'll alert your contact in $countdown s if you don't respond."), ongoing = true)
         countdown--
         if (countdown == 0) {
             sendHelp()
@@ -79,19 +80,19 @@ class FallMonitor(private val context: Context) : SensorEventListener {
     private fun sendHelp() {
         context.getSystemService(Vibrator::class.java)?.cancel()
         val loc = RideSession.lastLocation
-        val sent = loc != null && Safety.sendSms(context, Safety.message(loc, "Trazo ha detectado una posible caída y no respondo."))
+        val sent = loc != null && Safety.sendSms(context, Safety.message(loc, L("Trazo ha detectado una posible caída y no respondo.", "Trazo has detected a possible fall and I'm not responding.")))
         notify(
-            if (sent) "Aviso enviado" else "No se pudo avisar",
+            if (sent) L("Aviso enviado", "Alert sent") else L("No se pudo avisar", "Could not send the alert"),
             when {
-                sent -> "Se ha mandado tu posición por SMS a ${Safety.settings.value.contactName.ifBlank { Safety.settings.value.contactPhone }}."
-                loc == null -> "No hay posición del GPS todavía. Llama al 112 si necesitas ayuda."
-                else -> "Falta el contacto de emergencia o el permiso de SMS. Llama al 112 si necesitas ayuda."
+                sent -> L("Se ha mandado tu posición por SMS a ${Safety.settings.value.contactName.ifBlank { Safety.settings.value.contactPhone }}.", "Your position was texted to ${Safety.settings.value.contactName.ifBlank { Safety.settings.value.contactPhone }}.")
+                loc == null -> L("No hay posición del GPS todavía. Llama al 112 si necesitas ayuda.", "No GPS position yet. Call 112 if you need help.")
+                else -> L("Falta el contacto de emergencia o el permiso de SMS. Llama al 112 si necesitas ayuda.", "The emergency contact or the SMS permission is missing. Call 112 if you need help.")
             },
             ongoing = false,
         )
     }
 
-    /** "Estoy bien": para la cuenta atrás y la vibración. */
+    /** L("Estoy bien", "I'm OK"): para la cuenta atrás y la vibración. */
     fun cancelAlarm() {
         handler.removeCallbacksAndMessages(null)
         countdown = 0
@@ -103,8 +104,8 @@ class FallMonitor(private val context: Context) : SensorEventListener {
     private fun notify(title: String, text: String, ongoing: Boolean) {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Caídas", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Aviso de posible caída y cuenta atrás"
+            NotificationChannel(CHANNEL, L("Caídas", "Falls"), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = L("Aviso de posible caída y cuenta atrás", "Possible fall alert and countdown")
                 setSound(
                     RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
                     AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build(),
@@ -124,7 +125,7 @@ class FallMonitor(private val context: Context) : SensorEventListener {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setOnlyAlertOnce(true)
             .setOngoing(ongoing)
-        if (ongoing) b.addAction(0, "Estoy bien", ok)
+        if (ongoing) b.addAction(0, L("Estoy bien", "I'm OK"), ok)
         nm.notify(NOTIFICATION_ID, b.build())
     }
 

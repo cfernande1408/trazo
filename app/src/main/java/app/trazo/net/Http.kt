@@ -1,5 +1,6 @@
 package app.trazo.net
 
+import app.trazo.gpx.i18n.L
 import app.trazo.gpx.Gpx
 import app.trazo.gpx.Track
 import app.trazo.gpx.osm.ElevationFill
@@ -51,7 +52,7 @@ object Http {
                 }
                 val code = c.responseCode
                 if (code == 429 || code in 500..599) throw BusyException(code)
-                if (code !in 200..299) throw IOException("Error del servidor ($code)")
+                if (code !in 200..299) throw IOException(L("Error del servidor ($code)", "Server error ($code)"))
                 c.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
             } finally {
                 c.disconnect()
@@ -77,7 +78,7 @@ object Http {
     }
 
     /** El servidor respondió pero está lleno (429/5xx): merece la pena reintentar. */
-    class BusyException(val code: Int) : IOException("Servidor saturado ($code)")
+    class BusyException(val code: Int) : IOException(L("Servidor saturado ($code)", "Server busy ($code)"))
 
     /** Si un servidor no ha contestado en este tiempo, se pregunta también al siguiente. */
     private const val HEDGE_MS = 3_000L
@@ -110,7 +111,7 @@ object Http {
                             val busy = failures.any { it is BusyException }
                             result.completeExceptionally(
                                 IOException(
-                                    if (busy) "Los servidores de rutas de OpenStreetMap están saturados. Prueba en un par de minutos."
+                                    if (busy) L("Los servidores de rutas de OpenStreetMap están saturados. Prueba en un par de minutos.", "The OpenStreetMap route servers are busy. Try again in a couple of minutes.")
                                     else friendly(failures.last()),
                                     e,
                                 )
@@ -143,17 +144,17 @@ object Http {
 
     /** Mensaje para el usuario en lugar del error técnico. */
     fun friendly(e: Throwable?): String = when (e) {
-        is BusyException -> "El servidor está saturado. Prueba en un par de minutos."
-        is UnknownHostException -> "Sin conexión con el servidor de rutas. Comprueba internet y vuelve a probar."
-        is SocketTimeoutException -> "El servidor de rutas tarda demasiado. Prueba en un rato."
+        is BusyException -> L("El servidor está saturado. Prueba en un par de minutos.", "The server is busy. Try again in a couple of minutes.")
+        is UnknownHostException -> L("Sin conexión con el servidor de rutas. Comprueba internet y vuelve a probar.", "No connection to the routing server. Check your internet and try again.")
+        is SocketTimeoutException -> L("El servidor de rutas tarda demasiado. Prueba en un rato.", "The routing server is taking too long. Try again in a while.")
         // "Software caused connection abort", "Connection reset"…: el sistema cortó la conexión
-        is SocketException -> "Se cortó la conexión con el servidor de rutas."
+        is SocketException -> L("Se cortó la conexión con el servidor de rutas.", "The connection to the routing server dropped.")
         is IOException -> when (val cause = e.cause) {
             is SocketException, is UnknownHostException, is SocketTimeoutException -> friendly(cause)
-            else -> e.message ?: "No se pudo conectar"
+            else -> e.message ?: L("No se pudo conectar", "Could not connect")
         }
-        null -> "No se pudo conectar"
-        else -> e.message ?: "No se pudo conectar"
+        null -> L("No se pudo conectar", "Could not connect")
+        else -> e.message ?: L("No se pudo conectar", "Could not connect")
     }
 
     /**

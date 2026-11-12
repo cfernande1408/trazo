@@ -1,5 +1,6 @@
 package app.trazo.community
 
+import app.trazo.gpx.i18n.L
 import android.location.Location
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -67,15 +68,15 @@ fun CommunityScreen() {
         value = Nearby.Loading
         val here = RideSession.lastLocation
             ?: withTimeoutOrNull(20_000) { runCatching { context.locationUpdates().first() }.getOrNull() }
-        if (here == null) { value = Nearby.Failed("Sin posición: activa la ubicación para ver los avisos de tu zona."); return@produceState }
+        if (here == null) { value = Nearby.Failed(L("Sin posición: activa la ubicación para ver los avisos de tu zona.", "No position: turn on location to see alerts in your area.")); return@produceState }
         // Unos 15 km alrededor
         val d = 0.14
         value = runCatching {
             Nearby.Ok(here, CommunityRepo.hazards(context, Bbox(here.latitude - d, here.longitude - d * 1.3, here.latitude + d, here.longitude + d * 1.3)))
-        }.getOrElse { Nearby.Failed(it.message ?: "Sin conexión") }
+        }.getOrElse { Nearby.Failed(it.message ?: L("Sin conexión", "Offline")) }
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Comunidad") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(L("Comunidad", "Community")) }) }) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -83,11 +84,11 @@ fun CommunityScreen() {
             if (!Supabase.configured) {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                     Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Comunidad en preparación", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(L("Comunidad en preparación", "Community coming soon"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(
-                            "Las valoraciones y los avisos se guardan en un proyecto de Supabase. " +
-                                "Los pasos están en docs/DESARROLLO.md, en «Activar la comunidad»: crear el proyecto, pegar supabase/schema.sql " +
-                                "y poner la URL y la clave pública en local.properties.",
+                            L("Las valoraciones y los avisos se guardan en un proyecto de Supabase. ", "Ratings and alerts are stored in a Supabase project. ") +
+                                L("Los pasos están en docs/DESARROLLO.md, en «Activar la comunidad»: crear el proyecto, pegar supabase/schema.sql ", "The steps are in docs/DESARROLLO.md, under “Activar la comunidad”: create the project, paste supabase/schema.sql ") +
+                                L("y poner la URL y la clave pública en local.properties.", "and put the URL and public key in local.properties."),
                         )
                     }
                 }
@@ -96,26 +97,26 @@ fun CommunityScreen() {
 
             Button(onClick = { reporting = true }, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.ReportProblem, contentDescription = null)
-                Text("  Avisar de algo donde estoy")
+                Text(L("  Avisar de algo donde estoy", "  Report something where I am"))
             }
             Text(
-                "Hielo, barro, un árbol caído, un camino cortado, una batida… El aviso caduca solo y otros pueden decir si sigue ahí.",
+                L("Hielo, barro, un árbol caído, un camino cortado, una batida… El aviso caduca solo y otros pueden decir si sigue ahí.", "Ice, mud, a fallen tree, a closed path, a hunt… The alert expires by itself and others can say if it's still there."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Text("Avisos cerca de ti", style = MaterialTheme.typography.titleLarge)
+            Text(L("Avisos cerca de ti", "Alerts near you"), style = MaterialTheme.typography.titleLarge)
             when (val n = nearby) {
                 Nearby.Loading -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                    Text("Buscando avisos en tu zona…")
+                    Text(L("Buscando avisos en tu zona…", "Looking for alerts in your area…"))
                 }
                 is Nearby.Failed -> Text(n.message, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 is Nearby.Ok -> {
                     val list = n.hazards.filter { it.active }
                         .map { it to TrackStatsCalculator.haversineMeters(GeoPoint(n.here.latitude, n.here.longitude), GeoPoint(it.lat, it.lon)) }
                         .sortedBy { it.second }
-                    if (list.isEmpty()) Text("No hay avisos en unos 15 km. Buena señal.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (list.isEmpty()) Text(L("No hay avisos en unos 15 km. Buena señal.", "No alerts within about 15 km. Good news."), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     list.forEach { (h, d) ->
                         Card(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -137,16 +138,16 @@ fun CommunityScreen() {
 
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Valoraciones de rutas", style = MaterialTheme.typography.titleMedium)
+                    Text(L("Valoraciones de rutas", "Route ratings"), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Abre una ruta y entra en la pestaña Comentarios para ver las estrellas y comentarios de otros usuarios de Trazo, y dejar el tuyo.",
+                        L("Abre una ruta y entra en la pestaña Comentarios para ver las estrellas y comentarios de otros usuarios de Trazo, y dejar el tuyo.", "Open a route and go to the Comments tab to see the stars and comments from other Trazo users, and leave yours."),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
             Text(
-                "Sin registro: la app crea un usuario anónimo en este móvil. Solo se publica lo que escribes y dónde está el aviso.",
+                L("Sin registro: la app crea un usuario anónimo en este móvil. Solo se publica lo que escribes y dónde está el aviso.", "No sign-up: the app creates an anonymous user on this phone. Only what you write and where the alert is gets published."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

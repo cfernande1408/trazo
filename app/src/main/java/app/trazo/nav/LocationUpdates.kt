@@ -1,5 +1,6 @@
 package app.trazo.nav
 
+import app.trazo.gpx.i18n.L
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
@@ -43,7 +44,7 @@ fun Context.locationUpdates(intervalMs: Long = 1_000): Flow<Location> = callback
     val providers = candidates.filter { p -> p in lm.allProviders && runCatching { lm.isProviderEnabled(p) }.getOrDefault(false) }
 
     if (providers.isEmpty()) {
-        close(IllegalStateException("Activa la ubicación del móvil"))
+        close(IllegalStateException(L("Activa la ubicación del móvil", "Turn on your phone's location")))
     } else {
         val now = SystemClock.elapsedRealtimeNanos()
         providers
