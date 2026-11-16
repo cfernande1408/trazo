@@ -1,5 +1,7 @@
 <div align="center">
 
+**Español** · [English](README.en.md)
+
 <img src="docs/logo.svg" width="128" alt="Logo de Trazo">
 
 # Trazo
@@ -126,16 +128,17 @@ Hay tres versiones, que se instalan como apps distintas y pueden convivir, cada 
 
 | Versión | De dónde | Cuándo cambia | Nombre en el móvil |
 | --- | --- | --- | --- |
-| Estable | [Releases](https://github.com/cfernande1408/trazo/releases/latest) | al publicar una versión (`v0.3.0`…) | Trazo |
+| Estable | [Releases](https://github.com/cfernande1408/trazo/releases/latest) | al publicar una versión (`v0.4.0`…) | Trazo |
 | Beta | [Releases → beta](https://github.com/cfernande1408/trazo/releases/tag/beta) | en cada cambio en `main` | Trazo beta |
 | Debug | compilándola tú | cuando la instalas con el cable | Trazo debug |
 
 La estable es la de salir al monte; la beta, para probar lo nuevo sin arriesgar tus rutas. Descarga
-el APK y ábrelo en el móvil (hay que permitir instalar apps de esa fuente).
+el APK y ábrelo en el móvil (hay que permitir instalar apps de esa fuente). Google Play Protect
+puede avisar de que no conoce al desarrollador: pulsa *Instalar de todas formas*.
 
 La pestaña **Info** de la app dice qué versión llevas. La estable se llama como su etiqueta
-(`0.3.0`); la beta y la debug añaden un número que sube con cada cambio (`0.3.0.58-beta`,
-`0.3.0.12-debug`), además del commit del que salen.
+(`0.4.0`); la beta y la debug añaden un número que sube con cada cambio (`0.4.0.58-beta`,
+`0.4.0.12-debug`), además del commit del que salen.
 
 Funciona en Android 8.0 (API 26) o superior y no necesita Google Play Services.
 
@@ -165,10 +168,12 @@ trae) y la previsión de unos puntos de la ruta.
 | **3D** | MapLibre GL JS en una WebView, con relieve, edificios y árboles |
 | **Ubicación** | `LocationManager` de Android, sin el proveedor de Google |
 | **Núcleo** | Módulo de Kotlin puro, sin dependencias, con tests |
+| **Idiomas** | Español e inglés, con cada texto junto a su código (`L("es", "en")`) |
 
 ```
 core/gpx/      Kotlin puro: todo lo que se puede probar sin móvil
   gpx/           parser y escritor GPX, estadísticas, perfil, GeoJSON, estaciones
+  gpx/i18n/      idioma y textos en español e inglés
   gpx/nav/       navegación: emparejar con la ruta, desvíos, subidas
   gpx/osm/       Overpass, Waymarked Trails, Nominatim, unión de tramos, altitud
   gpx/ride/      grabación y estadísticas de salidas
@@ -187,7 +192,7 @@ app/           Android
   map/           mapa topo, navegación y vista 3D
   plan/          crear ruta y biblioteca de rutas
   ride/          grabar salidas y su historial
-  ui/            tema, modo biker/senderista, gráficos
+  ui/            tema, modo biker/senderista, idioma, gráficos
 ```
 
 ## Datos y servicios
