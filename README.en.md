@@ -155,6 +155,8 @@ at the start time you choose with what to wear, the steepest ramps, the estimate
 on foot and the author's waypoints. From there you can download the GPX to open it on your phone.
 It is not for navigating: to follow the route out there, use the app.
 It is in Spanish and English: it follows the browser's language and you can switch with ES / EN.
+As a trial it uses the Catppuccin colour theme (Latte by day, Mocha at night); the palette
+button at the top goes back to Trazo's colours.
 
 Files never leave your browser; Open-Meteo is only asked for altitudes (if the GPX has none) and
 for the forecast at a few points of the route.
@@ -214,6 +216,7 @@ stay on your phone. When the community is live, only what you post there will le
 | Community | [Supabase](https://supabase.com) (own project) | What users post |
 | Weather forecast | [Open-Meteo](https://open-meteo.com) | ECMWF, DWD, Météo-France and other models |
 | 3D view | [MapLibre GL JS](https://maplibre.org) | — |
+| Web theme (trial) | [Catppuccin](https://catppuccin.com) | Palette under the MIT licence |
 
 OpenStreetMap data is licensed under the [ODbL](https://www.openstreetmap.org/copyright).
 
@@ -245,6 +248,7 @@ website and reads the GPX files you download: it does not copy routes or comment
 - [x] Analyse or repeat completed routes
 - [x] Trazo web in Spanish and English
 - [x] The app in Spanish and English, with voice in the chosen language
+- [x] Trial Catppuccin theme in Trazo web
 - [x] Times at your pace and difficulty for you based on your fitness
 - [x] Gradient button in view on the route map
 - [ ] Community: user ratings and alerts (ice, fallen tree…), once the server is live

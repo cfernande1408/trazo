@@ -17,6 +17,7 @@ import { WeatherCard } from './weathercard'
 import { OsmCard } from './osmcard'
 import { friendly } from './net'
 import { L, lang, locale, percent, switchLang, translatePage } from './i18n'
+import { applyTheme, nextTheme, savedTheme, setTheme, type Theme } from './theme'
 import type { OsmRoute, Place } from './osm'
 
 // ---- Preferencias de este navegador (si se pueden guardar) ----
@@ -83,6 +84,24 @@ document.querySelectorAll<HTMLButtonElement>('[data-lang]').forEach((b) => {
   b.addEventListener('click', () => { if (b.dataset.lang !== lang()) switchLang(b.dataset.lang as 'es' | 'en') })
 })
 
+// ---- Tema ----
+let theme: Theme = savedTheme()
+applyTheme(theme)
+const themeBtn = document.querySelector<HTMLButtonElement>('#theme')!
+function labelTheme() {
+  themeBtn.title = theme === 'catppuccin'
+    ? L('Tema Catppuccin (de prueba). Toca para volver al de Trazo', 'Catppuccin theme (trial). Tap to go back to Trazo')
+    : L('Tema de Trazo. Toca para probar Catppuccin', 'Trazo theme. Tap to try Catppuccin')
+  themeBtn.setAttribute('aria-pressed', String(theme === 'catppuccin'))
+}
+labelTheme()
+themeBtn.addEventListener('click', () => {
+  theme = nextTheme(theme)
+  setTheme(theme)
+  labelTheme()
+  chart.draw()
+})
+
 function setActivity(a: Activity) {
   activity = a
   prefs.set('activity', a)
@@ -92,7 +111,7 @@ function setActivity(a: Activity) {
   renderSummary()
   chart.draw()
 }
-document.querySelectorAll<HTMLButtonElement>('.segmented button').forEach((b) => b.addEventListener('click', () => setActivity(b.dataset.activity as Activity)))
+document.querySelectorAll<HTMLButtonElement>('.segmented [data-activity]').forEach((b) => b.addEventListener('click', () => setActivity(b.dataset.activity as Activity)))
 
 const fileInput = $<HTMLInputElement>('file')
 for (const id of ['open', 'open2']) $(id).addEventListener('click', () => fileInput.click())

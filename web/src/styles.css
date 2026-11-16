@@ -29,6 +29,37 @@
   }
 }
 
+/* Tema Catppuccin (de prueba): Latte de día y Mocha de noche, con verde
+   para la bici y melocotón para ir a pie. Paleta: catppuccin.com (MIT). */
+:root[data-theme="catppuccin"] {
+  --primary: #40A02B; --on-primary: #EFF1F5;
+  --primary-container: color-mix(in srgb, #40A02B 18%, #EFF1F5); --on-primary-container: #4C4F69;
+  --secondary-container: #CCD0DA; --on-secondary-container: #4C4F69;
+  --bg: #EFF1F5; --on-bg: #4C4F69; --muted: #6C6F85; --outline: #9CA0B0;
+  --surface-container: #E6E9EF; --surface-high: #DCE0E8; --error: #D20F39;
+  --warn-bg: color-mix(in srgb, #D20F39 14%, #EFF1F5); --warn-fg: #4C4F69;
+  --accent: #8839EF;
+  color-scheme: light;
+}
+:root[data-theme="catppuccin"][data-activity="hike"] {
+  --primary: #FE640B; --primary-container: color-mix(in srgb, #FE640B 18%, #EFF1F5);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="catppuccin"] {
+    --primary: #A6E3A1; --on-primary: #11111B;
+    --primary-container: color-mix(in srgb, #A6E3A1 20%, #1E1E2E); --on-primary-container: #CDD6F4;
+    --secondary-container: #45475A; --on-secondary-container: #CDD6F4;
+    --bg: #1E1E2E; --on-bg: #CDD6F4; --muted: #A6ADC8; --outline: #6C7086;
+    --surface-container: #313244; --surface-high: #45475A; --error: #F38BA8;
+    --warn-bg: color-mix(in srgb, #F38BA8 20%, #1E1E2E); --warn-fg: #CDD6F4;
+    --accent: #CBA6F7;
+    color-scheme: dark;
+  }
+  :root[data-theme="catppuccin"][data-activity="hike"] {
+    --primary: #FAB387; --primary-container: color-mix(in srgb, #FAB387 20%, #1E1E2E);
+  }
+}
+
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
@@ -49,7 +80,7 @@ h2 { font-size: 21px; font-weight: 700; }
 }
 .brand { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-weight: 700; font-size: 20px; }
 .brand img { border-radius: 9px; }
-.brand small { font-weight: 600; font-size: 12px; color: var(--primary); text-transform: uppercase; letter-spacing: .08em; }
+.brand small { font-weight: 600; font-size: 12px; color: var(--accent, var(--primary)); text-transform: uppercase; letter-spacing: .08em; }
 .top-actions { display: flex; align-items: center; gap: 10px; }
 .search { position: relative; flex: 1; max-width: 520px; }
 .search input {
@@ -200,7 +231,7 @@ select.chip { appearance: auto; }
 .weather .days { flex-wrap: wrap; }
 .weather .hour { font-size: 14px; display: flex; align-items: center; gap: 8px; }
 .weather select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--outline, #c4c8b6); background: var(--surface, #fff); color: inherit; }
-.weather .warn { background: #FDE2DE; color: #5C1610; border-radius: 10px; padding: 10px 12px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
+.weather .warn { background: var(--warn-bg, #FDE2DE); color: var(--warn-fg, #5C1610); border-radius: 10px; padding: 10px 12px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
 .weather .ok { background: var(--primary-container); color: var(--on-primary-container); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
 .error { color: var(--error); }
 .wx-list { display: flex; flex-direction: column; gap: 8px; }
@@ -230,3 +261,11 @@ select.chip { appearance: auto; }
 
 /* Idioma */
 .segmented.lang button { padding: 0 10px; font-size: 13px; letter-spacing: .02em; }
+
+/* Tema */
+.theme-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+  border: 1px solid var(--outline); border-radius: 50%; background: transparent; color: var(--on-bg); cursor: pointer;
+}
+.theme-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.theme-btn svg { width: 20px; height: 20px; }
